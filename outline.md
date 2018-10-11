@@ -16,7 +16,7 @@
 
     1. Description of the function
 
-    2. comparison to other password hashing functions
+    2. Comparison to other password hashing functions
 
     3. Argon2 from the security point of view
 

@@ -1,0 +1,102 @@
+\documentclass[nolof]{fithesis3}
+\thesissetup{faculty=fi}
+\thesissetup{author=Bc. Vojtěch Polášek,id=410266, departmentEn = Department of Computer Systems and Communications, programmeEn = Informatics, fieldEn = Information Technology Security, assignment = {}}
+\thesissetup{type= mgr}
+\thesissetup{title=Argon2 security margin for disk encryption passwords}
+%\thesissetup{keywords = {security, web application, dynamic analysis,  SQL injection, software vulnerability, continuous integration}}
+\usepackage[english]{babel}
+\usepackage{alltt}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{csquotes}
+\usepackage[style=ieee,sorting=nty,block=ragged]{biblatex}
+\renewbibmacro*{bbx:savehash}{} %disabling dashing
+%\addbibresource{bibliography.bib}
+\usepackage{tabularx}
+\usepackage{placeins}
+\usepackage{tabu}
+\usepackage{longtable}
+
+
+%\thesislong{abstract}{
+%This thesis deals with tools for dynamic security analysis of web applications. It introduces 14 tools divided into 4 categories: reconnaissance tools, tools for discovery of specific vulnerabilities, intercepting web proxies, and complex vulnerability scanners. Tools are compared according to their features, licence, price, OWASP Top 10 coverage, and ability to be integrated into Atlassian stack. The thesis researches three selected tools in more details: Sqlmap, W3af, and Arachni. In the end, the thesis contains results produced by the three tools while performing audit of open-source deliberately vulnerable web applications.
+%}
+\thesissetup{advisor=Ing. Milan Brož}
+%\thesislong{thanks}{I would like to thank Andriy Stetsko for professional supervision, Tomáš Kuba for technical help while facing numerous problems, Radim Göth for invaluable help while collecting initial testing data, and Jiří Pecl for help while polishing final look of the thesis. My thanks also go to my girlfriend Věruška and my family for support during writing of this thesis.}
+%doplnit zadani
+
+\thesisload
+\setcounter{tocdepth}{2}
+
+
+\begin{document}
+\chapter{Introduction}
+
+\chapter{Password hashing and key derivation functions}
+
+\section{Definitions}
+
+\section{Why do we need PBKDFs?}
+
+\section{PBKDFs and disk encryption}
+
+\subsection{usage of PBKDFs in LUKS}
+
+\section{Attacks on PBKDFs}
+
+\section{Overview of PBKDFs}
+
+\chapter{State of the art PBKDFs}
+
+\section{Argon2}
+
+\subsection{Overview}
+
+\subsection{Algorithm}
+
+\section{PBKDF2}
+
+\subsection{Overview}
+
+\subsection{Algorithm}
+
+\section{Scrypt}
+
+\subsection{Overview}
+
+\subsection{Algorithm}
+
+\chapter{The price of an attack}
+
+\section{Attacker}
+
+\section{Tools}
+
+\subsection{Hardware}
+
+\subsection{Software}
+
+\section{Cost model}
+
+\subsection{Hardware}
+
+\subsection{Energy}
+
+\subsection{Software}
+
+\section{Real world cost estimation}
+
+\chapter{Attacking LUKS}
+
+\section{Testing methodology}
+
+
+\section{Analysis of results}
+
+\chapter{Conclusions}
+
+\appendix
+\chapter{LUKS attack results}
+
+
+\end{document}
