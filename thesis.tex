@@ -11,7 +11,7 @@
 \usepackage{csquotes}
 \usepackage[style=ieee,sorting=nty,block=ragged]{biblatex}
 \renewbibmacro*{bbx:savehash}{} %disabling dashing
-%\addbibresource{bibliography.bib}
+\addbibresource{bibliography.bib}
 \usepackage{tabularx}
 \usepackage{placeins}
 \usepackage{tabu}
@@ -35,18 +35,68 @@
 \chapter{Password hashing and key derivation functions}
 
 \section{Definitions}
+This thesis deals with various cryptographic terms including password hashing and key derivation. Let me first clearly define used terms to avoid possible confusion.
+
+A \emph{hashing function} is a function which receives an input of arbitrary length and produces an output of specified shorter length, effectively compressing the input. These functions are used in many areas such as effective data retrieval \parencite{itmc14}. \emph{Cryptographic hashing functions} are subset of \emph{hashing functions} and they have to meet certain properties, namely preimage resistance, second preimage resistance and collision resistance. We will consider only cryptographic hash functions in this thesis.
+%explain properties?
+
+\emph{Password hashing} is a process in which a password is supplied to a hash function. This is de facto standard method of storing of saved passwords in operating systems and applications. In case that an attacker gets hold of such password hashes, it should be ractically infeasible for an attacker to derive he original password. Therefore hashing functions are used also in process of password verification, during which the entered password is hashed and compared with the stored hash.
+
+This thesis is not going to deal with \emph{password hashing}. However, many \emph{key derivation functions} described below meet desired properties for being used in the password hashing process. However, this thesis is focused primarily on key derivation and verification of cryptographic keys during disk encryption.
+
+\emph{Key derivation functions} are contained in subset of \emph{hash functions}. Their basic purpose is to take an input and produce an output which can be used as a cryptographic key. The input is usually a password or other material such as biometric sample converted into binary form. These materials could be of course used as cryptographic keys on their own but they often lack properties of a good cryptographic key such as sufficient entropy or length. 
 
 \section{Why do we need PBKDFs?}
+Today, as more and more private information is stored on various kinds of media and transfered over the Internet, it is becoming crucial to protect it from being accessed or changed by unauthorised actors. Although there are several interesting authentication options such as biometrics, passwords or passphrases are still the most common method.
+
+Considering passwords we are facing a problematic situation. Organisations and services provide guidelines or requirements which should help an user to choose a strong password \parencite{nistpasswords} \parencite{sanspasswordguidelines}. Important parameters are password length (in characters), password complexity, uniqueness and others. By complexity I mean amount and diversity of used characters (letters, numbers, symbols, emojis\dots) and by uniqueness I mean the fact that the password does not contain easily guessable or predictable sequences. See mentioned policies for example.
+
+%I will find some researches supporting following lines
+As shown by researches, users tend to circumvent such policies by finding loopholes in them. %to be done
+
+What more, passwords them selves are not good cryptographic material which should be used as a cryptographic key. There are surprisingly many reasons. They are usually not sufficiently long. Because they are composed of printable characters, they do not meet the requirement of being uniformly distributed. If they should be remembered, they will probably contain dictionary words, which lessens their entropy even more. See \parencite[section 5.6.4]{itmc14} for short but interesting analysis.
+
+PBKDF stands for password-based key derivation function. The goal of these functions is to derive one or more cryptographic keys from a password or a passphrase. This key should be pseudorandom and sufficiently long to make brute-force guessing as time-consuming as possible. As stated above, they are a subset of cryptographic hashing functions.
+
+Lately PBKDFs are taking another specific task. Due to availability of GPUs, FPGAs and ASICs, there are  new possibilities in running functions in parallel computing environment \parencite[see][chapter 4]{mosnacek}. This increases effectivity of brute-force attacks. PBKDFs try to defend against such attacks by using salt and and function-specific parameters like iteration count etc. See section~\ref{sec:attacks} for more details.
+
+Examples of PBKDFs include Argon2, PBKDF2, Scrypt, Yscrypt and more. See chapter~\ref{chap:pbkdfs} for comparison of several functions.
 
 \section{PBKDFs and disk encryption}
+Disk encryption is a very good use case for usage of PBKDFs. Used encryption algorithms require cryptographic keys of certain length \parencite{veracrypt}. It is also important to consider the fact, that it is usually not desirable to change the encryption key often because reencryption of whole disk takes considerable amount of time. Let aside the fact that if an attacker gains permanent access to such an encrypted disk, the key cannot be changed at all and they may have extensive time period during which they can manage to crack the key. 
+
+By looking at \parencite{pbkdf2usage} we can see that PBKDFs are used in many types of disk encryption software. Note that this list mentions only PBKDF2 as this has been most used PBKDF since recent times. PBKDF2 is for example used in LUKS version 1 \parencite{luks1}, FileVault software used by macOS \parencite{filevault}, CipherShed disk encryption software \parencite{ciphershed}, Veracrypt disk encryption software \parencite{veracrypt} and more.
+
+In 2013 there was initiated a new open competition called Password hashing competition. Its goal was to find a new password hashing function which would resist new attacks devised against those functions \parencite{phc}. The winner was function named Argon2. It is already used for example in LUKS version 2 \parencite{luks2}.
+
 
 \subsection{usage of PBKDFs in LUKS}
+LUKS stands for Linux Unified Key Setup. This project started to be developed by Clemens Fruhwirth as a reaction to several incompatible disk encryption schemes which coexisted at the same time at the begining of 21st century. At certain point there existed three incompatible disk encryption schemes which varried from Linux distribution to Linux distribution. If an user created an encrypted disk, they couldn't be sure if they will be able to encrypt the disk with a different distribution or even with a new version of the same distribution.
+
+LUKS began as a metadata format for storing information about cryptographic key setup. However, Fruhwirth discovered that to design a proper metadata format, he needs to knoww enough information about key setup process \parencite{newmethods}. Therefore, he created TKS1 and TKS2. These are templates for the key setup process. Together with LUKS they ensure safe and standardized key management during disk encryption. After some user feedback, LUKS on-disk specification version 1.0 was created in 2005 \parencite{luks1}. Currently the latest version is LUKS on-disk specification version 2 \parencite{luks2}.
+
+PBKDF2 function is used as a key derivation function in LUKS version 1. It is used during master key initialisation, adding of a new password, master key recovery, and also during password changing because this operation is actually composed of previously mentioned operations. During all operations it internaly uses a hash algorithm specified by user during initialisation of the LUKS header. By default, SHA1 algorithm is used.
+
+During initialisation, the PBKDF2 function is used to create a checksum of a master key. This key is subsequently used for symmetric encryption of actual data stored on the encrypted disk. The function receives following parameters:
+
+\begin{description}
+\item[masterKey] a new randomly generated master key of user specified length
+
+\item[phdr.mk-digest-salt] a random number 32 bytes long which is used to prevent attacks against password using precomputed tables \parencite[see][section 5.6.3]{itmc14}
+
+\item[phdr.mk-digest-iteration-count] number of iterations for PBKDF2, see section~\ref{sec:pbkdf2}
+
+\item[LUKS DIGESTSIZE] length of he computed digest in bytes, default is 20
+
+\end{description}
 
 \section{Attacks on PBKDFs}
+\label{sec:attacks}
 
 \section{Overview of PBKDFs}
 
 \chapter{State of the art PBKDFs}
+\label{chap:pbkdfs}
 
 \section{Argon2}
 
@@ -55,6 +105,7 @@
 \subsection{Algorithm}
 
 \section{PBKDF2}
+\label{sec:pbkdf2}
 
 \subsection{Overview}
 
@@ -94,6 +145,8 @@
 \section{Analysis of results}
 
 \chapter{Conclusions}
+
+\printbibliography
 
 \appendix
 \chapter{LUKS attack results}
