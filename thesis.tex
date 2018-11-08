@@ -69,12 +69,14 @@ By looking at \parencite{pbkdf2usage} we can see that PBKDFs are used in many ty
 
 In 2013 there was initiated a new open competition called Password hashing competition. Its goal was to find a new password hashing function which would resist new attacks devised against those functions \parencite{phc}. The winner was function named Argon2. It is already used for example in LUKS version 2 \parencite{luks2}.
 
-
-\subsection{usage of PBKDFs in LUKS}
+\subsection{LUKđ}
 LUKS stands for Linux Unified Key Setup. This project started to be developed by Clemens Fruhwirth as a reaction to several incompatible disk encryption schemes which coexisted at the same time at the begining of 21st century. At certain point there existed three incompatible disk encryption schemes which varried from Linux distribution to Linux distribution. If an user created an encrypted disk, they couldn't be sure if they will be able to encrypt the disk with a different distribution or even with a new version of the same distribution.
 
 LUKS began as a metadata format for storing information about cryptographic key setup. However, Fruhwirth discovered that to design a proper metadata format, he needs to knoww enough information about key setup process \parencite{newmethods}. Therefore, he created TKS1 and TKS2. These are templates for the key setup process. Together with LUKS they ensure safe and standardized key management during disk encryption. After some user feedback, LUKS on-disk specification version 1.0 was created in 2005 \parencite{luks1}. Currently the latest version is LUKS on-disk specification version 2 \parencite{luks2}.
 
+The reference implementation of both versions of LUKS is called Cryptsetup. In the following two subsections, default parameters and information concerning command line switches are specific to this implementation.
+
+\subsection{usage of PBKDFs in LUKS version 1}
 PBKDF2 function is used as a key derivation function in LUKS version 1. It is used during master key initialisation, adding of a new password, master key recovery, and also during password changing because this operation is actually composed of previously mentioned operations. During all operations it internaly uses a hash algorithm specified by user during initialisation of the LUKS header. By default, SHA1 algorithm is used.
 
 During initialisation, the PBKDF2 function is used to create a checksum of a master key. This key is subsequently used for symmetric encryption of actual data stored on the encrypted disk. The function receives following parameters:
@@ -86,14 +88,66 @@ During initialisation, the PBKDF2 function is used to create a checksum of a mas
 
 \item[phdr.mk-digest-iteration-count] number of iterations for PBKDF2, see section~\ref{sec:pbkdf2}
 
-\item[LUKS DIGESTSIZE] length of he computed digest in bytes, default is 20
+\item[LUKS\-DIGEST\-SIZE] length of he computed digest in bytes, default is 20
 
 \end{description}
+
+The generated 20 bytes long checksum is stored in the LUKS header together with the iteration count and salt. Please note that the \emph{phdr.mk-digest-iteration-count} parameter is obtained by performing a benchmark with minimum of 1000 iterations.
+
+During adding of a new password, PBKDF is used to process the passphrase supplied by user. It receives following parameters:
+
+\begin{description}
+\item[password] a passphrase supplied by an user
+
+\item[ks.salt] randomly generated salt used for this particular key slot with length of 32 bytes
+
+\item[ks.iteration-count] number of PBKDF2 iterations
+
+\item[MasterKeyLength] length of the derived key
+
+\end{description}
+
+The resulting key derived from the passphrase is used to encrypt the master key. This key has to be present in memory either because initialisation happened recently or it was successfully recovered through a different key stored in different key slot. Together with the encrypted master key, the salt and iteration count are also written into the key slot.
+
+Note that the ks.iteration-count parameter can be influenced by user in several ways \parencite{cryptsetupmanual}. One possibility is to specify number of iterations directly with the command line option \verb+--pbkdf-force-iterations+. Another option is to specify the iteration time through \verb+-i+ or \verb+--iter-time+ command line options. This option expects a number which signifies number of milliseconds which should be spent calculating the hash. A benchmark is used to calculate number of iterations which corresponds to this time. If no option is specified then the default iteration time of 2000 milliseconds is used.
+
+The function is also used during the master key recovery. This process is performed while unlocking the encrypted partition. During key recovery the PBKDF is actually used twice for every key slot until the master key is decrypted or there are no more key slots to try. First it is used to derive a decryption key from a passphrase supplied by an user. Then this decryption key is used to decrypt the encrypted master key stored in the current key slot. The result is called the candidate master key because we are still not sure if the passphrase was correct. This candidate is again hashed with PBKDF and finally compared with hash of the master key stored in the LUKS header. If hashes match then the passphrase was entered correctly and the master key can be used.
+
+In the first case the function receives following parameters:
+
+\begin{description}
+\item[pwd] user supplied passphrase
+
+\item[ks.salt] the salt value read from currently tried key slot
+
+\item[ks.iteration-count] the iteration count read from currently tried key slot
+
+\item[masterKeyLength] length of the derived key
+\end{description}
+
+In the second case the function receives following parameters:
+
+\begin{description}
+\item[masterKeyCandidate] candidate master key, see above
+
+\item[ph.mk-digest-salt] the salt value which was used during the initialisation phase and stored in the header
+
+\item[ph.mk-digest-iter] number of PBKDF2 iterations used during the initialisation phase and also stored in the header
+
+\item[LUKS\_DIGEST\_SIZE] 20 bytes
+\end{description}
+
+The process of changing a password is composed of previously mentioned operations and hence I am not mentioning it here in greater details. To sum it up, firstly the master key is recovered, then a new password is added to a new key slot and the previous one is revoked.
+
+\subsection{Usage of PBKDFs in LUKS version 2}
+LUKS version 2 extends LUKS version 1 and uses similar principles. Therefore, I will focus on differences between version 1 and 2 which are related to usage of PBKDFs.
+
+
 
 \section{Attacks on PBKDFs}
 \label{sec:attacks}
 
-\section{Overview of PBKDFs}
+
 
 \chapter{State of the art PBKDFs}
 \label{chap:pbkdfs}
@@ -116,6 +170,8 @@ During initialisation, the PBKDF2 function is used to create a checksum of a mas
 \subsection{Overview}
 
 \subsection{Algorithm}
+
+\section{Other PBKDFs}
 
 \chapter{The price of an attack}
 
