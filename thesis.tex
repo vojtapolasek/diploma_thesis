@@ -16,7 +16,9 @@
 \usepackage{placeins}
 \usepackage{tabu}
 \usepackage{longtable}
-
+%\usepackage[chars=60, lines=30]{stdpage}
+\usepackage{algorithm2e}
+%\usepackage{algorithm}
 
 %\thesislong{abstract}{
 %This thesis deals with tools for dynamic security analysis of web applications. It introduces 14 tools divided into 4 categories: reconnaissance tools, tools for discovery of specific vulnerabilities, intercepting web proxies, and complex vulnerability scanners. Tools are compared according to their features, licence, price, OWASP Top 10 coverage, and ability to be integrated into Atlassian stack. The thesis researches three selected tools in more details: Sqlmap, W3af, and Arachni. In the end, the thesis contains results produced by the three tools while performing audit of open-source deliberately vulnerable web applications.
@@ -35,7 +37,8 @@
 \chapter{Password hashing and key derivation functions}
 
 \section{Definitions}
-This thesis deals with various cryptographic terms including password hashing and key derivation. Let me first clearly define used terms to avoid possible confusion.
+\label{definitions}
+This thesis deals with various cryptographic terms including password hashing and key derivation. This section briefly explains some of them. Note that reader of this thesis is expected to have at least basic knowlege of cryptography and computer security.
 
 A \emph{hashing function} is a function which receives an input of arbitrary length and produces an output of specified shorter length, effectively compressing the input. These functions are used in many areas such as effective data retrieval \parencite{itmc14}. \emph{Cryptographic hashing functions} are subset of \emph{hashing functions} and they have to meet certain properties, namely preimage resistance, second preimage resistance and collision resistance. We will consider only cryptographic hash functions in this thesis.
 %explain properties?
@@ -46,7 +49,10 @@ This thesis is not going to deal with \emph{password hashing}. However, many \em
 
 \emph{Key derivation functions} are contained in subset of \emph{hash functions}. Their basic purpose is to take an input and produce an output which can be used as a cryptographic key. The input is usually a password or other material such as biometric sample converted into binary form. These materials could be of course used as cryptographic keys on their own but they often lack properties of a good cryptographic key such as sufficient entropy or length. 
 
+A \emph{cryptographic salt} is often used during process of key derivation. The purpose of salt is to prevent attacks which use precomputed tables such as Rainbow tables \parencite{rainbowtables}. Salt introduces another factor which influences a derived key. It means that it is no longer dependent only on passhprase. For example suppose that 32 bit long integer is used as a salt. In that case there are \(2^{32}\) possible keys derived from the same passphrase. This makes precomputing attacks effectively infeasible. Salt is usualy stored unobfuscated together with hashed material.
+
 \section{Why do we need PBKDFs?}
+\label{whypbkdfs}
 Today, as more and more private information is stored on various kinds of media and transfered over the Internet, it is becoming crucial to protect it from being accessed or changed by unauthorised actors. Although there are several interesting authentication options such as biometrics, passwords or passphrases are still the most common method.
 
 Considering passwords we are facing a problematic situation. Organisations and services provide guidelines or requirements which should help an user to choose a strong password \parencite{nistpasswords} \parencite{sanspasswordguidelines}. Important parameters are password length (in characters), password complexity, uniqueness and others. By complexity I mean amount and diversity of used characters (letters, numbers, symbols, emojis\dots) and by uniqueness I mean the fact that the password does not contain easily guessable or predictable sequences. See mentioned policies for example.
@@ -69,14 +75,15 @@ By looking at \parencite{pbkdf2usage} we can see that PBKDFs are used in many ty
 
 In 2013 there was initiated a new open competition called Password hashing competition. Its goal was to find a new password hashing function which would resist new attacks devised against those functions \parencite{phc}. The winner was function named Argon2. It is already used for example in LUKS version 2 \parencite{luks2}.
 
-\subsection{LUKđ}
+\subsection{LUKS}
 LUKS stands for Linux Unified Key Setup. This project started to be developed by Clemens Fruhwirth as a reaction to several incompatible disk encryption schemes which coexisted at the same time at the begining of 21st century. At certain point there existed three incompatible disk encryption schemes which varried from Linux distribution to Linux distribution. If an user created an encrypted disk, they couldn't be sure if they will be able to encrypt the disk with a different distribution or even with a new version of the same distribution.
 
 LUKS began as a metadata format for storing information about cryptographic key setup. However, Fruhwirth discovered that to design a proper metadata format, he needs to knoww enough information about key setup process \parencite{newmethods}. Therefore, he created TKS1 and TKS2. These are templates for the key setup process. Together with LUKS they ensure safe and standardized key management during disk encryption. After some user feedback, LUKS on-disk specification version 1.0 was created in 2005 \parencite{luks1}. Currently the latest version is LUKS on-disk specification version 2 \parencite{luks2}.
 
-The reference implementation of both versions of LUKS is called Cryptsetup. In the following two subsections, default parameters and information concerning command line switches are specific to this implementation.
+The reference implementation of both versions of LUKS is called libcryptsetup. The userspace interface is called Cryptsetup. In the following two subsections, default parameters and information concerning command line switches are specific to this implementation.
 
 \subsection{usage of PBKDFs in LUKS version 1}
+\label{luks1}
 PBKDF2 function is used as a key derivation function in LUKS version 1. It is used during master key initialisation, adding of a new password, master key recovery, and also during password changing because this operation is actually composed of previously mentioned operations. During all operations it internaly uses a hash algorithm specified by user during initialisation of the LUKS header. By default, SHA1 algorithm is used.
 
 During initialisation, the PBKDF2 function is used to create a checksum of a master key. This key is subsequently used for symmetric encryption of actual data stored on the encrypted disk. The function receives following parameters:
@@ -89,7 +96,6 @@ During initialisation, the PBKDF2 function is used to create a checksum of a mas
 \item[phdr.mk-digest-iteration-count] number of iterations for PBKDF2, see section~\ref{sec:pbkdf2}
 
 \item[LUKS\-DIGEST\-SIZE] length of he computed digest in bytes, default is 20
-
 \end{description}
 
 The generated 20 bytes long checksum is stored in the LUKS header together with the iteration count and salt. Please note that the \emph{phdr.mk-digest-iteration-count} parameter is obtained by performing a benchmark with minimum of 1000 iterations.
@@ -104,7 +110,6 @@ During adding of a new password, PBKDF is used to process the passphrase supplie
 \item[ks.iteration-count] number of PBKDF2 iterations
 
 \item[MasterKeyLength] length of the derived key
-
 \end{description}
 
 The resulting key derived from the passphrase is used to encrypt the master key. This key has to be present in memory either because initialisation happened recently or it was successfully recovered through a different key stored in different key slot. Together with the encrypted master key, the salt and iteration count are also written into the key slot.
@@ -139,10 +144,18 @@ In the second case the function receives following parameters:
 
 The process of changing a password is composed of previously mentioned operations and hence I am not mentioning it here in greater details. To sum it up, firstly the master key is recovered, then a new password is added to a new key slot and the previous one is revoked.
 
-\subsection{Usage of PBKDFs in LUKS version 2}
-LUKS version 2 extends LUKS version 1 and uses similar principles. Therefore, I will focus on differences between version 1 and 2 which are related to usage of PBKDFs.
+Both password-based encryption and password checking require additional cryptographic primitives which process the derived key. For encryption, reference implementation of LUKS uses aes-xts-plain64 and for hashing it uses sha256. Usage of PBKDF2 requires underlying pseudorandom function. In case of LUKS version 1, default PRF is SHA1. Alternatively, it is possible to choose SHA256, SHA512, ripemd160 or whirlpool.
 
-The newer version supports configurable algorithms for encryption, hashing and also key derivation. That means that the set of algorithms can be extended as new are developed and some are obsoleted. 
+\subsection{Usage of PBKDFs in LUKS version 2}
+LUKS version 2 extends LUKS version 1 and uses similar principles. Therefore, I will focus on differences between version 1 and 2 which are related to usage of PBKDFs. For detailed list of changes see \parencite{}{luks2}{section 1.1}.
+
+The new version supports configurable algorithms for encryption, hashing and also key derivation. That means that the set of algorithms can be extended as new are developed and some are obsoleted. Note that there still exist some requirements for algorithms provided by cryptographic backend \parencite{}{luks2}{section 4.6}. The backend has to support SHA-1 and SHA-256 hashing functions, PBKDF2, Argon2i and Argon2id key derivation functions and AES-XTS symmetric encryption.
+
+LUKS2 introduces PBKDF memory hard functions Argon2i and Argon2id which are described in~\ref{argon2}. Argon2 functions should offer increased resistance to brute-force attacks.
+
+The volume key digest is no longer limited by length of 20 bytes, because it no longer relies on SHA-1 hashing function. The processes described in subsection~\ref{luks1} are the same in LUKS version 2. The same applies for situations in which PBKDFs are used. 
+
+As stated in subsection~\ref{luks1},  in case of PBKDF2 user can influence number of iterations directly or specify approximate time required for processing of the passphrase. This stays the same for LUKS2. Functions from Argon2 family introduce two additional parameters; memory cost and parallel cost. Both parameters can be specified through \verb+--pbkdf-memory+ and \verb+--pbkdf-parallel+ command line parameters respectively. If options are not specified, they are benchmarked.
 
 \section{Attacks on PBKDFs}
 \label{sec:attacks}
@@ -152,22 +165,83 @@ The newer version supports configurable algorithms for encryption, hashing and a
 \chapter{State of the art PBKDFs}
 \label{chap:pbkdfs}
 
-\section{Argon2}
-
-\subsection{Overview}
-
-\subsection{Algorithm}
 
 \section{PBKDF2}
 \label{sec:pbkdf2}
 
-\subsection{Overview}
+PBKDF2 is a password-based key derivation function defined in RFC 8018 \parencite{rfc8018}. This RFC thoroughly describes two use cases of PBKDF2; password-based encryption scheme and password-based message authentication scheme. Other mentioned use cases include password checking and derivation of multiple keys from one password. As shown in \ref{luks1}, LUKS version 1 uses PBKDF2 for password checking and derivation of key for encryption or decryption of master key.
+
+the function requires four input parameters; passphrase, cryptographic salt, iteration count and length of a key to be derived. Moreover, the function requires a pseudorandom function (PRF) which is used in process of key derivation.
+
+The term \emph{Passphrase} in this context means any data which are source for subsequent key derivation process. Usually it is a password entered by user. The \emph{cryptographic salt} is represented by randomly generated number.
+
+The purpose of \emph{iteration count} parameter is to defend against brute force and dictionary attacks performed on PBKDF2. The iteration count prolongs the time which is needed to derive a single key. Technically, the iteration count signifies number of successive runs of chosen PRF for every block of the derived key. In general, the \emph{iteration count} should be chosen as large as possible, taking into account the fact that the processing time should be acceptable for the end user \parencite{nistpbkdf2}. According to the cited document, minimum iteration count should be 1000 iterations and for critical security systems a count of 10000000 iterations is appropriate. 
+
+The function is described by following algorithm. Verbal description is also provided. Following abbreviations are used in the algorithm and description:
+
+\begin{description}
+\item{P} an octet string representing a passphrase
+
+\item{S} an octet string representing a cryptographic salt
+
+\item{C} a positive integer representing iteration count
+
+\item{dkLen} a positive integer representing length of the derived key counted in octets
+
+\item{DK}an octet string representing the derived key
+
+\item{PRF} - a pseudorandom function
+
+\item{hLen} - length of output of chosen pseudorandom function counted in octets
+
+\item{CEIL(x)} the ceiling function returning the smallest integer which is greater or equal to X
+
+
+\end{description}
+
+
+\begin{algorithm}
+\DontPrintSemicolon
+\SetKwInOut{Input}{input}
+\SetKwInOut{Output}{output}
+\SetKwFunction{KwCeil}{CEIL}
+\SetKwFunction{KwF}{F}
+\SetKwFunction{KwPrf}{PRF}
+\SetKwProg{Fn}{Function}{}{}
+\Input{P, S, C, dkLen}
+\Output{DK}
+\If{\(dkLen > (2^{32} - 1) * hLen\)}{\Return{Derived key too long}}
+\(L \leftarrow \) \KwCeil{\(hLen/dkLen\)} \;
+\tcc{l is the number of hLen-octet blocks in the derived key}
+\(r \leftarrow dkLen - (l - 1) * hLen \)
+\tcc{r is the number of octets in the last block}
+\For{\(i \leftarrow 1\) \KwTo }{
+\(T_i \leftarrow \) \KwF{p, s, c, i} \;
+}
+\Return{\( t_1 || t_2 || \dots t_l [0 \dots (r-1)]\)} \;
+\Fn{F (s, p, c, i)}{
+\( u_1 \leftarrow \) \KwPrf{P, S || INT(i)} \;
+\For{\( j \leftarrow 2 \) \KwTo \( c \)}{
+\( u_{i-1} \oplus \) \KwPrf{S, \( u_{j-1} \)} \;
+}
+\Return{\( u_c \)} \;
+}
+\caption{PBKDF2 function algorithm}
+\end{algorithm}
+
+
+
+
+
+\section{Argon2}
+\label{argon2}
+
 
 \subsection{Algorithm}
 
+
 \section{Scrypt}
 
-\subsection{Overview}
 
 \subsection{Algorithm}
 
