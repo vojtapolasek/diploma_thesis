@@ -178,7 +178,7 @@ The term \emph{Passphrase} in this context means any data which are source for s
 
 The purpose of \emph{iteration count} parameter is to defend against brute force and dictionary attacks performed on PBKDF2. The iteration count prolongs the time which is needed to derive a single key. Technically, the iteration count signifies number of successive runs of chosen PRF for every block of the derived key. In general, the \emph{iteration count} should be chosen as large as possible, taking into account the fact that the processing time should be acceptable for the end user \parencite{nistpbkdf2}. According to the cited document, minimum iteration count should be 1000 iterations and for critical security systems a count of 10000000 iterations is appropriate. 
 
-The function is described by following algorithm. Verbal description is also provided. Following abbreviations are used in the algorithm and description:
+The function is described by following algorithm. Verbal description is also provided. Following abbreviations and conventions are used in the algorithm and description:
 
 \begin{description}
 \item{P} an octet string representing a passphrase
@@ -198,6 +198,10 @@ The function is described by following algorithm. Verbal description is also pro
 \item{CEIL(x)} the ceiling function returning the smallest integer which is greater or equal to X
 
 \item{F} a helper function for better description
+
+\item{||} concatenation of strings
+
+\item{INT(x)} a big§-endian encoding of integer x
 \end{description}
 
 
@@ -230,6 +234,12 @@ The function is described by following algorithm. Verbal description is also pro
 }
 \caption{PBKDF2 function algorithm}
 \end{algorithm}
+
+At the begining the algorithm checks if the desired length of the key does not exceed \(2^{32} - 1\). If it does, it exits immediatelly. Then it processes the input and creates output key in blocks. Every block has length of hLen octects, except for the last one which can have shorter length. 
+
+In the pseudocode there is defined function \emph{F} which is applied to every block. Results of such applications are finally concatenated and returned as the resulting derived key. This function performs \emph{c} iterations of underlying pseudorandom function \emph{PRF}. The \emph{PRF} takes a passhprse as the first parameter and result of previous iteration as the second parameter. The only exception is the first iteration where the second parameter is concatenation of salt and binary representation of the block index \emph{i}. Results of all iterations are xored and returned as a particular block of the derived key. Finally, all blocks are concatenated and returned as the derived key.
+
+Notice that the function F can be rewritten to be quickly computed in parallel computing environments such as GPUs. See \parencite{mosnacek}{section~4.1} for more details.
 
 
 
