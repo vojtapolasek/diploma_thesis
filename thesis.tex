@@ -213,20 +213,20 @@ The function is described by following algorithm. Verbal description is also pro
 \Input{P, S, C, dkLen}
 \Output{DK}
 \If{\(dkLen > (2^{32} - 1) * hLen\)}{\Return{Derived key too long}}
-\(L \leftarrow \) \KwCeil{\(hLen/dkLen\)} \;
+\(L \leftarrow \) \KwCeil{\(dkLen/hLen\)} \;
 \tcc{l is the number of hLen-octet blocks in the derived key}
 \(r \leftarrow dkLen - (l - 1) * hLen \)
 \tcc{r is the number of octets in the last block}
-\For{\(i \leftarrow 1\) \KwTo }{
+\For{\(i \leftarrow 1\) \KwTo \(l\) }{
 \(T_i \leftarrow \) \KwF{p, s, c, i} \;
 }
 \Return{\( t_1 || t_2 || \dots t_l [0 \dots (r-1)]\)} \;
 \Fn{F (s, p, c, i)}{
 \( u_1 \leftarrow \) \KwPrf{P, S || INT(i)} \;
 \For{\( j \leftarrow 2 \) \KwTo \( c \)}{
-\( u_{i-1} \oplus \) \KwPrf{S, \( u_{j-1} \)} \;
+\( u_j \leftarrow \) \KwPrf{P, \( u_{j-1} \)} \;
 }
-\Return{\( u_c \)} \;
+\Return{\(u_1 \oplus u_2 \oplus \dots \oplus u_c \)} \;
 }
 \caption{PBKDF2 function algorithm}
 \end{algorithm}
