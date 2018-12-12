@@ -18,7 +18,6 @@
 \usepackage{longtable}
 %\usepackage[chars=60, lines=30]{stdpage}
 \usepackage{algorithm2e}
-%\usepackage{algorithm}
 
 %\thesislong{abstract}{
 %This thesis deals with tools for dynamic security analysis of web applications. It introduces 14 tools divided into 4 categories: reconnaissance tools, tools for discovery of specific vulnerabilities, intercepting web proxies, and complex vulnerability scanners. Tools are compared according to their features, licence, price, OWASP Top 10 coverage, and ability to be integrated into Atlassian stack. The thesis researches three selected tools in more details: Sqlmap, W3af, and Arachni. In the end, the thesis contains results produced by the three tools while performing audit of open-source deliberately vulnerable web applications.
@@ -31,7 +30,9 @@
 \setcounter{tocdepth}{2}
 
 
+
 \begin{document}
+\tableofcontents
 \chapter{Introduction}
 
 \chapter{Password hashing and key derivation functions}
@@ -196,12 +197,13 @@ The function is described by following algorithm. Verbal description is also pro
 
 \item{CEIL(x)} the ceiling function returning the smallest integer which is greater or equal to X
 
-
+\item{F} a helper function for better description
 \end{description}
 
 
 \begin{algorithm}
 \DontPrintSemicolon
+\LinesNumbered
 \SetKwInOut{Input}{input}
 \SetKwInOut{Output}{output}
 \SetKwFunction{KwCeil}{CEIL}
