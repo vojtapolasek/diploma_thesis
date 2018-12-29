@@ -166,7 +166,7 @@ At the begining passwords were stored on computer systems in plain text, protect
 
 . This time marks begining of the never-ending fight between authors of hash functions and people trying to crack passwords hashed by them. First hash functions were really simple and they were definitely not cryptographically secure, such as hash mechanism used in Multics. This mechanism squared numerical form of each password and applied a bit mask with AND operation \parencite{multicssecurity}. This increased number of guesses but only negligibly compared to modern functions.
 
-The first cryptographic hash came with Robert Morris and his Crypt function. Crypt used up to Unix 6th edition mimicked the M209 cipher machine from World War II. and proved not very secure because the algorithm could be recoded in a way which allowed to test passwords in very short period of time (1.25 milliseconds per password) \parencite{pshistory}. Later version used since Unix 7th edition employed the DES block cipher. This cipher was at that time very slow if implemented in software. The password entry program also introduced two new concepts; automated proactive password strength checking and \emph{cryptographic salt} (12 byte random number).
+The first cryptographic hash came with Robert Morris and his Crypt function. Crypt used up to Unix 6th edition mimicked the M209 cipher machine from World War II. and proved not very secure because the algorithm could be recoded in a way which allowed to test passwords in very short period of time (1.25 milliseconds per password) \parencite{pshistory}. Later version used since Unix 7th edition employed the DES block cipher. This cipher was at that time very slow if implemented in software. The password entry program also introduced two new concepts; automated proactive password strength checking and \emph{cryptographic salt} (12 bit random number at that time). Currently for example the LUKS2 specification uses salt 64 bits long.
 
 During 1980s there happened some password cracking contests and hash functions were also improved. Some of them were made deliberately slow to slow down potential attacker. If this measure was not effective enough, more iterations of hashing function could be used. During 1990s many password cracking programs appeared including John the Ripper, Crack, LOphtCrack etc. \parencite{crackinghistory}. Most of those programs tried to improve the cracking speed by optimizing underlying algorithms and later by using CPU parallelism.
 
@@ -237,10 +237,10 @@ The function is described by following algorithm. Verbal description is also pro
 \SetKwProg{Fn}{Function}{}{}
 \Input{P, S, C, dkLen}
 \Output{DK}
-\If{\(dkLen > (2^{32} - 1) * hLen\)}{\Return{Derived key too long}}
+\If{\(dkLen > (2^{32} - 1) \times hLen\)}{\Return{Derived key too long}}
 \(L \leftarrow \) \KwCeil{\(dkLen/hLen\)} \;
 \tcc{l is the number of hLen-octet blocks in the derived key}
-\(r \leftarrow dkLen - (l - 1) * hLen \)
+\(r \leftarrow dkLen - (l - 1) \times hLen \)
 \tcc{r is the number of octets in the last block}
 \For{\(i \leftarrow 1\) \KwTo \(l\) }{
 \(T_i \leftarrow \) \KwF{p, s, c, i} \;
@@ -264,20 +264,200 @@ In the pseudocode there is defined function \emph{F} which is applied to every b
 Notice that the function F can be rewritten to be quickly computed in parallel computing environments such as GPUs. See \parencite{mosnacek}{section~4.1} for more details.
 
 
-
-
-
 \section{Argon2}
 \label{argon2}
+As shown in very brief history of attacks on password hashes in section~\ref{sec:attacks}, the Argon2 function is the winner of Password Hashing Competition. Argon2 is a hash function belonging to the set of memory-hard functions as defined in \parencite{memoryhard}. As defined in section~\ref{definitions} PBKDFs are subset of hashing functions and Argon2 can be definitely used as PBKDF. Current version of the function is 1.3 and the latest IETF draft is \parencite{argon2draft}.
 
+The function quickly fills up given amount of memory and performs a sequence of computations over values stored in this memory. The Argon2 comes in three versions which differ in the way in which data in the memory matrix (described further below) is processed. See subsection~\ref{argon2versions} for detailed description.
 
-\subsection{Algorithm}
+Argon2 is used as the default PBKDF in LUKS version 2. Note that according to \parencite{cryptsetupmanual} the default PBKDF can be configured during compilation.
 
+The function is optimized for X86 architecture using improvements in handling of cache and memory access in recent Intel and AMD processors. The function can be implemented on specialised hardware, but the previously mentioned fact makes this implementation possibly very slow and expensive and even specialised ASICs shouldn't acquire significant benefit even if they employ large areas of memory. However, no implementations of any Argon2 mode for specialised hardware are known so far.
+
+\subsection{Operation}
+The function expects following primary input parameters. Primary means that parameters must always be supplied by user.
+
+\begin{description}
+\item{P} the message of any length from 0 to \(2^{32} - 1\) bytes. In case of PBKDF this is the passphrase.
+
+\item{S} nonce with length from 8 to \(2^{32} - 1\) bytes. In case of PBKDF this is the \emph{cryptographic salt}.
+\end{description}
+
+The function also accepts secondary inputs, which do not need to be supplied.
+
+\begin{description}
+\item{p} degree of parallelism as an integer with a value from 1 to \(2^{24} - 1\). The value determines the number of parallel computational chains to be run. Chains are not independent, synchronisation occurs.
+
+\item{\(\tau\)} tag length in bytes in range from 4 to \(2^{32} - 1\). This determines an output of the function, in case of PBKDF key length.
+
+\item{m} memory size as an integer number in range from 8\emph{p} to \(2^{32} - 1\). The integer determines amount of kilobytes of memory which should be used for computation of the function.
+
+\item{t} number of iterations as an integer in range from 1 to \(2^{32} - 1\). This parameter is used to tune the length of the function run by specifying number of iterations.
+
+\item{v} one byte version umber, currently hardcoded to 0x13.
+
+\item{K} signifies a secret value (key) with length from 0 to \(2^{32} - 1\) bytes. By default no key is assumed.
+
+\item{X} associated data with length from 0 to \(2^{32} - 1\) bytes.
+
+\item{y} type (mode) of Argon2 to be used. 0 for Argon2D, 1 for Argon2I, 2 for Argon2ID.
+\end{description}
+
+Argon2 makes use of the permutation function \emph{P} which is based on Blake2b hashfunction \parencite{blake2}. The function actually copies blake2b design but additionally it uses 64 bit multiplications. This particular modification makes the function more complicated to implement and optimize for ASICs, while the running speed on X86 processors should be degraded only negligibly. See \parencite{argon2draft}{section~3.6} for detailed explanation.
+
+Another internal function of Argon2 is compression function \emph{G} which internally uses previously mentioned function \emph{P}. \emph{G} accepts two 1024 bytes long inputs and produces one 1024 bytes long output. Let \emph{X} and \emph{Y} be the inputs. Firstly, the function XORs them:
+
+\(R = X \oplus Y \)
+
+R is treated as a \(8 \times 8 \) matrix of 16 byte registers. The function \emph{P} is first applied to every row of the matrix and then to every column. The result is denoted as \emph{Z}. Finally, the result is computed as \(Z \oplus R\). For more detailed description see \parencite{argon2draft}{section~3.5}.
+
+Argon2 makes use of two more hash functions. The \emph{\(H^X\)} function where \emph{X} denotes the output length in bytes and the whole function is again based on Blake2b. Finally, the variable length hash function \emph{\(H'^X\)} based on \emph{\(H^X\)} defined in \parencite{argon2draft}{section~3.3} is also used.
+
+The argon2 operation can be described as follows. The emphasized variables are Argon2 input parameters, primary and secondary parameters are not distinguished. The numbers in brackets denote the line numbers in algorithm~\ref{argon2alg}.
+
+\begin{enumerate}
+\item initialisation of the block \(H_0\)
+
+\item allocation of the memory according to \emph{m} and \emph{p} parameters. The real size of allocated memory is denoted with \(m'\) in 1024 byte blocks. Note that the memory is treated as a matrix \(B[I][J]\) with \emph{p} rows and \(q = m' / p\) columns.
+
+\item compute \(B[i][0]\) for \(0 <= i < p\)
+
+\item compute \(B[i][1[\) for \(0 <= i < p\)
+
+\item compute \(B[i][j]\) for \(0 <= i < p\) and \(2 <= j < q\). This step is different for every Argon2 mode.
+
+\item if \emph{\(t\)}\(> 1\) then repeat step 5 with slight change for every iteration
+
+\item the final block C is computed
+
+\item the output tag is computed
+\end{enumerate}
+
+\subsection{algorithm}
+This subsection describes Argon2 through pseudocode. In addition to input parameters mentioned earlier, following notations will be used:
+
+\begin{description}
+\item{\(||\)} concatenation of two strings
+
+\item{floor(x)} function returns the largest integer which is not bigger than x
+
+\item{ceil(x)} function returns the smallest integer which is not smaller than x
+
+\item{LE32(x)} converts 32 bit long integer x to byte string in little endian
+
+\item{length(s)} returns length of string s in bytes as a 32 bytes long integer
+
+\item{allocate(x)} allocates x bytes of memory
+\end{description}
+
+\begin{algorithm}
+\DontPrintSemicolon
+\LinesNumbered
+\SetKwInOut{Input}{input}
+\SetKwInOut{Output}{output}
+\SetKwFunction{KwCeil}{ceil}
+\SetKwFunction{KwFloor}{floor}
+\SetKwFunction{KwHapostrophe}{\(H'\)}
+\SetKwFunction{KwHapostropheonetwoeight}{\(H'^{128}\)}
+\SetKwFunction{KwG}{G}
+\SetKwFunction{KwHsixfour}{H64}
+\SetKwFunction{KwLethreetwo}{LE32}
+\SetKwFunction{KwLength}{length}
+\SetKwFunction{KwAllocate}{allocate}
+\SetKwFunction{KwHapostrophetau}{\(H'^\tau\)}
+\Input{P, S, p, \(\tau\), m, t, v, K, X, y}
+\Output{TAG}
+\(H_0 \leftarrow \) \KwHsixfour{\KwLethreetwo{p} || \KwLethreetwo{\(\tau\)} || \KwLethreetwo{M} || \KwLethreetwo{t} || \KwLethreetwo{v} || \KwLethreetwo{y} || \KwLethreetwo{\KwLength{P}} || P || \KwLethreetwo{\KwLength{S}} || S || \KwLethreetwo{\KwLength{K}} || K || \KwLethreetwo{\KwLength{X}} || X } \;
+\(M' \leftarrow 4 \times p \times \) \KwFloor{\(m / 4p\)} \;
+\(B \leftarrow \) \KwAllocate{\(m'\)} \;
+\For{\( i \leftarrow 0 \) \KwTo \(p - 1 \)} {
+\(B[i][0] \leftarrow \) \KwHapostropheonetwoeight{\(H_0 \) || \KwLethreetwo{0} || \KwLethreetwo{i}} \;
+}
+\For{\(i \leftarrow 0 \) \KwTo \( - 1p\)} {
+\(B[i][1] \leftarrow \) \KwHapostropheonetwoeight{\(H_0 \) || \KwLethreetwo{1} || \KwLethreetwo{i}} \;
+}
+\For{\(i \leftarrow 0 \) \KwTo \(p - 1\)} {
+\For{\(j \leftarrow 2\) \KwTo \(q\)} {
+\(B[i][j] \leftarrow \) \KwG{\(B[i][j-1], B[l][z]\)} \;
+\tcc{indexes l and z are computed differently for every Argon2 version, see subsection~\ref{argon2versions}}
+}
+}
+\If{\(t > 1\)} {
+\For{\(i \leftarrow 0 \) \KwTo \(p - 1\)} {
+\(B[i][0] \leftarrow \) \KwG{\(B[i][q-1], B[l][z]\)} \;
+\For{\(j \leftarrow 1\) \KwTo \(q\)} {
+\(B[i][j] \leftarrow \) \KwG{\(B[i][j-1], B[l][z]\)} \;
+}
+}
+}
+\(C \leftarrow B[0][q-1] \oplus B[1][q-1] \oplus \dots \oplus B[p-1][q-1]\) \;
+\Return{\KwHapostrophetau{C}}
+\caption{Argon2 function algorithm}
+\label{argon2alg}
+\end{algorithm}
+
+\subsection{Differences in Argon2 versions}
+\label{argon2versions}
+Argon2 comes in three versions:
+
+\begin{description}
+\item{Argon2D} data-dependent variant of Argon2. This version uses previously computed data while performing computations and memory access. It is recommended to be used for cryptocurrencies and other proof-of-work applications as well for hashing on backend servers. In general, this version is suited for an environment where no side-channel timing attacks are expected. It provides better protection against brute-force attacks usin specialised hardware and tradeoff attacks.
+
+\item{Argon2I} data-independent version. This version does not rely on previously computed data while performing calculations in memory. The version is recommended for key derivation and password hashing, where side-channel timing attacks are more probable because an adversary can have physical access to the machine. The mode is slower because it performs multiple passes over memory to defend against tradeoff attacks.
+
+\item{Argon2ID} combination of previous versions. In this mode the function behaves as Argon2I during computation of the first half of the first iteration over the memory. During remaining operation the Argon2D mode is used. The mode combines benefits of mitigation of side-channel timing attacks and brute force attacks.
+\end{description}
+
+The difference lies in line number xx in the algorithm~\ref{argon2alg}. In particular indexes \emph{l} and \emph{z} are computed differently within different Argon2 versions. The allocated memory is represented as a matrix \(B[I][J]\) with \emph{p} rows and \(q = m' / p\) columns. Before computing indexes \emph{l} and \emph{z}, values \(J_1\) and \(J_2\) have to be calculated. This is the difference among Argon2 versions. AFter calculating of these values, further processing needs to be done but this stays the same for all versions.
+
+Rows of memory are called lanes and there are p lanes according to the parameter \emph{p}, which signifies degree of parallelism. Moreover, the memory is divided into 4 vertical slices, where number of slices is denoted as \emph{S}. Every intersection of a lane and a slice is called a segment. Segments belonging to the same slice are computed in parallel and they must not reference blocks of each other.
+
+Argon2d computes \(J_1\) and \(J_2\) based on data stored in memory. Therefore it is data-dependent.
+
+\(J_1 \leftarrow int32(extract(B[i][j-1], 1))\)
+
+\(J_2 \leftarrow int32(extract(B[i][j-1], 2))\)
+
+Where the function int32(s) converts the 32 bit string s into non-negative integer represented in little endian. The function extract(s, i) extracts ith set 32 bits long from bitstring s while s is indexed from 0.
+
+Argon2i computes indexes by running two rounds of the compression function \emph{G} in counter mode in the following way
+
+\(x \leftarrow G(ZERO, LE64(r) || LE64(l) || LE64(s) || LE64(m') || LE64(t) || LE64(y) || LE64(i) || ZERO) \)
+
+The result x is 64 bits long and therefore it can be viewed as two 32 bit strings
+
+\(x_1 || x_2 \leftarrow x\)
+
+\(j_1 \leftarrow int32(x_1)\)
+
+\(j_2 \leftarrow int32(x_2)\)
+
+Inputs for the function \emph{G} are described below. Note that no data from memory blocks are used. therefore Argon2i is data-independent.
+
+\begin{description}
+\item{r} the pass number
+
+\item{l} the lane number
+
+\item{s} the slice number
+
+\item{\(m'\)} total number of memory blocks
+
+\item{t} total number of passes
+
+\item{y} Argon2 mode
+
+\item{i} counter starting from 1 in every segment
+
+\item{ZERO} string of zeroes, in the first case 1024 bytes long, in the second case 968 bytes long
+\end{description}
+
+Argon2id behaves as Argon2i if the pass number is 0 and at the same time the slice number is 0 or 1. Othervise it behaves like Argon2D.
+
+Further computations common for all Argon2 modes are described in \parencite{argon2draft}{3.4.2}.
 
 \section{Scrypt}
 
-
-\subsection{Algorithm}
 
 \section{Other PBKDFs}
 
