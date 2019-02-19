@@ -457,7 +457,9 @@ Argon2id behaves as Argon2i if the pass number is 0 and at the same time the sli
 Further computations common for all Argon2 modes are described in \parencite{argon2draft}{3.4.2}.
 
 \section{Scrypt}
+Scrypt is a PBKDF introduced by Colin Percival in \parencite{memoryhard}. At the time of releasing the paper (2009) problems of PBKDF2 and its parallel computation were already well-known. Percival came with two new concepts. He defined a memory-hard algorithm as an algorithm which performs asymptotically almost the same number of operations compared to number of accessed memory locations. The second concept is called sequential memory-hard function. This definition describes a function which can be computed by a memory-hard sequential algorithm and at the same time even the fastest parallel algorithm cannot asymptotically reach a significantly lower cost.
 
+Both concepts came as a reaction to increasing computing power of parallel hardware. 
 
 \section{Other PBKDFs}
 
