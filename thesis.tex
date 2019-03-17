@@ -48,7 +48,7 @@ A \emph{hashing function} is a function which receives an input of arbitrary len
 
 This thesis is not going to deal with \emph{password hashing}. However, many \emph{key derivation functions} described below meet desired properties for being used in the password hashing process. However, this thesis is focused primarily on key derivation and verification of cryptographic keys during disk encryption.
 
-\emph{Key derivation functions} are contained in subset of \emph{hash functions}. Their basic purpose is to take an input and produce an output which can be used as a cryptographic key. The input is usually a password or other material such as biometric sample converted into binary form. These materials could be of course used as cryptographic keys on their own but they often lack properties of a good cryptographic key such as sufficient entropy or length. 
+\emph{Key derivation functions} are based on \emph{hash functions}. Their basic purpose is to take an input and produce an output which can be used as a cryptographic key. The input is usually a password or other material such as biometric sample converted into binary form. These materials could be of course used as cryptographic keys on their own but they often lack properties of a good cryptographic key such as sufficient entropy or length. 
 
 A \emph{cryptographic salt} is often used during process of key derivation. The purpose of salt is to prevent attacks which use precomputed tables such as Rainbow tables \parencite{rainbowtables}. Salt introduces another factor which influences a derived key. It means that it is no longer dependent only on passhprase. For example suppose that 32 bit long integer is used as a salt. In that case there are \(2^{32}\) possible keys derived from the same passphrase. This makes precomputing attacks effectively infeasible. Salt is usualy stored unobfuscated together with hashed material.
 
@@ -63,7 +63,7 @@ As shown by researches, users tend to circumvent such policies by finding loopho
 
 What more, passwords them selves are not good cryptographic material which should be used as a cryptographic key. There are surprisingly many reasons. They are usually not sufficiently long. Because they are composed of printable characters, they do not meet the requirement of being uniformly distributed. If they should be remembered, they will probably contain dictionary words, which lessens their entropy even more. See \parencite[section 5.6.4]{itmc14} for short but interesting analysis.
 
-PBKDF stands for password-based key derivation function. The goal of these functions is to derive one or more cryptographic keys from a password or a passphrase. This key should be pseudorandom and sufficiently long to make brute-force guessing as time-consuming as possible. As stated above, they are a subset of cryptographic hashing functions.
+PBKDF stands for password-based key derivation function. The goal of these functions is to derive one or more cryptographic keys from a password or a passphrase. This key should be pseudorandom and sufficiently long to make brute-force guessing as time-consuming as possible. As stated above, they are based on cryptographic hashing functions.
 
 Lately PBKDFs are taking another specific task. Due to availability of GPUs, FPGAs and ASICs, there are  new possibilities in running functions in parallel computing environment \parencite[see][chapter 4]{mosnacek}. This increases effectivity of brute-force attacks. PBKDFs try to defend against such attacks by using salt and and function-specific parameters like iteration count etc. See section~\ref{sec:attacks} for more details.
 
@@ -85,7 +85,7 @@ The reference implementation of both versions of LUKS is called libcryptsetup. T
 
 \subsection{usage of PBKDFs in LUKS version 1}
 \label{luks1}
-PBKDF2 function is used as a key derivation function in LUKS version 1. It is used during master key initialisation, adding of a new password, master key recovery, and also during password changing because this operation is actually composed of previously mentioned operations. During all operations it internaly uses a hash algorithm specified by user during initialisation of the LUKS header. By default, SHA1 algorithm is used.
+PBKDF2 function is used as a key derivation function in LUKS version 1. It is used during master key initialisation, adding of a new password, master key recovery, and also during password changing because this operation is actually composed of previously mentioned operations. During all operations it internaly uses a hash algorithm specified by user during initialisation of the LUKS header. By default, SHA256 algorithm is used.
 
 During initialisation, the PBKDF2 function is used to create a checksum of a master key. This key is subsequently used for symmetric encryption of actual data stored on the encrypted disk. The function receives following parameters:
 
@@ -101,7 +101,7 @@ During initialisation, the PBKDF2 function is used to create a checksum of a mas
 
 The generated 20 bytes long checksum is stored in the LUKS header together with the iteration count and salt. Please note that the \emph{phdr.mk-digest-iteration-count} parameter is obtained by performing a benchmark with minimum of 1000 iterations.
 
-During adding of a new password, PBKDF is used to process the passphrase supplied by user. It receives following parameters:
+During adding of a new password, PBKDF2 is used to process the passphrase supplied by user. It receives following parameters:
 
 \begin{description}
 \item[password] a passphrase supplied by an user
@@ -148,15 +148,18 @@ The process of changing a password is composed of previously mentioned operation
 Both password-based encryption and password checking require additional cryptographic primitives which process the derived key. For encryption, reference implementation of LUKS uses aes-xts-plain64 and for hashing it uses sha256. Usage of PBKDF2 requires underlying pseudorandom function. In case of LUKS version 1, default PRF is SHA1. Alternatively, it is possible to choose SHA256, SHA512, ripemd160 or whirlpool.
 
 \subsection{Usage of PBKDFs in LUKS version 2}
+\label{luks2pbkdf}
 LUKS version 2 extends LUKS version 1 and uses similar principles. Therefore, I will focus on differences between version 1 and 2 which are related to usage of PBKDFs. For detailed list of changes see \parencite{}{luks2}{section 1.1}.
 
-The new version supports configurable algorithms for encryption, hashing and also key derivation. That means that the set of algorithms can be extended as new are developed and some are obsoleted. Note that there still exist some requirements for algorithms provided by cryptographic backend \parencite{}{luks2}{section 4.6}. The backend has to support SHA-1 and SHA-256 hashing functions, PBKDF2, Argon2i and Argon2id key derivation functions and AES-XTS symmetric encryption.
+The new version supports configurable algorithms for encryption, hashing and also key derivation. That means that the set of algorithms can be extended as new are developed and other are obsoleted. Note that there still exist some requirements for algorithms provided by cryptographic backend \parencite{}{luks2}{section 4.6}. The backend has to support SHA-1 and SHA-256 hashing functions, PBKDF2, Argon2i and Argon2id key derivation functions and AES-XTS symmetric encryption.
 
 LUKS2 introduces PBKDF memory hard functions Argon2i and Argon2id which are described in~\ref{argon2}. Argon2 functions should offer increased resistance to brute-force attacks.
 
 The volume key digest is no longer limited by length of 20 bytes, because it no longer relies on SHA-1 hashing function. The processes described in subsection~\ref{luks1} are the same in LUKS version 2. The same applies for situations in which PBKDFs are used. 
 
-As stated in subsection~\ref{luks1},  in case of PBKDF2 user can influence number of iterations directly or specify approximate time required for processing of the passphrase. This stays the same for LUKS2. Functions from Argon2 family introduce two additional parameters; memory cost and parallel cost. Both parameters can be specified through \verb+--pbkdf-memory+ and \verb+--pbkdf-parallel+ command line parameters respectively. If options are not specified, they are benchmarked.
+As stated in subsection~\ref{luks1},  in case of PBKDF2 user can influence number of iterations directly or specify approximate time required for processing of the passphrase. This stays the same for LUKS2. Functions from Argon2 family introduce two additional parameters; memory cost and parallel cost. Both parameters can be specified through \verb+--pbkdf-memory+ and \verb+--pbkdf-parallel+ command line parameters respectively. The number of iterations is either benchmarked or it can be manually specified through \verb+--pbkdf-force-iterations+.
+
+Note that the number of parallel threads will be always at most 4 and it will decrease if not enough CPUs are online at the time of its usage. In Cryptsetup version 2.6.0 the default unlocking time is set at 2000 miliseconds and the default memory cost is set at 1048576 kB. Both of default values can be changed at compilation time.
 
 \section{Attacks on PBKDFs}
 \label{sec:attacks}
@@ -166,7 +169,7 @@ At the begining passwords were stored on computer systems in plain text, protect
 
 . This time marks begining of the never-ending fight between authors of hash functions and people trying to crack passwords hashed by them. First hash functions were really simple and they were definitely not cryptographically secure, such as hash mechanism used in Multics. This mechanism squared numerical form of each password and applied a bit mask with AND operation \parencite{multicssecurity}. This increased number of guesses but only negligibly compared to modern functions.
 
-The first cryptographic hash came with Robert Morris and his Crypt function. Crypt used up to Unix 6th edition mimicked the M209 cipher machine from World War II. and proved not very secure because the algorithm could be recoded in a way which allowed to test passwords in very short period of time (1.25 milliseconds per password) \parencite{pshistory}. Later version used since Unix 7th edition employed the DES block cipher. This cipher was at that time very slow if implemented in software. The password entry program also introduced two new concepts; automated proactive password strength checking and \emph{cryptographic salt} (12 bit random number at that time). Currently for example the LUKS2 specification uses salt 64 bits long.
+The first cryptographic hash came with Robert Morris and his Crypt function. Crypt used up to Unix 6th edition mimicked the M209 cipher machine from World War II. and proved not very secure because the algorithm could be recoded in a way which allowed to test passwords in very short period of time (1.25 milliseconds per password) \parencite{pshistory}. Later version used since Unix 7th edition employed the DES block cipher. This cipher was at that time very slow if implemented in software. The password entry program also introduced two new concepts; automated proactive password strength checking and \emph{cryptographic salt} (12 bit random number at that time). Currently for example the LUKS2 specification uses 32 bytes long salt.
 
 During 1980s there happened some password cracking contests and hash functions were also improved. Some of them were made deliberately slow to slow down potential attacker. If this measure was not effective enough, more iterations of hashing function could be used. During 1990s many password cracking programs appeared including John the Ripper, Crack, LOphtCrack etc. \parencite{crackinghistory}. Most of those programs tried to improve the cracking speed by optimizing underlying algorithms and later by using CPU parallelism.
 
@@ -186,7 +189,6 @@ In a paper from 2016, authors show that there still exists an attack which can d
 
 \chapter{State of the art PBKDFs}
 \label{chap:pbkdfs}
-
 
 \section{PBKDF2}
 \label{sec:pbkdf2}
@@ -266,9 +268,9 @@ Notice that the function F can be rewritten to be quickly computed in parallel c
 
 \section{Argon2}
 \label{argon2}
-As shown in very brief history of attacks on password hashes in section~\ref{sec:attacks}, the Argon2 function is the winner of Password Hashing Competition. Argon2 is a hash function belonging to the set of memory-hard functions as defined in \parencite{memoryhard}. As defined in section~\ref{definitions} PBKDFs are subset of hashing functions and Argon2 can be definitely used as PBKDF. Current version of the function is 1.3 and the latest IETF draft is \parencite{argon2draft}.
+As mentioned in very brief history of attacks on password hashes in section~\ref{sec:attacks}, the Argon2 function is the winner of Password Hashing Competition. Argon2 is a hash function belonging to the set of memory-hard functions as defined in \parencite{memoryhard}. As defined in section~\ref{definitions} PBKDFs are subset of hashing functions and Argon2 can be definitely used as PBKDF. Current version of the function is 1.3 and the latest IETF draft is \parencite{argon2draft}.
 
-The function quickly fills up given amount of memory and performs a sequence of computations over values stored in this memory. The Argon2 comes in three versions which differ in the way in which data in the memory matrix (described further below) is processed. See subsection~\ref{argon2versions} for detailed description.
+The function quickly fills up given amount of memory and performs a sequence of computations over values stored in this memory. The Argon2 comes in three versions which differ in the way in which data in the memory matrix (described further below) is processed. Argon2D, Argon2I and Argon2ID. See subsection~\ref{argon2versions} for detailed description.
 
 Argon2 is used as the default PBKDF in LUKS version 2. Note that according to \parencite{cryptsetupmanual} the default PBKDF can be configured during compilation.
 
@@ -464,31 +466,89 @@ Both concepts came as a reaction to increasing computing power of parallel hardw
 \section{Other PBKDFs}
 
 \chapter{The price of an attack}
+\label{chap:model}
+This chapter focuses on creating a price model for potential attacker trying to gain unauthorized access to a disk volume encrypted with LUKS2 with Argon2 used as PBKDF. First an attacker and available hardware and software options are briefly described. Then the actual price model is introduced and applied to real world examples.
 
 \section{Attacker}
+For the purpose of this thesis an attacker is defined as an entity which gained unauthorized access to a LUKS2 volume header with Argon2 used as PBKDF. The header can be part of actual encrypted volume or it can be a detached header stored for example for backup purposes. The volume is not damaged. The attacker has moderate knowledge of information security and computers in general but does not want to invest the time in searching for vulnerabilities in Argon2 or Cryptsetup. The attacker decides to use brute-force or dictionary attack.
 
-\section{Tools}
-
-\subsection{Hardware}
-
-\subsection{Software}
-
-\section{Cost model}
+The attacker currently does not have any hardware with sufficient computing power and amount of RAM to be used for cracking the passphrase. However, suppose that the attacker has sufficient financial resources to purchase needed hardware or rent cloud computing resources.
 
 \subsection{Hardware}
+While considering cracking a password or a hash, there are several types of hardware to consider. An attacker can use powerful CPUs which can be cheaper solution compared to other possibilities but they are also usually slower because of their generic nature. The fact which is crucial while considering Argon2 is that they can have access to relatively large volume of RAM without degrading their computing performance. It is also less time-consuming to eventually optimize the hash algorithm for CPU than for other types of hardware.
 
-\subsection{Energy}
+The next option often used in this process is to use GPUs. Their architecture is suitable for computing many parallel identical tasks as is the case for hash cracking. GPUs showed to be effective against PBKDF2 \parencite{mosnacek}. However, the price of a GPU might be higher than the price of a CPU. To use full computing power of GPU it is important that the data being processed is copied into GPU global memory which limited. This fact could  reduce their effectivity in this particular case considering possible high memory demands of Argon2.
+
+Last two options are FPGAs and ASICs. They represent two groups of hardware which can be optimized for highly specific tasks. FPGAs are in general less powerful but they can be easily reprogrammed after production. ASICs can incorporate parts which can be later reprogrammed but definitely not to the same extend as FPGAs. ASICs are also more expensive than FPGAs when produced in small volumes. Moreover, to the best of the author's knowledge, there does not exist any publicly available implementation of Argon2 for FPGAs or ASICs and it would take for an attacker nonnegligible amount of time to create one.
 
 \subsection{Software}
+There does not exist any publicly available software offering feature to crack passphrases of LUKS2 headers. There exists a simple proof of concept program distributed with Cryptsetup called Dict\_search. It mounts dictionary attack against specified device supporting Truecrypt and LUKS1. After slight modifications it can be used also against LUKS2 volumes. It uses API of libcryptsetup. Therefore it obviously introduces slight overhead by creating and deleting structures pertaining to Cryptsetup.
+
+Then there is a possibility of extracting the master key from the captured LUKS2 header and trying to find the right password by comparing it to it after being hashed. This removes some slight overload mentioned above. Support for cracking of Argon2 hashes appeared in well-known open source password auditing software John the ripper in July 2016. This allows to use some infrastructure offered by the framework ut the hash function is not optimized in any way.
+
+Ondrej Mosnáček created an experimental program for benchmarking speed of Argon2 while running on CPUs and GPUs \parencite{argon2gpu}. The project can use both CUDA and OpenCL technologies to run on multiple GPUs or CPUs. The program currently does not perform password cracking, passwords are generated randomly and they are not compared to any hash. But slight modifications to the project could turn it into a password cracker.
+
+\section{Price model}
+Based on previous assumptions of an attacker's options I try to create a price model which will estimate costs connected with finding the right passphrase to unlock the LUKS2 encrypted volume. These costs include purchase of devices and electricity costs. The model is based on...
+
+
 
 \section{Real world cost estimation}
 
-\chapter{Attacking LUKS}
+\chapter{Analysis of LUKS2}
+This chapter deals with the actual practical research performed as a part of the thesis. The first part deals with collecting number of Argon2 parameters under various circumstances and their analysis. The second part introduces experimental attack against LUKS2 headers created with chosen parameters based on previous part. These results are then applied to the price model introduced in chapter~\ref{chap:model}.
 
-\section{Testing methodology}
+\section{LUKS2 and Argon2 parameters}
+As mentioned in section~\ref{luks2pbkdf}, there are two ways of defining three parameters needed for Argon2 operation. They can be either specified manually or Cryptsetup can estimate some of them through benchmarking process. Here I will deal only with the second option. 
+
+The most important parameters for the benchmark are unlocking time (default of 2000 miliseconds) and Aargon2 memory cost (1048576 kB). The degree of parallelism can be at most 4 and will be lowered if not enough CPUs are available. The main aim of the benchmarking function is to find such Argon2 parameters that the time of hash calculation is as closest to the given unlocking time as possible. This is reached by increasing or decreasing memory cost and number of Argon2 iterations. At the same time the memory cost parameter cannot exceed the user supplyed volume of memory and it cannot exceed half of available physical memory. The source code of the function can be found in the file lib/crypto\_backend/pbkdf\_check.c.
+
+\subsection{Benchmarking tool}
+As a part of my thesis I performed collection of Argon2 parameters estimated by the function mentioned above. I created a small tool which can perform series of benchmarks with given parameters and output results in human-readable or machine-readable format. The source code of the tool is part of the thesis (bude na Githubu).
+
+The tool accepts the following parameters. Run the tool without command line options to see exact format of parameters.
+
+\begin{itemize}
+\item memory cost
+
+\item degree of parallelism
+
+\item required unlocking time
+
+\item number of repetitions of the benchmark
+\end{itemize}
+
+The tool can output results in a text format or in a CSV format including headers for better machine processing. The tool does not perform actual benchmarking, it use API of Libcryptsetup library. Therefore the library is required for it to work. The tool does not create any cryptsetup volumes and does not require root privileges.
+
+\subsection{Collecting of real world parameters}
+I used the previously mentioned tool to collect real data on real physical hardware. I tried to simulate various environments in which Cryptsetup can be used to create and unlock encrypted volumes. I decided to use real hardware and not virtual machines because of possible inaccuracies during measurement caused by virtualization layer.
+
+The first hardware configuration consists of Lenovo Thinkpad P50 with ... to be completed
+
+The second configuration comprises Raspberry Pi 3 with ... to be completed. As shown this configuration has relatively low computing power and limited amount of memory. This combination was chosen because it can show potential problems of the benchmarking function.
+
+On both devices I performed the following steps:
+
+\begin{enumerate}
+\item install required libraries and headers
+
+\item download and unpack the source code of Cryptsetup version 2.6.0
+
+\item configure and compile Cryptsetup without support for udev and blkid to minimize required dependencies, see below for remarks concerning configuration options
+
+\item compile the benchmarking tool linking it to the Libcryptsetup compiled in the previous step
+
+\item perform hardware limitations (amount of available CPUs, amount of available memory)
+
+\item run series of benchmarks over unlocking times of 1000, 2000, 3000, 4000, 5000, 10000 and 20000 miliseconds with 1, 2, 3, 4, 6 and 8 parallel threads with every benchmark repeated 100 times
+\end{enumerate}
 
 
-\section{Analysis of results}
+
+
+\section{Attacking LUKS2}
+
+
 
 \chapter{Conclusions}
 
