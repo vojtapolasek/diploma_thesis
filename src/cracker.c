@@ -33,10 +33,25 @@
 #include <sys/resource.h>
 #include <libcryptsetup.h>
 #include<getopt.h>
+#include<time.h>
 
 #define MAX_LEN 512
 
 static enum { LUKS, TCRYPT, LUKS2 } device_type;
+
+struct timespec timediff(struct timespec start, struct timespec end)
+{
+        struct timespec temp;
+        if ((end.tv_nsec-start.tv_nsec)<0) {
+                temp.tv_sec = end.tv_sec-start.tv_sec-1;
+                temp.tv_nsec = 1000000000+end.tv_nsec-start.tv_nsec;
+        } else {
+                temp.tv_sec = end.tv_sec-start.tv_sec;
+                temp.tv_nsec = end.tv_nsec-start.tv_nsec;
+        }
+        return temp;
+}
+
 
 static void check(struct crypt_device *cd, const char *pwd_file, unsigned my_id, unsigned max_id)
 {
@@ -54,9 +69,15 @@ static void check(struct crypt_device *cd, const char *pwd_file, unsigned my_id,
         printf("Cannot open %s.\n", pwd_file);
         exit(EXIT_FAILURE);
     }
+    //time measurement
+    struct timespec start, end;
+    long double cumultime = 0;
+    unsigned int loopcount = 0;
+
 
     while (fgets(pwd, MAX_LEN, f)) {
 
+        clock_gettime(CLOCK_MONOTONIC, &start);
         /* every process tries N-th line, skip others */
         if (line++ % max_id != my_id)
             continue;
@@ -86,6 +107,15 @@ static void check(struct crypt_device *cd, const char *pwd_file, unsigned my_id,
             };
             r = crypt_load(cd, CRYPT_TCRYPT, &params);
         }
+        clock_gettime(CLOCK_MONOTONIC, &end);
+        struct timespec dif = timediff(start, end);
+        //unsigned long long int temp = (dif.tv_sec * 1000000000) + (dif.tv_nsec);
+        //long double temp2 = temp / 1000000;
+        long double hashtime = (dif.tv_sec * 1000) + (dif.tv_nsec / 1000);
+        //printf ("%Lf\n", temp2);
+        cumultime += hashtime;
+        loopcount += 1;
+
         if (r >= 0) {
             printf("Found passphrase for slot %d: \"%s\"\n", r, pwd);
             break;
@@ -94,6 +124,7 @@ static void check(struct crypt_device *cd, const char *pwd_file, unsigned my_id,
 
     fclose(f);
     crypt_free(cd);
+    printf ("%Lf ms\n", cumultime/loopcount);
     exit(r >= 0 ? 2 : EXIT_SUCCESS);
 }
 

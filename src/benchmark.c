@@ -54,7 +54,7 @@ int main(int argc, char *argv[]) {
         return rt;
     }*/
     if (csvoutput == 1) {
-        printf("iterations,memory,threads\n");
+        printf("iterations\tmemory\tthreads\n");
     }
     for (unsigned int i = 0; i < repetitions; i++) {
         struct crypt_pbkdf_type pbkdf = {
@@ -69,7 +69,7 @@ int main(int argc, char *argv[]) {
                 return rt;
         }
         if (csvoutput == 1) {
-                printf ("%4u, %5u, %1u\n", pbkdf.iterations, pbkdf.max_memory_kb, pbkdf.parallel_threads);
+                printf ("%u\t%u\t%u\n", pbkdf.iterations, pbkdf.max_memory_kb, pbkdf.parallel_threads);
         }
         else {
             printf ("%4u iterations, %5u memory, %1u parallel threads\n", pbkdf.iterations, pbkdf.max_memory_kb, pbkdf.parallel_threads);
