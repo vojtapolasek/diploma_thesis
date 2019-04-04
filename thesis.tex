@@ -465,9 +465,79 @@ Both concepts came as a reaction to increasing computing power of parallel hardw
 
 \section{Other PBKDFs}
 
+\chapter{Analysis of LUKS2}
+This chapter deals with the actual practical research performed as a part of the thesis. The first part deals with collecting number of Argon2 parameters under various circumstances and their analysis. The second part introduces experimental attack against LUKS2 headers created with chosen parameters based on previous part. These results are then applied to the price model introduced in chapter~\ref{chap:model}.
+
+\section{Benchmarking ofLUKS2 and Argon2 parameters}
+\label{sec:benchmark}
+As mentioned in section~\ref{luks2pbkdf}, there are two ways of defining three parameters needed for Argon2 operation. They can be either specified manually or Cryptsetup can estimate some of them through benchmarking process. Here I will deal only with the second option. 
+
+The most important parameters for the benchmark are unlocking time (default of 2000 miliseconds) and Argon2 memory cost (1048576 kB) \parencite{cryptsetupgitconfigureac}. Both values can be configured at compile time. The degree of parallelism can be at most 4 and will be lowered if not enough CPUs are available. The main aim of the benchmarking function is to find such Argon2 parameters that the time of hash calculation is as closest to the given unlocking time as possible. This is reached by increasing or decreasing memory cost and number of Argon2 iterations. At the same time the memory cost parameter cannot exceed the user supplyed volume of memory and it cannot exceed half of available physical memory. See \parencite{cryptsetupgitpbkdfcheck} for details.
+
+\subsection{Benchmarking tool}
+As a part of my thesis I performed collection of Argon2 parameters estimated by the function mentioned above. I created a small tool which can perform series of benchmarks with given parameters and output results in human-readable or machine-readable format. The source code of the tool is part of the thesis (bude na Githubu).
+
+The tool accepts the following parameters. Run the tool without command line options to see exact format of parameters.
+
+\begin{itemize}
+\item memory cost
+
+\item degree of parallelism
+
+\item required unlocking time
+
+\item number of repetitions of the benchmark
+\end{itemize}
+
+The tool can output results in a text format or in a CSV format including headers for better machine processing. The tool does not perform actual benchmarking, it utilizes API of Libcryptsetup library. Therefore the library is required for it to work. The tool does not create any cryptsetup volumes and does not require root privileges.
+
+\subsection{Collecting of real world parameters}
+I used the previously mentioned tool to collect real data on real physical hardware. I tried to simulate various environments in which Cryptsetup can be used to create and unlock encrypted volumes. I decided to use real hardware and not virtual machines because of possible inaccuracies during measurement caused by virtualization layer.
+
+The first hardware configuration consists of Lenovo Thinkpad P50 with ... to be completed. The system was booted from live USB media of Accessible Coconut linux distribution. The distribution is based on Ubuntu 18.04 and it does not provide any special modifications concerning Cryptsetup and related libraries. It only provides better accessibility for people with visual impairment like me.
+
+The second configuration comprises Raspberry Pi 3, model B+. This device is equipped with quad core Broadcom CM2837B0, Cortex-A53 (ARMv8) 64-bit SoC @ 1.4GHz processor and 1GB LPDDR2 SDRAM memory \parencite{raspberryspecs}. Note that parameters of this device are considerably lower but there still might be scenarios in which an user might wish to perform drive encryption utilizing this device (network attached storage, home media server). The device was running Raspbian GNU/Linux 9 (stretch).
+
+I have performed following steps on both devices:
+
+\begin{enumerate}
+\item install required libraries and headers
+
+\item download and unpack the source code of Cryptsetup version 2.1.0
+
+\item configure and compile Cryptsetup without support for udev and blkid to minimize required dependencies, see below for remarks concerning configuration options
+
+\item compile the benchmarking tool linking it to the Libcryptsetup compiled in the previous step
+
+\item simulate hardware limitations (amount of available CPUs, amount of available memory)
+
+\item run series of benchmarks over unlocking times of 1000, 2000, 3000, 4000, 5000, 10000 and 20000 miliseconds with 1, 2, 3 and 4 parallel threads with every benchmark repeated 100 times
+\end{enumerate}
+
+During compilation, I decided to run the configure script with \verb+--disable-udev+ and \verb+--disable-blkid+ options. They disable support for udev and device signature detection through blkid. These features were not needed during benchmarking and they caused complications while installing necessary development libraries.
+
+Simulating various hardware conditions by limiting CPU performance and available memory appeared to be an interesting challenge. My goal was to simulate different number of available CPU cores and different amount of available RAM memory. I wanted to collect results from various combinations of those parameters.
+
+At first I tried to use Control Groups 2 feature of Linux kernel \parencite{cgroups2}. Unfortunately, I was not able to get desired results. In particular I was not able to guarantee that the benchmarking process will really use limited set of CPU cores. Then I tried to use the Cpulimit project \parencite{cpulimit}. Unfortunately I still was not able to guarantee that the benchmarking function uses only certain number of CPU cores.
+
+At last I found the solution for limiting number of available CPU cores. On the laptop running Accessible Coconut, I was able to disable individual cores through the following command:
+
+\begin{tt}
+echo 0 | tee /sys/devices/system/cpu/cpu7/online
+\end{tt}
+
+Where the number 7 can be replaced with number of the core to be turned off. Cores are numbered starting from 0.
+
+
+
+
+\section{Attacking LUKS2}
+\label{sec:attack}
+
+
 \chapter{The price of an attack}
 \label{chap:model}
-This chapter focuses on creating a price model for potential attacker trying to gain unauthorized access to a disk volume encrypted with LUKS2 with Argon2 used as PBKDF. First an attacker and available hardware and software options are briefly described. Then the actual price model is introduced and applied to real world examples.
+This chapter focuses on creating a price model for potential attacker trying to gain unauthorized access to a disk volume encrypted with LUKS2 with Argon2 used as PBKDF. First an attacker and available hardware and software options are briefly described. Then the actual price model is introduced and applied to real world examples. The price model is based on real parameters collected during benchmarking in section~\ref{sec:benchmark} and mainly on computing Argon2 hashes based on these parameters using powerful hardware configurations described in section~\ref{sec:attack}.
 
 \section{Attacker}
 For the purpose of this thesis an attacker is defined as an entity which gained unauthorized access to a LUKS2 volume header with Argon2 used as PBKDF. The header can be part of actual encrypted volume or it can be a detached header stored for example for backup purposes. The volume is not damaged. The attacker has moderate knowledge of information security and computers in general but does not want to invest the time in searching for vulnerabilities in Argon2 or Cryptsetup. The attacker decides to use brute-force or dictionary attack.
@@ -494,59 +564,6 @@ Based on previous assumptions of an attacker's options I try to create a price m
 
 
 \section{Real world cost estimation}
-
-\chapter{Analysis of LUKS2}
-This chapter deals with the actual practical research performed as a part of the thesis. The first part deals with collecting number of Argon2 parameters under various circumstances and their analysis. The second part introduces experimental attack against LUKS2 headers created with chosen parameters based on previous part. These results are then applied to the price model introduced in chapter~\ref{chap:model}.
-
-\section{LUKS2 and Argon2 parameters}
-As mentioned in section~\ref{luks2pbkdf}, there are two ways of defining three parameters needed for Argon2 operation. They can be either specified manually or Cryptsetup can estimate some of them through benchmarking process. Here I will deal only with the second option. 
-
-The most important parameters for the benchmark are unlocking time (default of 2000 miliseconds) and Aargon2 memory cost (1048576 kB). The degree of parallelism can be at most 4 and will be lowered if not enough CPUs are available. The main aim of the benchmarking function is to find such Argon2 parameters that the time of hash calculation is as closest to the given unlocking time as possible. This is reached by increasing or decreasing memory cost and number of Argon2 iterations. At the same time the memory cost parameter cannot exceed the user supplyed volume of memory and it cannot exceed half of available physical memory. The source code of the function can be found in the file lib/crypto\_backend/pbkdf\_check.c.
-
-\subsection{Benchmarking tool}
-As a part of my thesis I performed collection of Argon2 parameters estimated by the function mentioned above. I created a small tool which can perform series of benchmarks with given parameters and output results in human-readable or machine-readable format. The source code of the tool is part of the thesis (bude na Githubu).
-
-The tool accepts the following parameters. Run the tool without command line options to see exact format of parameters.
-
-\begin{itemize}
-\item memory cost
-
-\item degree of parallelism
-
-\item required unlocking time
-
-\item number of repetitions of the benchmark
-\end{itemize}
-
-The tool can output results in a text format or in a CSV format including headers for better machine processing. The tool does not perform actual benchmarking, it use API of Libcryptsetup library. Therefore the library is required for it to work. The tool does not create any cryptsetup volumes and does not require root privileges.
-
-\subsection{Collecting of real world parameters}
-I used the previously mentioned tool to collect real data on real physical hardware. I tried to simulate various environments in which Cryptsetup can be used to create and unlock encrypted volumes. I decided to use real hardware and not virtual machines because of possible inaccuracies during measurement caused by virtualization layer.
-
-The first hardware configuration consists of Lenovo Thinkpad P50 with ... to be completed
-
-The second configuration comprises Raspberry Pi 3 with ... to be completed. As shown this configuration has relatively low computing power and limited amount of memory. This combination was chosen because it can show potential problems of the benchmarking function.
-
-On both devices I performed the following steps:
-
-\begin{enumerate}
-\item install required libraries and headers
-
-\item download and unpack the source code of Cryptsetup version 2.6.0
-
-\item configure and compile Cryptsetup without support for udev and blkid to minimize required dependencies, see below for remarks concerning configuration options
-
-\item compile the benchmarking tool linking it to the Libcryptsetup compiled in the previous step
-
-\item perform hardware limitations (amount of available CPUs, amount of available memory)
-
-\item run series of benchmarks over unlocking times of 1000, 2000, 3000, 4000, 5000, 10000 and 20000 miliseconds with 1, 2, 3, 4, 6 and 8 parallel threads with every benchmark repeated 100 times
-\end{enumerate}
-
-
-
-
-\section{Attacking LUKS2}
 
 
 
