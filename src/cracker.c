@@ -33,49 +33,101 @@
 #include <sys/resource.h>
 #include <libcryptsetup.h>
 #include<getopt.h>
+#include<pthread.h>
 #include<time.h>
 
 #define MAX_LEN 512
 
+//defining structure for passing data to threads
+struct targ {const char *disk_file_basename; const char *pwd_file; unsigned my_id; unsigned max_id; struct timespec *averages;};
+
+//global primitives for signaling to the main thread that the passphrase has been found
+unsigned short int passphrase_found=0;
+pthread_mutex_t pass_mutex;
+
+
+
+//defining structure for device type
 static enum { LUKS, TCRYPT, LUKS2 } device_type;
 
-struct timespec timediff(struct timespec start, struct timespec end)
+
+//function for computing difference between two time points
+struct timespec timediff(struct timespec a, struct timespec b)
 {
-        struct timespec temp;
-        if ((end.tv_nsec-start.tv_nsec)<0) {
-                temp.tv_sec = end.tv_sec-start.tv_sec-1;
-                temp.tv_nsec = 1000000000+end.tv_nsec-start.tv_nsec;
+        struct timespec result;
+        if ((b.tv_nsec - a.tv_nsec)<0) {
+                result.tv_sec = b.tv_sec - a.tv_sec-1;
+                result.tv_nsec = 1000000000 + b.tv_nsec - a.tv_nsec;
         } else {
-                temp.tv_sec = end.tv_sec-start.tv_sec;
-                temp.tv_nsec = end.tv_nsec-start.tv_nsec;
+                result.tv_sec = b.tv_sec - a.tv_sec;
+                result.tv_nsec = b.tv_nsec - a.tv_nsec;
         }
-        return temp;
+        return result;
 }
 
+struct timespec timeadd(struct timespec a, struct timespec b) {
+    struct timespec result;
+    if ((a.tv_nsec + b.tv_nsec) > 1000000000) {
+            result.tv_sec = a.tv_sec + b.tv_sec + 1;
+            result.tv_nsec = a.tv_nsec + b.tv_nsec -1000000000;
+    }
+    else {
+            result.tv_sec = a.tv_sec + b.tv_sec;
+            result.tv_nsec = a.tv_nsec + b.tv_nsec;
+    }
+    return result;
+}
 
-static void check(struct crypt_device *cd, const char *pwd_file, unsigned my_id, unsigned max_id)
+void* check(void* threadargs)
 {
+    const char *disk_file_basename;
+    const char *pwd_file;
+    unsigned my_id;
+    unsigned max_id;
+    struct timespec *averages;
+    struct targ* args = (struct targ*) threadargs;
+    disk_file_basename = args->disk_file_basename;
+    pwd_file = args->pwd_file;
+    my_id = args->my_id;
+    max_id = args->max_id;
+    averages = args->averages;
+    free(args);
     FILE *f;
     int len, r = -1;
     unsigned long line = 0;
+    struct crypt_device *cd;
     char pwd[MAX_LEN];
 
-    if (fork())
-        return;
+    if (crypt_init(&cd, disk_file_basename) ||
+            (device_type == LUKS && crypt_load(cd, CRYPT_LUKS1, NULL)) ||
+            (device_type == LUKS2 && crypt_load(cd, CRYPT_LUKS2, NULL))
+        ) {
+            printf("Cannot open %s.\n", disk_file_basename);
+            pthread_exit(NULL);
+        }
 
+    printf ("Thread %d ready.\n", my_id);
     /* open password file, now in separate process */
     f = fopen(pwd_file, "r");
     if (!f) {
         printf("Cannot open %s.\n", pwd_file);
-        exit(EXIT_FAILURE);
+        pthread_exit(NULL);
     }
     //time measurement
     struct timespec start, end;
-    long double cumultime = 0;
+    struct timespec cumultime;
     unsigned int loopcount = 0;
 
 
+
     while (fgets(pwd, MAX_LEN, f)) {
+        //check if passphrase not yet found
+        pthread_mutex_lock(&pass_mutex);
+        if (passphrase_found == 1) {
+            pthread_mutex_unlock(&pass_mutex);
+            break;
+        }
+        pthread_mutex_unlock(&pass_mutex);
 
         clock_gettime(CLOCK_MONOTONIC, &start);
         /* every process tries N-th line, skip others */
@@ -107,35 +159,38 @@ static void check(struct crypt_device *cd, const char *pwd_file, unsigned my_id,
             };
             r = crypt_load(cd, CRYPT_TCRYPT, &params);
         }
-        clock_gettime(CLOCK_MONOTONIC, &end);
-        struct timespec dif = timediff(start, end);
-        //unsigned long long int temp = (dif.tv_sec * 1000000000) + (dif.tv_nsec);
-        //long double temp2 = temp / 1000000;
-        long double hashtime = (dif.tv_sec * 1000) + (dif.tv_nsec / 1000);
-        //printf ("%Lf\n", temp2);
-        cumultime += hashtime;
-        loopcount += 1;
-
         if (r >= 0) {
+            pthread_mutex_lock(&pass_mutex);
+            passphrase_found = 1;
+            pthread_mutex_unlock(&pass_mutex);
             printf("Found passphrase for slot %d: \"%s\"\n", r, pwd);
             break;
         }
+        clock_gettime(CLOCK_MONOTONIC, &end);
+        struct timespec dif = timediff(start, end);
+        cumultime = timeadd(dif, cumultime);
+        loopcount += 1;
     }
 
     fclose(f);
     crypt_free(cd);
-    printf ("%Lf ms\n", cumultime/loopcount);
-    exit(r >= 0 ? 2 : EXIT_SUCCESS);
+    cumultime.tv_sec /= loopcount;
+    cumultime.tv_nsec /= loopcount;
+    printf ("Thread %d %ld.%ld ns\n", my_id, cumultime.tv_sec, cumultime.tv_nsec);
+    averages[my_id] = cumultime;
+    printf ("Thread %d finished\n", my_id);
+    pthread_exit(NULL);
 }
 
 int main(int argc, char *argv[])
 {
-    int i, status, procs = 4;
+    int i, procs = 4;
     char inputfile[512];
     char pwdfile[512];
     char type[16];
     char c;
-    struct crypt_device *cd;
+    //time measurement
+    struct timespec start, end;
     while ((c = getopt(argc, argv, "t:p:i:T:")) != -1) {
         switch (c) {
             case 't': {
@@ -200,31 +255,39 @@ int main(int argc, char *argv[])
 
     printf ("%d threads.\n", procs);
 
-    /* signal all children if anything happens */
-    prctl(PR_SET_PDEATHSIG, SIGHUP);
-    setpriority(PRIO_PROCESS, 0, -5);
-
-    /* we are not going to modify anything, so common init is ok */
-    if (crypt_init(&cd, inputfile) ||
-        (device_type == LUKS && crypt_load(cd, CRYPT_LUKS1, NULL)) ||
-        (device_type == LUKS2 && crypt_load(cd, CRYPT_LUKS2, NULL))
-    ) {
-        printf("Cannot open %s.\n", inputfile);
-        exit(EXIT_FAILURE);
-    }
+    pthread_t thread_ids[procs];
+    //defining array for averages from time measurement
+    struct timespec averages[procs];
+    clock_gettime(CLOCK_MONOTONIC, &start);
 
     /* run scan in separate processes, it is up to scheduler to assign CPUs inteligently */
-    for (i = 0; i < procs; i++)
-        check(cd, pwdfile, i, procs);
-
-    /* wait until at least one finishes with error or status 2 (key found) */
-    while (wait(&status) != -1 && WIFEXITED(status)) {
-        if (WEXITSTATUS(status) == EXIT_SUCCESS)
-            continue;
-        /* kill rest of processes */
-        kill(0, SIGHUP);
-        /* not reached */
-        break;
+    for (i = 0; i < procs; i++) {
+        struct targ *tmptarg = malloc(sizeof(struct targ));
+        tmptarg->disk_file_basename = inputfile;
+        tmptarg->pwd_file = pwdfile;
+        tmptarg->my_id = i;
+        tmptarg->max_id = procs;
+        tmptarg->averages = averages;
+        printf ("creating thread %d.\n", i);
+        pthread_create(&thread_ids[i], NULL, check, tmptarg);
     }
-    exit(0);
+
+    for (int i = 0; i < procs; i++) {
+            pthread_join(thread_ids[i], NULL);
+    }
+    clock_gettime(CLOCK_MONOTONIC, &end);
+    struct timespec dif = timediff(start, end);
+    printf ("total calculation %ld.%ld ns \n", dif.tv_sec, dif.tv_nsec);
+    struct timespec finalaverage;
+    finalaverage.tv_sec = 0;
+    finalaverage.tv_nsec = 0;
+    for (int i = 0; i < procs; i++) {
+        finalaverage.tv_sec += averages[i].tv_sec;
+        finalaverage.tv_nsec += averages[i].tv_nsec;
+    }
+    finalaverage.tv_sec /= procs;
+    finalaverage.tv_nsec /= procs;
+    printf ("final average %ld.%ld ns\n", finalaverage.tv_sec, finalaverage.tv_nsec);
+    pthread_mutex_destroy(&pass_mutex);
+    pthread_exit(NULL);
 }

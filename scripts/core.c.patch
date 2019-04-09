@@ -1,0 +1,11 @@
+--- core.c	2018-10-04 09:48:08.000000000 +0200
++++ core.c.mod	2019-04-05 20:01:13.047061372 +0200
+@@ -134,7 +134,7 @@
+ }
+ 
+ /* Memory clear flag defaults to true. */
+-int FLAG_clear_internal_memory = 1;
++int FLAG_clear_internal_memory = 0;
+ void clear_internal_memory(void *v, size_t n) {
+   if (FLAG_clear_internal_memory && v) {
+     secure_wipe_memory(v, n);
