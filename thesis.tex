@@ -471,7 +471,7 @@ Both concepts came as a reaction to increasing computing power of parallel hardw
 \chapter{Analysis of LUKS2}
 This chapter deals with the actual practical research performed as a part of the thesis. The important goal of this thesis is to create a price model for potential attacker trying to get unauthorised access to LUKS2 encrypted partition. Another goal is tightly related. As explained in section~\ref{luks2pbkdf}, LUKS2 can determine three parameters for Argon2 through its own benchmarking function. It is highly probable that most of Cryptsetup users do not provide their own Argon2 parameters and therefore use the benchmarking function.
 
-Therefore, before the actual model is created, it is necessary to collect sufficient data about parameters used as a result of  this benchmark under various real world conditions. The process and results are described in section~\parencite{sec:benchmark}. These parameters are further used while simulating attacks on LUKS2 encrypted volumes on real machines.  This is described in section~\ref{sec:attack}. Results are used to create an actual price model in chapter~\ref{chap:model}.
+Therefore, before the actual model is created, it is necessary to collect sufficient data about parameters used as a result of  this benchmark under various real world conditions. The process and results are described in section~\ref{sec:benchmark}. These parameters are further used while simulating attacks on LUKS2 encrypted volumes on real machines.  This is described in section~\ref{sec:attack}. Results are used to create an actual price model in chapter~\ref{chap:model}.
 
 \section{Benchmarking ofLUKS2 and Argon2 parameters}
 \label{sec:benchmark}
@@ -488,24 +488,14 @@ In Cryptsetup version 2.1.0 the default unlocking time is set at 2000 milisecond
 \subsection{Benchmarking tool}
 As a part of my thesis I performed collection of Argon2 parameters estimated by the function mentioned above. I created a small tool which can perform series of benchmarks with given parameters and output results in human-readable or machine-readable format. The source code of the tool is part of the thesis (bude na Githubu).
 
-The tool accepts the following parameters. Run the tool without command line options to see exact format of parameters.
-
-\begin{itemize}
-\item memory cost
-
-\item degree of parallelism
-
-\item required unlocking time
-
-\item number of repetitions of the benchmark
-\end{itemize}
+The tool accepts several parameters. It is possible to specify desired unlocking time, maximum degree of parallelism, maximum memory cost and number of benchmarks performed.
 
 The tool can output results in a text format or in a CSV format including headers for better machine processing. The tool does not perform actual benchmarking, it utilizes API of Libcryptsetup library. Therefore the library is required for it to work. The tool does not create any cryptsetup volumes and does not require root privileges.
 
 \subsection{Methodology of collecting of real world parameters}
 I used the previously mentioned tool to collect real data on real physical hardware. I tried to simulate various environments in which Cryptsetup can be used to create and unlock encrypted volumes. I decided to use real hardware and not virtual machines because of possible inaccuracies during measurement caused by virtualization layer.
 
-The first hardware configuration consists of Lenovo Thinkpad P50 with ... to be completed. The system was booted from live USB media of Accessible Coconut linux distribution. The distribution is based on Ubuntu 18.04 and it does not provide any special modifications concerning Cryptsetup and related libraries. It only provides better accessibility for people with visual impairment like me.
+The first hardware configuration consisted of Lenovo Thinkpad P50 laptop with Intel(R) Core(TM) i7-6820HQ CPU @ 2.70GHz with 4 cores, 8 threads. The laptop was equipped with 32 GiB of SODIMM DDR4 Synchronous 2133 MHz (0,5 ns) RAM \parencite{laptopspecs}.
 
 The second configuration comprises Raspberry Pi 3, model B+. This device is equipped with quad core Broadcom CM2837B0, Cortex-A53 (ARMv8) 64-bit SoC @ 1.4GHz processor and 1GB LPDDR2 SDRAM memory \parencite{raspberryspecs}. Note that parameters of this device are considerably lower but there still might be scenarios in which an user might wish to perform drive encryption utilizing this device (network attached storage, home media server). The device was running Raspbian GNU/Linux 9 (stretch).
 
@@ -547,12 +537,27 @@ Due to the way in which the Cryptsetup detects available amount of memory, I dec
 
 After the benchmark I used the Datamash tool to perform basic statistic computations on resulting CSV data \parencite{datamash}. Raw data as well as Datamash results can be found in the thesis Git repository.
 
+\FloatBarrier
+
 \subsection{Collected benchmarking results}
+Tables present some chosen results gained through methodology described in the previous subsection. Following conventions are used:
+
+\begin{description}
+\item{T} number of iterations (Time cost)
+
+\item{M} memory cost
+
+\item{avg()} average
+
+\item{stdev()} standard deviation
+\end{description}
+
+The table \ref{tab:l8c32g} serves as an introduction and it shows which parameters to expect. The most important is the row concerning unlocking time of 2000 milliseconds as these values were used as baseline for simlating of attacks in the next chapter. Tables \ref{tab:l4c4g}, \ref{tab:l4c2g} and ... demonstrate hardware limitations affecting Argon2 parameters. See the Git repository for more combinations of CPU and memory limitations.
 
 \noindent
 \begin{table}
-\caption{Benchmark results for laptop with 8 threads and 8 GiB of memory}
-\label{tab:l8c4g}
+\caption{Benchmark results for laptop with 8 threads and 32 GiB of memory}
+\label{tab:l8c32g}
 \begin{tabularx}{\textwidth}{| c | c | c | c | c |}
 \hline
 Unlocking time & avg(t) & stdev(t) & avg(m) & stdev(m)\\
@@ -601,6 +606,89 @@ Unlocking time & avg(t) & stdev(t) & avg(m) & stdev(m)\\
 
 \noindent
 \begin{table}
+\caption{Benchmark results for laptop with 4 cores and 2 GiB of memory}
+\label{tab:l4c2g}
+\begin{tabularx}{\textwidth}{| c | c | c | c | c |}
+\hline
+Unlocking time & avg(t) & stdev(t) & avg(m) & stdev(m)\\
+\hline
+1000 & 4 & 0 & 781944 & 1715,758\\
+\hline
+2000 & 6 & 0 & 1024000 & 0\\
+\hline
+3000 & 9 & 0 & 1024000 & 0\\
+\hline
+4000 & 12 & 0 & 1024000 & 0\\
+\hline
+5000 & 15 & 0 & 1024000 & 0\\
+\hline
+10000 & 31.26 & 0.438 & 1024000 & 0\\
+\hline
+20000 & 63.57 & 1.041 & 1024000 & 0\\
+\hline
+\end{tabularx}
+\end{table}
+
+\FloatBarrier
+
+Tables \ref{tab:comp2000} and \ref{tab:comp1000} compare benchmarking results for unlocking time of 1000 and 2000 ms respectively. Cryptsetup was compiled with different options explained below:
+
+\begin{description}
+\item{none} no special options were added
+\item{SSE} the \verb+--enable-internal-sse-argon2+ configuration option was added. If this option is specified, additional checks for special CPU features are performed (SSE2, SSE3, AVX2, AVX512). If they are detected, Argon2 is compiled with support for the most advanced one.
+
+\item{native} the \verb+-march=native+ flag is passed to the compiler, optimizing the source code for the particular platform
+
+\item{external} Cryptsetup is compiled against external Argon2 library
+\end{description}
+
+Notice that combining optimized versions of Argon2 with compilation for the particular platform produces the best results. It almost doubles the number of iterations compared with the benchmark without and it produces only one less iteration compared to unlocking time of 4000 milliseconds benchmarked without optimization. Unfortunately, such combination of configuration options is not very common. A quick review of several Linux distributions (Debian, Ubuntu, Fedora) shows that distributions package the Argon2 library separatly and link the Cryptsetup against it. Also due to the support of broadest array of devices possible platform-specific optimizations are not used.
+
+
+\noindent
+\begin{table}
+\caption{Comparing results for various Cryptsetup compilation options with unlocking time of 2000 ms}
+\label{tab:comp2000}
+\begin{tabularx}{\textwidth}{| l | c | c | c | c |}
+\hline
+flags & avg(t) & stdev(t) & avg(m) & stdev(m)\\
+\hline
+none & 6 & 0 & 1048576 & 0\\
+\hline
+SSE & 7 & 0 & 1048576 & 0\\
+\hline
+native & 6 & 0 & 1048576 & 0\\
+\hline
+native + SSE & 11 & 0 & 1048576 & 0\\
+\hline
+external & 6 & 0 & 1048576 & 0\\
+\hline
+\end{tabularx}
+\end{table}
+
+\noindent
+\begin{table}
+\caption{Comparing results for various Cryptsetup compilation options with unlocking time of 1000 ms}
+\label{tab:comp1000}
+\begin{tabularx}{\textwidth}{| l | c | c | c | c |}
+\hline
+flags & avg(t) & stdev(t) & avg(m) & stdev(m)\\
+\hline
+none & 4 & 0 & 804032.75 & 3886.047\\
+\hline
+SSE & 4 & 0 & 949740.83 & 2305.669\\
+\hline
+native & 4 & 0 & 863822.25 & 1414.500\\
+\hline
+native + SSE & 5 & 0 & 1048576 & 0\\
+\hline
+external & 4 & 0 & 846713.44 & 1359.307\\
+\hline
+\end{tabularx}
+\end{table}
+
+\noindent
+\begin{table}
 \caption{Benchmark results for Raspberry with 4 cores and 1 GiB of memory}
 \label{tab:r4c1g}
 \begin{tabularx}{\textwidth}{| c | c | c | c | c |}
@@ -623,6 +711,8 @@ Unlocking time & avg(t) & stdev(t) & avg(m) & stdev(m)\\
 \hline
 \end{tabularx}
 \end{table}
+
+\FloatBarrier
 
 \section{Attacking LUKS2}
 \label{sec:attack}
