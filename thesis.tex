@@ -58,7 +58,8 @@ Today, as more and more private information is stored on various kinds of media 
 
 Considering passwords we are facing a problematic situation. Organisations and services provide guidelines or requirements which should help an user to choose a strong password \parencite{nistpasswords} \parencite{sanspasswordguidelines}. Important parameters are password length (in characters), password complexity, uniqueness and others. By complexity I mean amount and diversity of used characters (letters, numbers, symbols, emojis\dots) and by uniqueness I mean the fact that the password does not contain easily guessable or predictable sequences. See mentioned policies for example.
 
-%I will find some researches supporting following lines
+I will find some researches supporting following lines
+
 As shown by researches, users tend to circumvent such policies by finding loopholes in them. %to be done
 
 What more, passwords them selves are not good cryptographic material which should be used as a cryptographic key. There are surprisingly many reasons. They are usually not sufficiently long. Because they are composed of printable characters, they do not meet the requirement of being uniformly distributed. If they should be remembered, they will probably contain dictionary words, which lessens their entropy even more. See \parencite[section 5.6.4]{itmc14} for short but interesting analysis.
@@ -159,7 +160,9 @@ The volume key digest is no longer limited by length of 20 bytes, because it no 
 
 As stated in subsection~\ref{luks1},  in case of PBKDF2 user can influence number of iterations directly or specify approximate time required for processing of the passphrase. This stays the same for LUKS2. Functions from Argon2 family introduce two additional parameters; memory cost and parallel cost. Both parameters can be specified through \verb+--pbkdf-memory+ and \verb+--pbkdf-parallel+ command line parameters respectively. The number of iterations is either benchmarked or it can be manually specified through \verb+--pbkdf-force-iterations+.
 
-Note that the number of parallel threads will be always at most 4 and it will decrease if not enough CPUs are online at the time of its usage. In Cryptsetup version 2.6.0 the default unlocking time is set at 2000 miliseconds and the default memory cost is set at 1048576 kB. Both of default values can be changed at compilation time.
+The benchmarking function takes as an input a desired unlocking time specified in milliseconds. The function tries to find the best parameters while not exceeding this unlocking time. Note that the number of parallel threads will be always at most 4 and it will decrease if not enough CPUs are online at the time of its usage. In Cryptsetup version 2.6.0 the default unlocking time is set at 2000 miliseconds and the default memory cost is set at 1048576 kB. Both default values can be changed at compilation time.
+
+
 
 \section{Attacks on PBKDFs}
 \label{sec:attacks}
@@ -466,13 +469,21 @@ Both concepts came as a reaction to increasing computing power of parallel hardw
 \section{Other PBKDFs}
 
 \chapter{Analysis of LUKS2}
-This chapter deals with the actual practical research performed as a part of the thesis. The first part deals with collecting number of Argon2 parameters under various circumstances and their analysis. The second part introduces experimental attack against LUKS2 headers created with chosen parameters based on previous part. These results are then applied to the price model introduced in chapter~\ref{chap:model}.
+This chapter deals with the actual practical research performed as a part of the thesis. The important goal of this thesis is to create a price model for potential attacker trying to get unauthorised access to LUKS2 encrypted partition. Another goal is tightly related. As explained in section~\ref{luks2pbkdf}, LUKS2 can determine three parameters for Argon2 through its own benchmarking function. It is highly probable that most of Cryptsetup users do not provide their own Argon2 parameters and therefore use the benchmarking function.
+
+Therefore, before the actual model is created, it is necessary to collect sufficient data about parameters used as a result of  this benchmark under various real world conditions. The process and results are described in section~\parencite{sec:benchmark}. These parameters are further used while simulating attacks on LUKS2 encrypted volumes on real machines.  This is described in section~\ref{sec:attack}. Results are used to create an actual price model in chapter~\ref{chap:model}.
 
 \section{Benchmarking ofLUKS2 and Argon2 parameters}
 \label{sec:benchmark}
-As mentioned in section~\ref{luks2pbkdf}, there are two ways of defining three parameters needed for Argon2 operation. They can be either specified manually or Cryptsetup can estimate some of them through benchmarking process. Here I will deal only with the second option. 
+In \ref{luks2pbkdf} three parameters for Argon2 were mentioned. They have crucial impact on resistance of the resulting hash against dictionary or brute-force attacks. Their effects are described in detail in section~\ref{argon2}. From the Cryptsetup's point of view, these parameters impact not only security but  user experience as well. If they are set to too low values, the security of encryption keys can be endangered. If they are set to tooo high values, the unlocking process can last undesirably long time or  excesive amount of computing power and memory can be used. Cryptsetup does not suppose that all users know exact implications of choosing particular parameters. Therefore, it introduces a benchmarking function. Note that advanced users can still choose parameters manually.
 
-The most important parameters for the benchmark are unlocking time (default of 2000 miliseconds) and Argon2 memory cost (1048576 kB) \parencite{cryptsetupgitconfigureac}. Both values can be configured at compile time. The degree of parallelism can be at most 4 and will be lowered if not enough CPUs are available. The main aim of the benchmarking function is to find such Argon2 parameters that the time of hash calculation is as closest to the given unlocking time as possible. This is reached by increasing or decreasing memory cost and number of Argon2 iterations. At the same time the memory cost parameter cannot exceed the user supplyed volume of memory and it cannot exceed half of available physical memory. See \parencite{cryptsetupgitpbkdfcheck} for details.
+The benchmarking function takes as an input the desired unlocking time specified in milliseconds. It starts with default parameters and performs several PBKDF computations. By increasing and decreasing parameters during computations it tries to find the most secure (the highest) parameters while not exceeding the unlocking time. Additionally the function performs some estimations to reduce number of required computations because the benchmarking process should not last too long. Average length of benchmark is ... zjistit
+
+Due to this approach the resulting parameters are dependent on several conditions, in particular available hardware and current workload of the system. This can be observed in ... However, as pointed out ..., the resulting parameters are currently very secure.
+
+Currently there exist some limitations which are hardcoded into Cryptsetup. The minimal number of iterations for Argon2 is 4, maximum number is limited by limit of unsigned 32 bit integer for the given platform. The minimum memory parameter is 32 KiB, maximum is 4 GiB. The minimal degree of parallelism for Argon2 is 1, maximum is 4. All the limits are hardcoded in \parencite{cryptsetupgitpbkdfcheck}. Note that the number of parallel threads will be always at most 4 and it will decrease if not enough CPUs are online at the time of the benchmark.
+
+In Cryptsetup version 2.1.0 the default unlocking time is set at 2000 miliseconds. The default Argon2 memory cost is set at 1048576 kB. Both default values can be changed at compilation time.
 
 \subsection{Benchmarking tool}
 As a part of my thesis I performed collection of Argon2 parameters estimated by the function mentioned above. I created a small tool which can perform series of benchmarks with given parameters and output results in human-readable or machine-readable format. The source code of the tool is part of the thesis (bude na Githubu).
@@ -491,7 +502,7 @@ The tool accepts the following parameters. Run the tool without command line opt
 
 The tool can output results in a text format or in a CSV format including headers for better machine processing. The tool does not perform actual benchmarking, it utilizes API of Libcryptsetup library. Therefore the library is required for it to work. The tool does not create any cryptsetup volumes and does not require root privileges.
 
-\subsection{Collecting of real world parameters}
+\subsection{Methodology of collecting of real world parameters}
 I used the previously mentioned tool to collect real data on real physical hardware. I tried to simulate various environments in which Cryptsetup can be used to create and unlock encrypted volumes. I decided to use real hardware and not virtual machines because of possible inaccuracies during measurement caused by virtualization layer.
 
 The first hardware configuration consists of Lenovo Thinkpad P50 with ... to be completed. The system was booted from live USB media of Accessible Coconut linux distribution. The distribution is based on Ubuntu 18.04 and it does not provide any special modifications concerning Cryptsetup and related libraries. It only provides better accessibility for people with visual impairment like me.
@@ -520,16 +531,98 @@ Simulating various hardware conditions by limiting CPU performance and available
 
 At first I tried to use Control Groups 2 feature of Linux kernel \parencite{cgroups2}. Unfortunately, I was not able to get desired results. In particular I was not able to guarantee that the benchmarking process will really use limited set of CPU cores. Then I tried to use the Cpulimit project \parencite{cpulimit}. Unfortunately I still was not able to guarantee that the benchmarking function uses only certain number of CPU cores.
 
-At last I found the solution for limiting number of available CPU cores. On the laptop running Accessible Coconut, I was able to disable individual cores through the following command:
-
+At last I found the solution for limiting number of available CPU cores. On the laptop running Accessible Coconut, I was able to disable individual cores by modifying the file 
 \begin{tt}
-echo 0 | tee /sys/devices/system/cpu/cpu7/online
+/sys/devices/system/cpu/cpu\emph{N}/online
 \end{tt}
+ Where the \emph{N} signifies the number of the core to be turned off. Note that this method allowed me to change state not only of individual cores, but also of individual virtual cores created with hyperthreading technology.
 
-Where the number 7 can be replaced with number of the core to be turned off. Cores are numbered starting from 0.
+This method could not be applied to raspberry, as the needed file had not existed, probably because of difference of underlying hardware platform. Therefore, I limited number of available CPUs by modifying the 
+\begin{tt}
+maxcpus=\emph{n}
+\end{tt}
+ kernel parameter. This device does not offer hyperthreading.
 
+Due to the way in which the Cryptsetup detects available amount of memory, I decided to perform modification to Cryptsetup it self \parencite{cryptsetuputils}. I decided to modify directly the function \emph{crypt\_getphysmemory\_kb} which returns available physical memory in Kb. I modified it sothat it reads the value from an environment variable, see the patch in the thesis git repository.
 
+After the benchmark I used the Datamash tool to perform basic statistic computations on resulting CSV data \parencite{datamash}. Raw data as well as Datamash results can be found in the thesis Git repository.
 
+\subsection{Collected benchmarking results}
+
+\noindent
+\begin{table}
+\caption{Benchmark results for laptop with 8 threads and 8 GiB of memory}
+\label{tab:l8c4g}
+\begin{tabularx}{\textwidth}{| c | c | c | c | c |}
+\hline
+Unlocking time & avg(t) & stdev(t) & avg(m) & stdev(m)\\
+\hline
+1000 & 4 & 0 & 804033 & 3886\\
+\hline
+2000 & 6 & 0 & 1048576 & 0\\
+\hline
+3000 & 9 & 0 & 1048576 & 0\\
+\hline
+4000 & 12 & 0 & 1048576 & 0\\
+\hline
+5000 & 15 & 0 & 1048576 & 0\\
+\hline
+10000 & 31.01 & 0.099 & 1048576 & 0\\
+\hline
+20000 & 64 & 0 & 1048576 & 0\\
+\hline
+\end{tabularx}
+\end{table}
+
+\noindent
+\begin{table}
+\caption{Benchmark results for laptop with 4 cores and 4 GiB of memory}
+\label{tab:l4c4g}
+\begin{tabularx}{\textwidth}{| c | c | c | c | c |}
+\hline
+Unlocking time & avg(t) & stdev(t) & avg(m) & stdev(m)\\
+\hline
+1000 & 4 & 0 & 785173 & 4532\\
+\hline
+2000 & 5 & 0 & 1048576 & 0\\
+\hline
+3000 & 9 & 0 & 1048576 & 0\\
+\hline
+4000 & 12 & 0 & 1048576 & 0\\
+\hline
+5000 & 15 & 0 & 1048576 & 0\\
+\hline
+10000 & 31 & 0 & 1048576 & 0\\
+\hline
+20000 & 61.97 & 0.298 & 1048576 & 0\\
+\hline
+\end{tabularx}
+\end{table}
+
+\noindent
+\begin{table}
+\caption{Benchmark results for Raspberry with 4 cores and 1 GiB of memory}
+\label{tab:r4c1g}
+\begin{tabularx}{\textwidth}{| c | c | c | c | c |}
+\hline
+Unlocking time & avg(t) & stdev(t) & avg(m) & stdev(m)\\
+\hline
+1000 & 4 & 0 & 43292 & 3628\\
+\hline
+2000 & 4 & 0 & 95297 & 8199\\
+\hline
+3000 & 4 & 0 & 150861 & 10508\\
+\hline
+4000 & 4 & 0 & 203604 & 6723\\
+\hline
+5000 & 4 & 0 & 255362 & 10598\\
+\hline
+10000 & 4 & 0 & 474447 & 2737\\
+\hline
+20000 & 7.81 & 0.879 & 474722 & 0\\
+\hline
+\end{tabularx}
+\end{table}
 
 \section{Attacking LUKS2}
 \label{sec:attack}
@@ -570,9 +663,4 @@ Based on previous assumptions of an attacker's options I try to create a price m
 \chapter{Conclusions}
 
 \printbibliography
-
-\appendix
-\chapter{LUKS attack results}
-
-
 \end{document}
