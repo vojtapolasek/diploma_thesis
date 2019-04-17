@@ -78,6 +78,18 @@ struct timespec timeadd(struct timespec a, struct timespec b) {
     return result;
 }
 
+//determine number of digits in number
+unsigned int digits (int number) {
+    int result = 1;
+    int tmpnum = number;
+    while ((int)(tmpnum / 10) != 0) {
+        result ++;
+        tmpnum /= 10;
+    }
+    return result;
+}
+
+
 void* check(void* threadargs)
 {
     const char *disk_file_basename;
@@ -97,12 +109,18 @@ void* check(void* threadargs)
     unsigned long line = 0;
     struct crypt_device *cd;
     char pwd[MAX_LEN];
+    unsigned int fnamelen = strlen(disk_file_basename) + digits(my_id) + 1;
+    char filename[fnamelen];
+    sprintf(filename, "%s%d", disk_file_basename, my_id);
+    printf ("Thread %d, using %s.\n", my_id, filename);
 
-    if (crypt_init(&cd, disk_file_basename) ||
+
+
+    if (crypt_init(&cd, filename) ||
             (device_type == LUKS && crypt_load(cd, CRYPT_LUKS1, NULL)) ||
             (device_type == LUKS2 && crypt_load(cd, CRYPT_LUKS2, NULL))
         ) {
-            printf("Cannot open %s.\n", disk_file_basename);
+            printf("Cannot open %s.\n", filename);
             pthread_exit(NULL);
         }
 
