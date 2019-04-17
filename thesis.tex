@@ -77,92 +77,6 @@ By looking at \parencite{pbkdf2usage} we can see that PBKDFs are used in many ty
 
 In 2013 there was initiated a new open competition called Password hashing competition. Its goal was to find a new password hashing function which would resist new attacks devised against those functions \parencite{phc}. The winner was function named Argon2. It is already used for example in LUKS version 2 \parencite{luks2}.
 
-\subsection{LUKS}
-LUKS stands for Linux Unified Key Setup. This project started to be developed by Clemens Fruhwirth as a reaction to several incompatible disk encryption schemes which coexisted at the same time at the begining of 21st century. At certain point there existed three incompatible disk encryption schemes which varried from Linux distribution to Linux distribution. If an user created an encrypted disk, they couldn't be sure if they will be able to encrypt the disk with a different distribution or even with a new version of the same distribution.
-
-LUKS began as a metadata format for storing information about cryptographic key setup. However, Fruhwirth discovered that to design a proper metadata format, he needs to knoww enough information about key setup process \parencite{newmethods}. Therefore, he created TKS1 and TKS2. These are templates for the key setup process. Together with LUKS they ensure safe and standardized key management during disk encryption. After some user feedback, LUKS on-disk specification version 1.0 was created in 2005 \parencite{luks1}. Currently the latest version is LUKS on-disk specification version 2 \parencite{luks2}.
-
-The reference implementation of both versions of LUKS is called libcryptsetup. The userspace interface is called Cryptsetup. In the following two subsections, default parameters and information concerning command line switches are specific to this implementation.
-
-\subsection{usage of PBKDFs in LUKS version 1}
-\label{luks1}
-PBKDF2 function is used as a key derivation function in LUKS version 1. It is used during master key initialisation, adding of a new password, master key recovery, and also during password changing because this operation is actually composed of previously mentioned operations. During all operations it internaly uses a hash algorithm specified by user during initialisation of the LUKS header. By default, SHA256 algorithm is used.
-
-During initialisation, the PBKDF2 function is used to create a checksum of a master key. This key is subsequently used for symmetric encryption of actual data stored on the encrypted disk. The function receives following parameters:
-
-\begin{description}
-\item[masterKey] a new randomly generated master key of user specified length
-
-\item[phdr.mk-digest-salt] a random number 32 bytes long which is used to prevent attacks against password using precomputed tables \parencite[see][section 5.6.3]{itmc14}
-
-\item[phdr.mk-digest-iteration-count] number of iterations for PBKDF2, see section~\ref{sec:pbkdf2}
-
-\item[LUKS\-DIGEST\-SIZE] length of he computed digest in bytes, default is 20
-\end{description}
-
-The generated 20 bytes long checksum is stored in the LUKS header together with the iteration count and salt. Please note that the \emph{phdr.mk-digest-iteration-count} parameter is obtained by performing a benchmark with minimum of 1000 iterations.
-
-During adding of a new password, PBKDF2 is used to process the passphrase supplied by user. It receives following parameters:
-
-\begin{description}
-\item[password] a passphrase supplied by an user
-
-\item[ks.salt] randomly generated salt used for this particular key slot with length of 32 bytes
-
-\item[ks.iteration-count] number of PBKDF2 iterations
-
-\item[MasterKeyLength] length of the derived key
-\end{description}
-
-The resulting key derived from the passphrase is used to encrypt the master key. This key has to be present in memory either because initialisation happened recently or it was successfully recovered through a different key stored in different key slot. Together with the encrypted master key, the salt and iteration count are also written into the key slot.
-
-Note that the ks.iteration-count parameter can be influenced by user in several ways \parencite{cryptsetupmanual}. One possibility is to specify number of iterations directly with the command line option \verb+--pbkdf-force-iterations+. Another option is to specify the iteration time through \verb+-i+ or \verb+--iter-time+ command line options. This option expects a number which signifies number of milliseconds which should be spent calculating the hash. A benchmark is used to calculate number of iterations which corresponds to this time. If no option is specified then the default iteration time of 2000 milliseconds is used.
-
-The function is also used during the master key recovery. This process is performed while unlocking the encrypted partition. During key recovery the PBKDF is actually used twice for every key slot until the master key is decrypted or there are no more key slots to try. First it is used to derive a decryption key from a passphrase supplied by an user. Then this decryption key is used to decrypt the encrypted master key stored in the current key slot. The result is called the candidate master key because we are still not sure if the passphrase was correct. This candidate is again hashed with PBKDF and finally compared with hash of the master key stored in the LUKS header. If hashes match then the passphrase was entered correctly and the master key can be used.
-
-In the first case the function receives following parameters:
-
-\begin{description}
-\item[pwd] user supplied passphrase
-
-\item[ks.salt] the salt value read from currently tried key slot
-
-\item[ks.iteration-count] the iteration count read from currently tried key slot
-
-\item[masterKeyLength] length of the derived key
-\end{description}
-
-In the second case the function receives following parameters:
-
-\begin{description}
-\item[masterKeyCandidate] candidate master key, see above
-
-\item[ph.mk-digest-salt] the salt value which was used during the initialisation phase and stored in the header
-
-\item[ph.mk-digest-iter] number of PBKDF2 iterations used during the initialisation phase and also stored in the header
-
-\item[LUKS\_DIGEST\_SIZE] 20 bytes
-\end{description}
-
-The process of changing a password is composed of previously mentioned operations and hence I am not mentioning it here in greater details. To sum it up, firstly the master key is recovered, then a new password is added to a new key slot and the previous one is revoked.
-
-Both password-based encryption and password checking require additional cryptographic primitives which process the derived key. For encryption, reference implementation of LUKS uses aes-xts-plain64 and for hashing it uses sha256. Usage of PBKDF2 requires underlying pseudorandom function. In case of LUKS version 1, default PRF is SHA1. Alternatively, it is possible to choose SHA256, SHA512, ripemd160 or whirlpool.
-
-\subsection{Usage of PBKDFs in LUKS version 2}
-\label{luks2pbkdf}
-LUKS version 2 extends LUKS version 1 and uses similar principles. Therefore, I will focus on differences between version 1 and 2 which are related to usage of PBKDFs. For detailed list of changes see \parencite{}{luks2}{section 1.1}.
-
-The new version supports configurable algorithms for encryption, hashing and also key derivation. That means that the set of algorithms can be extended as new are developed and other are obsoleted. Note that there still exist some requirements for algorithms provided by cryptographic backend \parencite{}{luks2}{section 4.6}. The backend has to support SHA-1 and SHA-256 hashing functions, PBKDF2, Argon2i and Argon2id key derivation functions and AES-XTS symmetric encryption.
-
-LUKS2 introduces PBKDF memory hard functions Argon2i and Argon2id which are described in~\ref{argon2}. Argon2 functions should offer increased resistance to brute-force attacks.
-
-The volume key digest is no longer limited by length of 20 bytes, because it no longer relies on SHA-1 hashing function. The processes described in subsection~\ref{luks1} are the same in LUKS version 2. The same applies for situations in which PBKDFs are used. 
-
-As stated in subsection~\ref{luks1},  in case of PBKDF2 user can influence number of iterations directly or specify approximate time required for processing of the passphrase. This stays the same for LUKS2. Functions from Argon2 family introduce two additional parameters; memory cost and parallel cost. Both parameters can be specified through \verb+--pbkdf-memory+ and \verb+--pbkdf-parallel+ command line parameters respectively. The number of iterations is either benchmarked or it can be manually specified through \verb+--pbkdf-force-iterations+.
-
-The benchmarking function takes as an input a desired unlocking time specified in milliseconds. The function tries to find the best parameters while not exceeding this unlocking time. Note that the number of parallel threads will be always at most 4 and it will decrease if not enough CPUs are online at the time of its usage. In Cryptsetup version 2.6.0 the default unlocking time is set at 2000 miliseconds and the default memory cost is set at 1048576 kB. Both default values can be changed at compilation time.
-
-
 
 \section{Attacks on PBKDFs}
 \label{sec:attacks}
@@ -473,6 +387,91 @@ This chapter deals with the actual practical research performed as a part of the
 
 Therefore, before the actual model is created, it is necessary to collect sufficient data about parameters used as a result of  this benchmark under various real world conditions. The process and results are described in section~\ref{sec:benchmark}. These parameters are further used while simulating attacks on LUKS2 encrypted volumes on real machines.  This is described in section~\ref{sec:attack}. Results are used to create an actual price model in chapter~\ref{chap:model}.
 
+\section{LUKS}
+LUKS stands for Linux Unified Key Setup. This project started to be developed by Clemens Fruhwirth as a reaction to several incompatible disk encryption schemes which coexisted at the same time at the begining of 21st century. At certain point there existed three incompatible disk encryption schemes which varried from Linux distribution to Linux distribution. If an user created an encrypted disk, they couldn't be sure if they will be able to encrypt the disk with a different distribution or even with a new version of the same distribution.
+
+LUKS began as a metadata format for storing information about cryptographic key setup. However, Fruhwirth discovered that to design a proper metadata format, he needs to knoww enough information about key setup process \parencite{newmethods}. Therefore, he created TKS1 and TKS2. These are templates for the key setup process. Together with LUKS they ensure safe and standardized key management during disk encryption. After some user feedback, LUKS on-disk specification version 1.0 was created in 2005 \parencite{luks1}. Currently the latest version is LUKS on-disk specification version 2 \parencite{luks2}.
+
+The reference implementation of both versions of LUKS is called libcryptsetup. The userspace interface is called Cryptsetup. In the following two subsections, default parameters and information concerning command line switches are specific to this implementation.
+
+\subsection{usage of PBKDFs in LUKS version 1}
+\label{luks1}
+PBKDF2 function is used as a key derivation function in LUKS version 1. It is used during master key initialisation, adding of a new password, master key recovery, and also during password changing because this operation is actually composed of previously mentioned operations. During all operations it internaly uses a hash algorithm specified by user during initialisation of the LUKS header. By default, SHA256 algorithm is used.
+
+During initialisation, the PBKDF2 function is used to create a checksum of a master key. This key is subsequently used for symmetric encryption of actual data stored on the encrypted disk. The function receives following parameters:
+
+\begin{description}
+\item[masterKey] a new randomly generated master key of user specified length
+
+\item[phdr.mk-digest-salt] a random number 32 bytes long which is used to prevent attacks against password using precomputed tables \parencite[see][section 5.6.3]{itmc14}
+
+\item[phdr.mk-digest-iteration-count] number of iterations for PBKDF2, see section~\ref{sec:pbkdf2}
+
+\item[LUKS\-DIGEST\-SIZE] length of he computed digest in bytes, default is 20
+\end{description}
+
+The generated 20 bytes long checksum is stored in the LUKS header together with the iteration count and salt. Please note that the \emph{phdr.mk-digest-iteration-count} parameter is obtained by performing a benchmark with minimum of 1000 iterations.
+
+During adding of a new password, PBKDF2 is used to process the passphrase supplied by user. It receives following parameters:
+
+\begin{description}
+\item[password] a passphrase supplied by an user
+
+\item[ks.salt] randomly generated salt used for this particular key slot with length of 32 bytes
+
+\item[ks.iteration-count] number of PBKDF2 iterations
+
+\item[MasterKeyLength] length of the derived key
+\end{description}
+
+The resulting key derived from the passphrase is used to encrypt the master key. This key has to be present in memory either because initialisation happened recently or it was successfully recovered through a different key stored in different key slot. Together with the encrypted master key, the salt and iteration count are also written into the key slot.
+
+Note that the ks.iteration-count parameter can be influenced by user in several ways \parencite{cryptsetupmanual}. One possibility is to specify number of iterations directly with the command line option \verb+--pbkdf-force-iterations+. Another option is to specify the iteration time through \verb+-i+ or \verb+--iter-time+ command line options. This option expects a number which signifies number of milliseconds which should be spent calculating the hash. A benchmark is used to calculate number of iterations which corresponds to this time. If no option is specified then the default iteration time of 2000 milliseconds is used.
+
+The function is also used during the master key recovery. This process is performed while unlocking the encrypted partition. During key recovery the PBKDF is actually used twice for every key slot until the master key is decrypted or there are no more key slots to try. First it is used to derive a decryption key from a passphrase supplied by an user. Then this decryption key is used to decrypt the encrypted master key stored in the current key slot. The result is called the candidate master key because we are still not sure if the passphrase was correct. This candidate is again hashed with PBKDF and finally compared with hash of the master key stored in the LUKS header. If hashes match then the passphrase was entered correctly and the master key can be used.
+
+In the first case the function receives following parameters:
+
+\begin{description}
+\item[pwd] user supplied passphrase
+
+\item[ks.salt] the salt value read from currently tried key slot
+
+\item[ks.iteration-count] the iteration count read from currently tried key slot
+
+\item[masterKeyLength] length of the derived key
+\end{description}
+
+In the second case the function receives following parameters:
+
+\begin{description}
+\item[masterKeyCandidate] candidate master key, see above
+
+\item[ph.mk-digest-salt] the salt value which was used during the initialisation phase and stored in the header
+
+\item[ph.mk-digest-iter] number of PBKDF2 iterations used during the initialisation phase and also stored in the header
+
+\item[LUKS\_DIGEST\_SIZE] 20 bytes
+\end{description}
+
+The process of changing a password is composed of previously mentioned operations and hence I am not mentioning it here in greater details. To sum it up, firstly the master key is recovered, then a new password is added to a new key slot and the previous one is revoked.
+
+Both password-based encryption and password checking require additional cryptographic primitives which process the derived key. For encryption, reference implementation of LUKS uses aes-xts-plain64 and for hashing it uses sha256. Usage of PBKDF2 requires underlying pseudorandom function. In case of LUKS version 1, default PRF is SHA1. Alternatively, it is possible to choose SHA256, SHA512, ripemd160 or whirlpool.
+
+\subsection{Usage of PBKDFs in LUKS version 2}
+\label{luks2pbkdf}
+LUKS version 2 extends LUKS version 1 and uses similar principles. Therefore, I will focus on differences between version 1 and 2 which are related to usage of PBKDFs. For detailed list of changes see \parencite{}{luks2}{section 1.1}.
+
+The new version supports configurable algorithms for encryption, hashing and also key derivation. That means that the set of algorithms can be extended as new are developed and other are obsoleted. Note that there still exist some requirements for algorithms provided by cryptographic backend \parencite{}{luks2}{section 4.6}. The backend has to support SHA-1 and SHA-256 hashing functions, PBKDF2, Argon2i and Argon2id key derivation functions and AES-XTS symmetric encryption.
+
+LUKS2 introduces PBKDF memory hard functions Argon2i and Argon2id which are described in~\ref{argon2}. Argon2 functions should offer increased resistance to brute-force attacks.
+
+The volume key digest is no longer limited by length of 20 bytes, because it no longer relies on SHA-1 hashing function. The processes described in subsection~\ref{luks1} are the same in LUKS version 2. The same applies for situations in which PBKDFs are used. 
+
+As stated in subsection~\ref{luks1},  in case of PBKDF2 user can influence number of iterations directly or specify approximate time required for processing of the passphrase. This stays the same for LUKS2. Functions from Argon2 family introduce two additional parameters; memory cost and parallel cost. Both parameters can be specified through \verb+--pbkdf-memory+ and \verb+--pbkdf-parallel+ command line parameters respectively. The number of iterations is either benchmarked or it can be manually specified through \verb+--pbkdf-force-iterations+.
+
+The benchmarking function takes as an input a desired unlocking time specified in milliseconds. The function tries to find the best parameters while not exceeding this unlocking time. Note that the number of parallel threads will be always at most 4 and it will decrease if not enough CPUs are online at the time of its usage. In Cryptsetup version 2.6.0 the default unlocking time is set at 2000 miliseconds and the default memory cost is set at 1048576 kB. Both default values can be changed at compilation time.
+
 \section{Benchmarking ofLUKS2 and Argon2 parameters}
 \label{sec:benchmark}
 In \ref{luks2pbkdf} three parameters for Argon2 were mentioned. They have crucial impact on resistance of the resulting hash against dictionary or brute-force attacks. Their effects are described in detail in section~\ref{argon2}. From the Cryptsetup's point of view, these parameters impact not only security but  user experience as well. If they are set to too low values, the security of encryption keys can be endangered. If they are set to tooo high values, the unlocking process can last undesirably long time or  excesive amount of computing power and memory can be used. Cryptsetup does not suppose that all users know exact implications of choosing particular parameters. Therefore, it introduces a benchmarking function. Note that advanced users can still choose parameters manually.
@@ -635,6 +634,7 @@ Tables \ref{tab:comp2000} and \ref{tab:comp1000} compare benchmarking results fo
 
 \begin{description}
 \item{none} no special options were added
+
 \item{SSE} the \verb+--enable-internal-sse-argon2+ configuration option was added. If this option is specified, additional checks for special CPU features are performed (SSE2, SSE3, AVX2, AVX512). If they are detected, Argon2 is compiled with support for the most advanced one.
 
 \item{native} the \verb+-march=native+ flag is passed to the compiler, optimizing the source code for the particular platform
@@ -643,7 +643,6 @@ Tables \ref{tab:comp2000} and \ref{tab:comp1000} compare benchmarking results fo
 \end{description}
 
 Notice that combining optimized versions of Argon2 with compilation for the particular platform produces the best results. It almost doubles the number of iterations compared with the benchmark without and it produces only one less iteration compared to unlocking time of 4000 milliseconds benchmarked without optimization. Unfortunately, such combination of configuration options is not very common. A quick review of several Linux distributions (Debian, Ubuntu, Fedora) shows that distributions package the Argon2 library separatly and link the Cryptsetup against it. Also due to the support of broadest array of devices possible platform-specific optimizations are not used.
-
 
 \noindent
 \begin{table}

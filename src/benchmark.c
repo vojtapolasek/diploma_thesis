@@ -4,6 +4,23 @@
 #include<stdlib.h>
 #include<unistd.h>
 #include<getopt.h>
+#include<time.h>
+
+//function for computing difference between two time points
+struct timespec timediff(struct timespec a, struct timespec b)
+{
+        struct timespec result;
+        if ((b.tv_nsec - a.tv_nsec)<0) {
+                result.tv_sec = b.tv_sec - a.tv_sec-1;
+                result.tv_nsec = 1000000000 + b.tv_nsec - a.tv_nsec;
+        } else {
+                result.tv_sec = b.tv_sec - a.tv_sec;
+                result.tv_nsec = b.tv_nsec - a.tv_nsec;
+        }
+        return result;
+}
+
+
 
 
 
@@ -16,12 +33,14 @@ int main(int argc, char *argv[]) {
     unsigned short int threads = 4;
     unsigned short int repetitions = 0;
     unsigned short int csvoutput = 0;
-    int c;
+    unsigned short int benchtime = 0; //flag if turned on, outputs time of every benchmark to stderr
+    struct timespec start, end;
+    int c; //for getopt
     struct crypt_pbkdf_type* input_pbkdf = NULL; //pbkdf with parameters set with input values
     const struct crypt_pbkdf_type* modified_pbkdf = NULL; //will show parameters modified by crypt_init_pbkdf (lowered memory)
     struct crypt_pbkdf_type *pbkdf = NULL; //pbkdf to be fed in benchmark with final parameters
     pbkdf = malloc(sizeof(struct crypt_pbkdf_type));
-    while ((c = getopt(argc, argv, "t:p:m:r:c")) != -1) {
+    while ((c = getopt(argc, argv, "t:p:m:r:cb")) != -1) {
         switch (c) {
             case 't': {
                 time = atoi(optarg);
@@ -43,12 +62,16 @@ int main(int argc, char *argv[]) {
                 csvoutput = 1;
                 break;
             }
+            case 'b': {
+                benchtime = 1;
+                break;
+            }
             default: {abort();}
         }
     }
     //printf ("%u %u %u %u\n", time, memory, threads, repetitions);
     if ((time == 0) || (memory == 0) || (threads == 0) || (repetitions == 0)) {
-        printf ("Invalid arguments provided.\nRequired arguments:\n-m memory limit in kb, default 1048576\n-p number of parallel processes, default 4\n-t required unlocking time\n-r number of repetitions of the benchmark\n-c turn on csv output\n");
+        printf ("Invalid arguments provided.\nRequired arguments:\n-m memory limit in kb, default 1048576\n-p number of parallel processes, default 4\n-t required unlocking time\n-r number of repetitions of the benchmark\n-c turn on csv output\n-b output actual time taken for every benchmark to stderr\n");
         return 1;
     }
     int rt = crypt_init(&cd, NULL);
@@ -76,7 +99,15 @@ int main(int argc, char *argv[]) {
         pbkdf->time_ms = modified_pbkdf->time_ms;
         pbkdf->max_memory_kb = modified_pbkdf->max_memory_kb;
         pbkdf->parallel_threads = modified_pbkdf->parallel_threads;
+        if (benchtime == 1) {
+            clock_gettime(CLOCK_MONOTONIC, &start);
+        }
         int rt = crypt_benchmark_pbkdf(cd, pbkdf, "ahojahoj", 8, "0123456789abcdef0123456789abcdef", 32, 256, NULL, NULL);
+        if (benchtime == 1) {
+            clock_gettime(CLOCK_MONOTONIC, &end);
+            struct timespec dif = timediff(start, end);
+            fprintf(stderr, "%ld.%ld\n", dif.tv_sec, dif.tv_nsec);
+        }
         if (rt != 0) {
                 printf ("Error while benchmarking.\n%s\n", strerror(rt));
                 return rt;
