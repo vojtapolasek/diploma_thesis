@@ -194,7 +194,7 @@ void* check(void* threadargs)
     crypt_free(cd);
     cumultime.tv_sec /= loopcount;
     cumultime.tv_nsec /= loopcount;
-    printf ("Thread %d %ld.%ld ns\n", my_id, cumultime.tv_sec, cumultime.tv_nsec);
+    printf ("Thread %d %ld.%09ld s\n", my_id, cumultime.tv_sec, cumultime.tv_nsec);
     averages[my_id] = cumultime;
     printf ("Thread %d finished\n", my_id);
     pthread_exit(NULL);
@@ -295,7 +295,7 @@ int main(int argc, char *argv[])
     }
     clock_gettime(CLOCK_MONOTONIC, &end);
     struct timespec dif = timediff(start, end);
-    printf ("total calculation %ld.%ld ns \n", dif.tv_sec, dif.tv_nsec);
+    printf ("total calculation %ld.%09ld s \n", dif.tv_sec, dif.tv_nsec);
     struct timespec finalaverage;
     finalaverage.tv_sec = 0;
     finalaverage.tv_nsec = 0;
@@ -305,7 +305,7 @@ int main(int argc, char *argv[])
     }
     finalaverage.tv_sec /= procs;
     finalaverage.tv_nsec /= procs;
-    printf ("final average %ld.%.9ld ns\n", finalaverage.tv_sec, finalaverage.tv_nsec);
+    printf ("final average %ld.%09ld s\n", finalaverage.tv_sec, finalaverage.tv_nsec);
     pthread_mutex_destroy(&pass_mutex);
     pthread_exit(NULL);
 }

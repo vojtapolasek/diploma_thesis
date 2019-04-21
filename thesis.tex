@@ -849,11 +849,16 @@ Here I describe and compare results collected by two methods described in previo
 \item{stdev(c)} standard deviation of time spent computing one batch of hashes in milliseconds
 \end{description}
 
+Tables \ref{tab:nymphacracker}, \ref{tab:nymphacpu}  and \ref{tab:konosgpu} show us a baseline of results. Nympha and Konos were the most powerful machines for computing Argon2 I managed to find in MetaCentrum. We can see that cracking hashes with high memory parameter (1049576 KiB) is highly ineffective with the naive approach. The best result was achieved while running two concurrent unlocking operations, therefore occupying 8 threads. This configuration enabled computation of 1 hash per 1.107 seconds.
+
+However, using powerful enough CPU supporting AVX512F instructions or using GPU it is possible to get more interesting results. The table \ref{tab:nymphacpu} is very interesting in particular. As we can see, we can get to the speed of 1 hash per 215 milliseconds, e.g. 4.651 hashes per second. From the theoretical point of view, the most effective computation should occur while running 16 concurrent Argon2 computations using $16 \times 4 = 64$ threads, as Nympha machine offers 64 CPU threads. As we can observe, at this degree of parallelism one hash can be computed in 296.3 milliseconds. However, increasing degree of parallelism up to 512 decreases the time up to 215 milliseconds. I am not entirely sure why does it happen and further research should be performed in this area.
+
+
 
 
 \noindent
 \begin{table}
-\caption{Cracker running on Nympha}
+\caption{Cracker running on Nympha cracking drive created with benchmark parameters on laptop}
 \label{tab:nymphacracker}
 \begin{tabularx}{\textwidth}{| c | c |}
 \hline
@@ -878,28 +883,6 @@ T & avg(tph)\\
 \end{tabularx}
 \end{table}
 
-\noindent
-\begin{table}
-\caption{Cracker running on Nympha cracking drive with parameters benchmarked on Raspberry Pi}
-\label{tab:nymphacrackerrpi}
-\begin{tabularx}{\textwidth}{| c | c |}
-\hline
-T & avg(tph)\\
-\hline
-1 & 1.69139\\
-\hline
-2 & 1.684504\\
-\hline
-4 & 2.718874\\
-\hline
-8 & 4.262887\\
-\hline
-16 & 7.930445\\
-\hline
-32 & 12.130352\\
-\hline
-64 & 
-
 
 \noindent
 \begin{table}
@@ -918,6 +901,16 @@ b & avg(tph) & stdev(tph) & avg(c) | stdev(c)\\
 8 & 351.323321 & 10.219132 & 2810.587 & 81.753061\\
 \hline
 16 & 296.345655 & 4.376179 & 4741.530 & 70.018871\\
+\hline
+32 & 252.618991 & 2.967656 & 8083.808 & 94.964996\\
+\hline
+64 & 235.185256 & 2.112931 & 15051.856 & 135.227588\\
+\hline
+128 & 224.986376 & 2.046735 & 28798.256 & 261.982150\\
+\hline
+256 & 219.888724 & 1.691552 & 56291.514 & 433.037402\\
+\hline
+512 & 217.429176 & 1.660830 & 111323,76 & 850.345233\\
 \hline
 \end{tabularx}
 \end{table}
@@ -980,6 +973,31 @@ warpshuffleshared + precomputes & 297.277366 & 0.003769 & 2972.774 & 0.037696 \\
 \hline
 \end{tabularx}
 \end{table}
+
+\noindent
+\begin{table}
+\caption{Cracker running on Nympha cracking drive with parameters benchmarked on Raspberry Pi}
+\label{tab:nymphacrackerrpi}
+\begin{tabularx}{\textwidth}{| c | c |}
+\hline
+T & avg(tph)\\
+\hline
+1 & 1.69139\\
+\hline
+2 & 1.684504\\
+\hline
+4 & 2.718874\\
+\hline
+8 & 4.262887\\
+\hline
+16 & 7.930445\\
+\hline
+32 & 12.130352\\
+\hline
+\end{tabularx}
+\end{table}
+
+
 
 
 \chapter{The price of an attack}
