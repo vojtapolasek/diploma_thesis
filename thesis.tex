@@ -191,7 +191,9 @@ The function quickly fills up given amount of memory and performs a sequence of 
 
 Argon2 is used as the default PBKDF in LUKS version 2. Note that according to \parencite{cryptsetupmanual} the default PBKDF can be configured during compilation.
 
-The function is optimized for X86 architecture using improvements in handling of cache and memory access in recent Intel and AMD processors. The function can be implemented on specialised hardware, but the previously mentioned fact makes this implementation possibly very slow and expensive and even specialised ASICs shouldn't acquire significant benefit even if they employ large areas of memory. However, no implementations of any Argon2 mode for specialised hardware are known so far.
+The function is optimized for X86 architecture using improvements in handling of cache and memory access in recent Intel and AMD processors. To be exact, currently the Argon2 supports compilation on platforms with SSE2, SSSE3, XOP, AVX2 and AVX512F cpu instructions. All the instructions except for XOP are Intel specific, XOP is specific for AMD processors.
+
+The function can be implemented on specialised hardware, but the previously mentioned fact makes this implementation possibly very slow and expensive and even specialised ASICs shouldn't acquire significant benefit even if they employ large areas of memory. However, no implementations of any Argon2 mode for specialised hardware are known so far.
 
 \subsection{Operation}
 The function expects following primary input parameters. Primary means that parameters must always be supplied by user.
@@ -492,6 +494,7 @@ The tool accepts several parameters. It is possible to specify desired unlocking
 The tool can output results in a text format or in a CSV format including headers for better machine processing. The tool does not perform actual benchmarking, it utilizes API of Libcryptsetup library. Therefore the library is required for it to work. The tool does not create any cryptsetup volumes and does not require root privileges.
 
 \subsection{Methodology of collecting of real world parameters}
+\label{subsec:laptop}
 I used the previously mentioned tool to collect real data on real physical hardware. I tried to simulate various environments in which Cryptsetup can be used to create and unlock encrypted volumes. I decided to use real hardware and not virtual machines because of possible inaccuracies during measurement caused by virtualization layer.
 
 The first hardware configuration consisted of Lenovo Thinkpad P50 laptop with Intel(R) Core(TM) i7-6820HQ CPU @ 2.70GHz with 4 cores, 8 threads. The laptop was equipped with 32 GiB of SODIMM DDR4 Synchronous 2133 MHz (0,5 ns) RAM \parencite{laptopspecs}.
@@ -542,9 +545,9 @@ After the benchmark I used the Datamash tool to perform basic statistic computat
 Tables present some chosen results gained through methodology described in the previous subsection. Following conventions are used:
 
 \begin{description}
-\item{T} number of iterations (Time cost)
+\item{avg(T)} average time cost
 
-\item{M} memory cost
+\item{stddev(M} memory cost
 
 \item{avg()} average
 
@@ -561,7 +564,7 @@ The table \ref{tab:l8c32g} serves as an introduction and it shows which paramete
 \hline
 Unlocking time & avg(t) & stdev(t) & avg(m) & stdev(m)\\
 \hline
-1000 & 4 & 0 & 804033 & 3886\\
+1000 & 4 & 0 & 804032.75 & 3886\\
 \hline
 2000 & 6 & 0 & 1048576 & 0\\
 \hline
@@ -586,7 +589,7 @@ Unlocking time & avg(t) & stdev(t) & avg(m) & stdev(m)\\
 \hline
 Unlocking time & avg(t) & stdev(t) & avg(m) & stdev(m)\\
 \hline
-1000 & 4 & 0 & 785173 & 4532\\
+1000 & 4 & 0 & 785173.44 & 4532\\
 \hline
 2000 & 5 & 0 & 1048576 & 0\\
 \hline
@@ -642,8 +645,6 @@ Tables \ref{tab:comp2000} and \ref{tab:comp1000} compare benchmarking results fo
 \item{external} Cryptsetup is compiled against external Argon2 library
 \end{description}
 
-Notice that combining optimized versions of Argon2 with compilation for the particular platform produces the best results. It almost doubles the number of iterations compared with the benchmark without and it produces only one less iteration compared to unlocking time of 4000 milliseconds benchmarked without optimization. Unfortunately, such combination of configuration options is not very common. A quick review of several Linux distributions (Debian, Ubuntu, Fedora) shows that distributions package the Argon2 library separatly and link the Cryptsetup against it. Also due to the support of broadest array of devices possible platform-specific optimizations are not used.
-
 \noindent
 \begin{table}
 \caption{Comparing results for various Cryptsetup compilation options with unlocking time of 2000 ms}
@@ -686,42 +687,307 @@ external & 4 & 0 & 846713.44 & 1359.307\\
 \end{tabularx}
 \end{table}
 
+Notice that combining optimized versions of Argon2 with compilation for the particular platform produces the best results. It almost doubles the number of iterations compared with the benchmark without and it produces only one less iteration compared to unlocking time of 4000 milliseconds benchmarked without optimization. Unfortunately, such combination of configuration options is not very common. A quick review of several Linux distributions (Debian, Ubuntu, Fedora) shows that distributions package the Argon2 library separatly and link the Cryptsetup against it. Also due to the support of broadest array of devices possible platform-specific optimizations are not used.
+
+The table \ref{tab:r4c1g} shows benchmarking results for the Raspberry Pi.  Notice that the memory cost is significantly lower. It is important to note here that the benchmarking algorithm of Cryptsetup will never use more than half of available amount of physical memory to prevent out of memory killer from killing the actual benchmarking process. Note also that the algorithm tries to use maximum available memory first and then tries to increase number of iterations.
+
 \noindent
 \begin{table}
-\caption{Benchmark results for Raspberry with 4 cores and 1 GiB of memory}
+\caption{Benchmark results for Raspberry Pi with 4 cores and 1 GiB of memory}
 \label{tab:r4c1g}
 \begin{tabularx}{\textwidth}{| c | c | c | c | c |}
 \hline
 Unlocking time & avg(t) & stdev(t) & avg(m) & stdev(m)\\
 \hline
-1000 & 4 & 0 & 43292 & 3628\\
+1000 & 4 & 0 & 43291.74 & 3628\\
 \hline
-2000 & 4 & 0 & 95297 & 8199\\
+2000 & 4 & 0 & 95296.58 & 8199\\
 \hline
-3000 & 4 & 0 & 150861 & 10508\\
+3000 & 4 & 0 & 150860.59 & 10508\\
 \hline
-4000 & 4 & 0 & 203604 & 6723\\
+4000 & 4 & 0 & 203604.14 & 6723\\
 \hline
-5000 & 4 & 0 & 255362 & 10598\\
+5000 & 4 & 0 & 255361.51 & 10598\\
 \hline
-10000 & 4 & 0 & 474447 & 2737\\
+10000 & 4 & 0 & 474446.97 & 2737\\
 \hline
 20000 & 7.81 & 0.879 & 474722 & 0\\
 \hline
 \end{tabularx}
 \end{table}
 
+By comparing tables \ref{tab:r4c1g} and \ref{tab:r4c1go} it can be seen that there is not a significant difference in displayed values. The values from the table \ref{tab:r4c1g} were benchmarked after compilation with \verb+-march=native+ flag. The \verb+--enable-sse-internal-argon2+ option cannot be used on Raspberry Pi, because the ARM architecture does not offer this kind of CPU instructions. It also confirms the premise that Argon2 should be difficult to optimize for other platforms than X86.
+
+\noindent
+\begin{table}
+\caption{Benchmark results for Raspberry Pi with optimizations}
+\label{tab:r4c1go}
+\begin{tabularx}{\textwidth}{| c | c | c | c | c |}
+\hline
+Unlocking time & avg(t) & stdev(t) & avg(m) & stdev(m)\\
+\hline
+1000 & 4 & 0 & 25639.15 & 4745.422\\
+\hline
+2000 & 4 & 0 & 53143.46 & 1493.866\\
+\hline
+3000 & 4 & 0 & 82432.72 & 2296.222\\
+\hline
+4000 & 4 & 0 & 111220.07 & 1818.082\\
+\hline
+5000 & 4 & 0 & 140627.5 & 1984.865\\
+\hline
+10000 & 4 & 0 & 292344.17 & 1726.421\\
+\hline
+20000 & 4.17 & 0.375 & 474722 & 0\\
+\hline
+\end{tabularx}
+\end{table}
+
+
 \FloatBarrier
 
 \section{Attacking LUKS2}
 \label{sec:attack}
+This section describes the rest of the practical research. The next chapter then defines and presents the price model which is based on results collected in this chapter. The following three subsections describe utilized hardware and software. The last subsection presents the results.
+
+The motivation behind performing of experimental simulations described in this chapter was to make the price model more precise and realistic. I found some results of benchmarks of Argon2 on CPU or GPU \parencite{argon2gpuold},, they are, however, almost four years old. Since that time there appeared new technologies in GPU and CPU segment and the Argon2 went through several upgrades. Another reason was that  by using a real hardware I was able to finetune parameters such as number of CPU cores, amount of available memory, available specialized CPU instructions etc.
+
+\subsection{Utilized hardware}
+. For the purpose of this thesis I chose to utilize machines offered by the MetaCentrum VO organization because they are easily accessible to registered students and they offer diverse spectrum of computing resources. This proved useful especially considering the fact that according to the definition of an attacker in section~\ref{sec:attacker} it is expected to utilize as powerful machines as possible.
+
+The following list describes parameters of the most interesting machines used during the research. For description of all the machines offered in Metacentrum see \parencite{metacentrumhw}.
+
+\begin{description}
+\item{Elmo1} $4\times14$ CPU Intel Xeon Gold 5120 2.20 GHz, hyperhreading 2 threads per core, supporting AVX512F instruction, 768 GB of RAM
+
+%\item{Elmo3}
+
+\item{Konos} $2\times10$ cores Intel(R) Xeon(R) CPU E5-2630 v4 at 2.20 GHz, hyperthreading 2 threads per core, supporting AVX2 instruction, 128 GB of RAM, NVIDIA GeForce GTX 1080 Ti with 11178 MiB of GPU memory
+
+\item{nympha} $32\times$ Intel(R) Xeon(R) Gold 6130 CPU at 2.10 GHz, hyperthreading 2 threads per core, supporting AVX512F instruction, 192 GiB of RAM
+
+\item{Manegrot} $4\times$ 8-core Intel Xeon E5-4627v2 at 3.30GHz, no hyperthreading, supporting SSSE3 instruction, 512 GiB of RAM
+
+\item{Uruk} $8\times18$ cores Intel Xeon Gold 6140  3.70 GHz, hyperthreading 2 threads per core, supporting AVX512F instruction, 2.86 TiB of RAM
+
+\item{White} $2\times12$ core Intel Xeon Gold 6138 2.0 GHz, no hyperthreading, supporting SSSE3 instruction, 512 GiB of RAM, GPU Tesla P100 with 16280 MiB of memory
+
+\item{Zubat} $2\times8$ core Intel Xeon E5-2630v3 2.40GHz, hyperthreading 2 threads per core, supporting SSSE3 instruction, 128 GiB of RAM, GPU Tesla K20Xm with 5700 MiB of memory
+\end{description}
+
+While performing computations on CPU I always allocated whole computing host and requested maximum number of available CPUS. I requested always at least $(T/L) \times M$ GiB of memory where \emph{T} denotes number of available CPU threads, \emph{L} denotes degree of parallelism for instance of Argon2 being computed and \emph{M} denotes memory cost. While simulating attacks on GPU I always reserved one instance of GPU, 1 CPU and 1 GiB of RAM memory. Reservations of GPUs are always exclusive. All tests used SSDs as underlying storage.
+
+For the sake of completeness experiments were ran also on the laptop used in the process of collecting benchmarked parameters in the previous section. Parameters are described in subsection~\ref{subsec:laptop}.
+
+\subsection{naive method}
+The first chosen attack method is naive but simple. It requires Libcryptsetup library to be present because it directly utilizes the API. The main idea is simply to try to recover the master key through normal means but to perform this action in multiple parallel threads.
+
+I created the tool which performs this attack. The tool was based on proof of concept called Dict\_search \parencite{cryptsetupdictsearch}.  I modified it sothat it uses threads instead of processes and it measures every recovery attempt and provides statistics. I also improved its usability. The tool can be found in the thesis Git repository.
+
+
+The tool expects following inputs where letters denoting parameters correspond to the command line options:
+
+\begin{description}
+\item{t} type of encrypted volume (LUKS1, Truecrypt, LUKS2) This can be very easily extended to other types supported by Cryptsetup.
+
+\item{i} base name of input device files
+
+\item{p} input password file with one password per line
+
+\item{T} number of parallel threads
+\end{description}
+
+The tool performs basic validation of input parameters and launches defined number of threads. Every thread receives a handler to the specified file containing the encrypted partition. Every thread opens the file with passwords and starts attempting to unlock the keyslot with passwords read from the input file. The file is internaly divided into segments and every thread reads a different segment. The tool runs until the passphrase is found or all the passhprases in the input file had been tried.
+
+Memory footprint of this method can be expressed as $M \times T$, where \emph{M} denotes the memory cost parameter used during creation of the encrypted partition and \emph{T} denotes number of cracking threads specified while launching the tool. The number of utilized CPU threads can be expressed as $P \times T$, where \emph{P} denotes the degreee of parallelism of Argon2 used during initialization of the encrypted drive and \emph{T} is number of parallel cracking threads.
+
+Because an attacker would try to speed up the cracking process as soon as possible, I compiled Cryptsetup with support for optimized Argon2 using the \verb+--enable-sse-internal-argon2+ and I applied a simple patch which disabled clearing of internal Argon2 memory after every Argon2 computation. The patch can be found in the Git repository of the thesis.
+
+\subsection{Method based on Argon2-gpu-bench tool}
+This method utilizes a tool called Argon2-gpu-bench written by Ondrej Mosnáček \parencite{argon2gpu}. The tool was originally created to benchmark speed and energy consumption of Argon2 computing hashes. The background scenario was offline brute-force attack against Argon2 hash, which overlaps with goals of my thesis. that is the reason why I selected this tool.
+
+The tool can compute Argon2 using three different modes. It can utilize standard CPU implementation and automatically choose the most optimized one according to supported CPU instructions. Clearing of internal memory is disabled for performance reasons. It also contains Argon2 implementation for OpenCL platform and three different GPU kernels (implementations) to be used with CUDA platform. Every GPU kernel handles the GPU memory in a different way, possibly producing different results under different parameters.
+
+Argon2-gpu-bench can also precompute values for Argon2i and Argon2id, speeding up the process. This feature is available only for CUDA and OpenCL modes.
+
+Following list describes chosen input parameters for the application. Letters match command line options.
+
+\begin{description}
+\item{L} degree of parallelism
+
+\item{M} memory cost parameter
+
+\item{T} number of Argon2 iterations
+
+\item{s} number of computations
+
+\item{b} number of hashes computed in every computation (batches)
+\end{description}
+
+Please notice the \emph{s} and \emph{b} parameters, they are important while interpreting results collected through this tool. The tool performs \emph{s} consecutive discrete computations. Every such computation is measured separately and the tool outputs its length including time of writing and reading of data for OpenCL and CUDA modes. In every such phase \emph{b} hopefully parallel hash computations is performed. I say hopefully because it is not always possible or desirable. Lenght of every such small computation is measured and averaged at the end of the whole benchmark.  So at the end the tool performs $s \times b$ computations.
+
+The tool tries to run as many parallel threads as possible. The number of such threads is determined as $b \times L$. The amount of needed memory is determined as $b \times M$. However, there are upper limits for both values considering effectivity of calculations. While computing on CPU through standard Argon2 CPU implementation or OpenCL platform, the number of available CPU threads is effectively the limit. While performing computations on GPU through OpenCL or CUDA, the tool cannot run if amount of memory required is higher than amount of memory available at the GPU.
+
+originally the tool generated random strings 64 bytes long. I modified the tool sothat strings are loaded from provided file containing one password per line. My modifications can be found at \parencite{argon2gpuvojta}.
+
+\FloatBarrier
+
+\subsection{Results}
+Here I describe and compare results collected by two methods described in previous subsections. These numbers serve as direct basis for the price model described in the next chapter. the following list shows column headings used in tables with their description and appropriate units:
+
+\begin{description}
+\item{T} number of threads passed as parameter to cracker
+
+\item{b} number of concurent Argon2 computations passed through \verb+-b+ parameter to the Argon2-gpu-bench tool
+
+\item{avg(tph)} average time spent calculating one hash in milliseconds
+
+\item{stdev(tph)} standard deviation of time spent computing one hash in milliseconds
+
+\item{avg(c)} average time spent computing one batch of hashes in milliseconds
+
+\item{stdev(c)} standard deviation of time spent computing one batch of hashes in milliseconds
+\end{description}
+
+
+
+\noindent
+\begin{table}
+\caption{Cracker running on Nympha}
+\label{tab:nymphacracker}
+\begin{tabularx}{\textwidth}{| c | c |}
+\hline
+T & avg(tph)\\
+\hline
+1 & 1522.347\\
+\hline
+2 & 1107.5161\\
+\hline
+4 & 1208.7151\\
+\hline
+8 & 2308.0038\\
+\hline
+16 & 4688.9099\\
+\hline
+32 & 8182.64344\\
+\hline
+64 & 16306.40980\\
+\hline
+128 & 35668.50723\\
+\hline
+\end{tabularx}
+\end{table}
+
+\noindent
+\begin{table}
+\caption{Cracker running on Nympha cracking drive with parameters benchmarked on Raspberry Pi}
+\label{tab:nymphacrackerrpi}
+\begin{tabularx}{\textwidth}{| c | c |}
+\hline
+T & avg(tph)\\
+\hline
+1 & 1.69139\\
+\hline
+2 & 1.684504\\
+\hline
+4 & 2.718874\\
+\hline
+8 & 4.262887\\
+\hline
+16 & 7.930445\\
+\hline
+32 & 12.130352\\
+\hline
+64 & 
+
+
+\noindent
+\begin{table}
+\caption{Argon2-gpu-bench running on Nympha in CPU mode}
+\label{tab:nymphacpu}
+\begin{tabularx}{\textwidth}{| c | c | c | c | c |}
+\hline
+b & avg(tph) & stdev(tph) & avg(c) | stdev(c)\\
+\hline
+1 & 1641.408 & 29.667225 & 1641.408 & 29.667225 \\
+\hline
+2 & 893.785107 & 21.578192 & 1787.570 & 43.156384 \\
+\hline
+4 & 525.360194 & 10.351916 & 2101.441 & 41.407664\\
+\hline
+8 & 351.323321 & 10.219132 & 2810.587 & 81.753061\\
+\hline
+16 & 296.345655 & 4.376179 & 4741.530 & 70.018871\\
+\hline
+\end{tabularx}
+\end{table}
+
+\noindent
+\begin{table}
+\caption{Argon2-gpu-bench running on Konos in CUDA mode}
+\label{tab:konosgpu}
+\begin{tabularx}{\textwidth}{| c | c | c | c | c |}
+\hline
+b & avg(tph) & stdev(tph) & avg(c) | stdev(c)\\
+\hline
+1 & 2996.175 & 0.057949 & 2996.175 & 0.057949\\
+\hline
+2 & 1499.818 & 0.025972 & 2999.637 & 0.051945 \\
+\hline
+3 & 1000.870 & 0.049965 & 3002.610 & 0.149898 \\
+\hline
+4 & 752.094474 & 0.015133 & 3008.378 & 0.060533 \\
+\hline
+5 & 602.25337 & 0.007514 & 3011.267 & 0.037569 \\
+\hline
+6 & 502.370514 & 0.106702 & 3014.223 & 0.640211 \\
+\hline
+7 & 430.885932 & 0.007669 & 3016.202 & 0.053687 \\
+\hline
+8 & 382.38511 & 0.079782 & 3059.081 & 0.638259 \\
+\hline
+9 & 340.40505 & 0.060572 & 3063.645 & 0.545148 \\
+\hline
+10 & 306.682325 & 0.04252 & 3066.823 & 0.4252 \\
+\hline
+\end{tabularx}
+\end{table}
+
+
+\noindent
+\begin{table}
+\caption{Argon2-gpu-bench running on Konos in CUDA mode comparing various options}
+\label{tab:konosgpuopt}
+\begin{tabularx}{\textwidth}{| l | c | c | c | c |}
+\hline
+option & avg(tph) & stdev(tph) & avg(c) | stdev(c)\\
+\hline
+master & 306.682325 & 0.04252 & 3066.823 & 0.4252 \\
+\hline
+master + precomputes & 294.535537 & 0.04566 & 2945.355 & 0.45661 \\
+\hline
+master + oneshot & 305.809563 & 0.009897 & 3058.096 & 0.98977 \\
+\hline
+master + oneshot + precomputes & 334.033881 & 0.008523 & 3340.339 & 0.085239 \\
+\hline
+warpshuffle & 306.163346 & 0.83872 & 3061.633 & 8.387203 \\
+\hline
+warpshuffle + precomputes & 294.932399 & 0.054746 & 2949.324 & 0.547467\\
+\hline
+warpshuffleshared & 306.103173 & 0.834074 & 3061.032 & 8.340742 \\
+\hline
+warpshuffleshared + precomputes & 297.277366 & 0.003769 & 2972.774 & 0.037696 \\
+\hline
+\end{tabularx}
+\end{table}
 
 
 \chapter{The price of an attack}
 \label{chap:model}
 This chapter focuses on creating a price model for potential attacker trying to gain unauthorized access to a disk volume encrypted with LUKS2 with Argon2 used as PBKDF. First an attacker and available hardware and software options are briefly described. Then the actual price model is introduced and applied to real world examples. The price model is based on real parameters collected during benchmarking in section~\ref{sec:benchmark} and mainly on computing Argon2 hashes based on these parameters using powerful hardware configurations described in section~\ref{sec:attack}.
 
-\section{Attacker}
+\section{Attacker definition}
+\label{sec:attacker}
 For the purpose of this thesis an attacker is defined as an entity which gained unauthorized access to a LUKS2 volume header with Argon2 used as PBKDF. The header can be part of actual encrypted volume or it can be a detached header stored for example for backup purposes. The volume is not damaged. The attacker has moderate knowledge of information security and computers in general but does not want to invest the time in searching for vulnerabilities in Argon2 or Cryptsetup. The attacker decides to use brute-force or dictionary attack.
 
 The attacker currently does not have any hardware with sufficient computing power and amount of RAM to be used for cracking the passphrase. However, suppose that the attacker has sufficient financial resources to purchase needed hardware or rent cloud computing resources.

@@ -305,7 +305,7 @@ int main(int argc, char *argv[])
     }
     finalaverage.tv_sec /= procs;
     finalaverage.tv_nsec /= procs;
-    printf ("final average %ld.%ld ns\n", finalaverage.tv_sec, finalaverage.tv_nsec);
+    printf ("final average %ld.%.9ld ns\n", finalaverage.tv_sec, finalaverage.tv_nsec);
     pthread_mutex_destroy(&pass_mutex);
     pthread_exit(NULL);
 }
