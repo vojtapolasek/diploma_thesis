@@ -67,7 +67,7 @@ struct timespec timediff(struct timespec a, struct timespec b)
 
 struct timespec timeadd(struct timespec a, struct timespec b) {
     struct timespec result;
-    if ((a.tv_nsec + b.tv_nsec) > 1000000000) {
+    if ((a.tv_nsec + b.tv_nsec) >= 1000000000) {
             result.tv_sec = a.tv_sec + b.tv_sec + 1;
             result.tv_nsec = a.tv_nsec + b.tv_nsec -1000000000;
     }
@@ -78,9 +78,23 @@ struct timespec timeadd(struct timespec a, struct timespec b) {
     return result;
 }
 
+struct timespec timedivide(struct timespec a, unsigned int b) {
+    struct timespec result;
+    if (a.tv_sec / b < 1) {
+            result.tv_sec = 0;
+            double tmp = (double)a.tv_sec / b;
+            result.tv_nsec = (a.tv_nsec / b) + (tmp * 1000000000);
+    }
+    else {
+            result.tv_sec = a.tv_sec / b;
+            result.tv_nsec = a.tv_nsec / b;
+    }
+    return result;
+}
+
 //determine number of digits in number
 unsigned int digits (int number) {
-    int result = 1;
+    unsigned int result = 1;
     int tmpnum = number;
     while ((int)(tmpnum / 10) != 0) {
         result ++;
@@ -112,7 +126,7 @@ void* check(void* threadargs)
     unsigned int fnamelen = strlen(disk_file_basename) + digits(my_id) + 1;
     char filename[fnamelen];
     sprintf(filename, "%s%d", disk_file_basename, my_id);
-    printf ("Thread %d, using %s.\n", my_id, filename);
+    fprintf (stderr, "Thread %d, using %s.\n", my_id, filename);
 
 
 
@@ -120,15 +134,15 @@ void* check(void* threadargs)
             (device_type == LUKS && crypt_load(cd, CRYPT_LUKS1, NULL)) ||
             (device_type == LUKS2 && crypt_load(cd, CRYPT_LUKS2, NULL))
         ) {
-            printf("Cannot open %s.\n", filename);
+            fprintf(stderr, "Cannot open %s.\n", filename);
             pthread_exit(NULL);
         }
 
-    printf ("Thread %d ready.\n", my_id);
+    fprintf (stderr, "Thread %d ready.\n", my_id);
     /* open password file, now in separate process */
     f = fopen(pwd_file, "r");
     if (!f) {
-        printf("Cannot open %s.\n", pwd_file);
+        fprintf(stderr, "Cannot open %s.\n", pwd_file);
         pthread_exit(NULL);
     }
     //time measurement
@@ -181,7 +195,7 @@ void* check(void* threadargs)
             pthread_mutex_lock(&pass_mutex);
             passphrase_found = 1;
             pthread_mutex_unlock(&pass_mutex);
-            printf("Found passphrase for slot %d: \"%s\"\n", r, pwd);
+            fprintf(stderr, "Found passphrase for slot %d: \"%s\"\n", r, pwd);
             break;
         }
         clock_gettime(CLOCK_MONOTONIC, &end);
@@ -192,11 +206,10 @@ void* check(void* threadargs)
 
     fclose(f);
     crypt_free(cd);
-    cumultime.tv_sec /= loopcount;
-    cumultime.tv_nsec /= loopcount;
-    printf ("Thread %d %ld.%09ld s\n", my_id, cumultime.tv_sec, cumultime.tv_nsec);
-    averages[my_id] = cumultime;
-    printf ("Thread %d finished\n", my_id);
+    struct timespec avgtime = timedivide(cumultime, loopcount);
+    printf ("%ld.%09ld\n", avgtime.tv_sec, avgtime.tv_nsec);
+    averages[my_id] = avgtime;
+    fprintf (stderr, "Thread %d finished\n", my_id);
     pthread_exit(NULL);
 }
 
@@ -271,7 +284,7 @@ int main(int argc, char *argv[])
                 exit(EXIT_FAILURE);
     }*/
 
-    printf ("%d threads.\n", procs);
+    fprintf (stderr, "%d threads.\n", procs);
 
     pthread_t thread_ids[procs];
     //defining array for averages from time measurement
@@ -286,7 +299,7 @@ int main(int argc, char *argv[])
         tmptarg->my_id = i;
         tmptarg->max_id = procs;
         tmptarg->averages = averages;
-        printf ("creating thread %d.\n", i);
+        //printf ("creating thread %d.\n", i);
         pthread_create(&thread_ids[i], NULL, check, tmptarg);
     }
 
@@ -295,17 +308,16 @@ int main(int argc, char *argv[])
     }
     clock_gettime(CLOCK_MONOTONIC, &end);
     struct timespec dif = timediff(start, end);
-    printf ("total calculation %ld.%09ld s \n", dif.tv_sec, dif.tv_nsec);
-    struct timespec finalaverage;
-    finalaverage.tv_sec = 0;
-    finalaverage.tv_nsec = 0;
+    fprintf (stderr, "total calculation %ld.%09ld s \n", dif.tv_sec, dif.tv_nsec);
+    struct timespec cumulaverage;
+    cumulaverage.tv_sec = 0;
+    cumulaverage.tv_nsec = 0;
     for (int i = 0; i < procs; i++) {
-        finalaverage.tv_sec += averages[i].tv_sec;
-        finalaverage.tv_nsec += averages[i].tv_nsec;
+        cumulaverage.tv_sec += averages[i].tv_sec;
+        cumulaverage.tv_nsec += averages[i].tv_nsec;
     }
-    finalaverage.tv_sec /= procs;
-    finalaverage.tv_nsec /= procs;
-    printf ("final average %ld.%09ld s\n", finalaverage.tv_sec, finalaverage.tv_nsec);
+    struct timespec finalaverage = timedivide(cumulaverage, procs);
+    fprintf (stderr, "final average %ld.%09ld s\n", finalaverage.tv_sec, finalaverage.tv_nsec);
     pthread_mutex_destroy(&pass_mutex);
     pthread_exit(NULL);
 }

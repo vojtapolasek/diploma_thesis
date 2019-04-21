@@ -758,9 +758,11 @@ The motivation behind performing of experimental simulations described in this c
 The following list describes parameters of the most interesting machines used during the research. For description of all the machines offered in Metacentrum see \parencite{metacentrumhw}.
 
 \begin{description}
-\item{Elmo1} $4\times14$ CPU Intel Xeon Gold 5120 2.20 GHz, hyperhreading 2 threads per core, supporting AVX512F instruction, 768 GB of RAM
+\item{Elmo1} $4\times14$ CPU Intel Xeon Gold 5120 2.20 GHz, hyperthreading 2 threads per core, supporting AVX512F instruction, 768 GB of RAM
 
 %\item{Elmo3}
+
+\item{Doom} $2 |times 8$ cores Intel Xeon E5-2650v2 2.60 GHz, hyperthreading 2 threads per core, supporting SSSE3 instruction, 64 GiB RAM, nVidia Tesla K20 with 4743 MiB of memory
 
 \item{Konos} $2\times10$ cores Intel(R) Xeon(R) CPU E5-2630 v4 at 2.20 GHz, hyperthreading 2 threads per core, supporting AVX2 instruction, 128 GB of RAM, NVIDIA GeForce GTX 1080 Ti with 11178 MiB of GPU memory
 
@@ -780,6 +782,7 @@ While performing computations on CPU I always allocated whole computing host and
 For the sake of completeness experiments were ran also on the laptop used in the process of collecting benchmarked parameters in the previous section. Parameters are described in subsection~\ref{subsec:laptop}.
 
 \subsection{naive method}
+\label{subsec:naive}
 The first chosen attack method is naive but simple. It requires Libcryptsetup library to be present because it directly utilizes the API. The main idea is simply to try to recover the master key through normal means but to perform this action in multiple parallel threads.
 
 I created the tool which performs this attack. The tool was based on proof of concept called Dict\_search \parencite{cryptsetupdictsearch}.  I modified it sothat it uses threads instead of processes and it measures every recovery attempt and provides statistics. I also improved its usability. The tool can be found in the thesis Git repository.
@@ -808,6 +811,8 @@ This method utilizes a tool called Argon2-gpu-bench written by Ondrej Mosnáček
 
 The tool can compute Argon2 using three different modes. It can utilize standard CPU implementation and automatically choose the most optimized one according to supported CPU instructions. Clearing of internal memory is disabled for performance reasons. It also contains Argon2 implementation for OpenCL platform and three different GPU kernels (implementations) to be used with CUDA platform. Every GPU kernel handles the GPU memory in a different way, possibly producing different results under different parameters.
 
+The \emph{Master} kernel uses only shared memory of GPU. The \emph{Warpshuffle} kernel uses only GPU registers. The \emph{Warpshuffleshared} kernel uses combination of both. Additionally, while running in GPU or OpenCL mode, it is possible to select two modes of operation. the \emph{Oneshot} computes individual Argon2 computation as one GPU / OpenCL task, whereas \emph{By-segment} mode divides computation of Argon2 slices among individual GPU / OpenCL tasks.
+
 Argon2-gpu-bench can also precompute values for Argon2i and Argon2id, speeding up the process. This feature is available only for CUDA and OpenCL modes.
 
 Following list describes chosen input parameters for the application. Letters match command line options.
@@ -826,7 +831,7 @@ Following list describes chosen input parameters for the application. Letters ma
 
 Please notice the \emph{s} and \emph{b} parameters, they are important while interpreting results collected through this tool. The tool performs \emph{s} consecutive discrete computations. Every such computation is measured separately and the tool outputs its length including time of writing and reading of data for OpenCL and CUDA modes. In every such phase \emph{b} hopefully parallel hash computations is performed. I say hopefully because it is not always possible or desirable. Lenght of every such small computation is measured and averaged at the end of the whole benchmark.  So at the end the tool performs $s \times b$ computations.
 
-The tool tries to run as many parallel threads as possible. The number of such threads is determined as $b \times L$. The amount of needed memory is determined as $b \times M$. However, there are upper limits for both values considering effectivity of calculations. While computing on CPU through standard Argon2 CPU implementation or OpenCL platform, the number of available CPU threads is effectively the limit. While performing computations on GPU through OpenCL or CUDA, the tool cannot run if amount of memory required is higher than amount of memory available at the GPU.
+The tool tries to run as many parallel threads as possible. The number of such threads is determined as $b \times L$. The amount of needed memory is determined as $b \times M$. However, there are upper limits for both values considering effectivity of calculations. While computing on CPU through standard Argon2 CPU implementation or OpenCL platform, the number of available CPU threads should be effectively the limit. While performing computations on GPU through OpenCL or CUDA, the tool cannot run if amount of memory required is higher than amount of memory available at the GPU.
 
 originally the tool generated random strings 64 bytes long. I modified the tool sothat strings are loaded from provided file containing one password per line. My modifications can be found at \parencite{argon2gpuvojta}.
 
@@ -851,10 +856,9 @@ Here I describe and compare results collected by two methods described in previo
 
 Tables \ref{tab:nymphacracker}, \ref{tab:nymphacpu}  and \ref{tab:konosgpu} show us a baseline of results. Nympha and Konos were the most powerful machines for computing Argon2 I managed to find in MetaCentrum. We can see that cracking hashes with high memory parameter (1049576 KiB) is highly ineffective with the naive approach. The best result was achieved while running two concurrent unlocking operations, therefore occupying 8 threads. This configuration enabled computation of 1 hash per 1.107 seconds.
 
-However, using powerful enough CPU supporting AVX512F instructions or using GPU it is possible to get more interesting results. The table \ref{tab:nymphacpu} is very interesting in particular. As we can see, we can get to the speed of 1 hash per 215 milliseconds, e.g. 4.651 hashes per second. From the theoretical point of view, the most effective computation should occur while running 16 concurrent Argon2 computations using $16 \times 4 = 64$ threads, as Nympha machine offers 64 CPU threads. As we can observe, at this degree of parallelism one hash can be computed in 296.3 milliseconds. However, increasing degree of parallelism up to 512 decreases the time up to 215 milliseconds. I am not entirely sure why does it happen and further research should be performed in this area.
+However, using powerful enough CPU supporting AVX512F instructions it is possible to get more interesting results. The table \ref{tab:nymphacpu} is very interesting in particular. As we can see, we can get to the speed of 1 hash per 215 milliseconds, that is 4.651 hashes per second. From the theoretical point of view, the most effective computation should occur while running 16 concurrent Argon2 computations using $16 \times 4 = 64$ threads, as Nympha machine offers 64 CPU threads. As we can observe, at this degree of parallelism one hash can be computed in 296.3 milliseconds. However, increasing degree of parallelism up to 512 decreases the time up to 215 milliseconds. This is probably caused by desynchronization of threads during the computing process because it is not possible to have 512 threads running at the same time if every thread requires 1 GiB of memory and the machine has only 180 GiB of memory. apparently threads get managed by operating system scheduler sothat performance is not degraded.
 
-
-
+Considering GPU it is possible to get even slightly better times. The GPU provided by Konos machine can run at most 10 parallel Argon2 computations calculating one hash in cca 307 milliseconds, that is 3.25 hashes per second. The table \ref{tab:konosgpuopt} shows us that thanks to precomputing values for Argon2i it is possible to reach 294.5 milliseconds per hash. All values in table \ref{tab:konosgpuopt} were computed with $\emph{b} = 10$.
 
 \noindent
 \begin{table}
@@ -882,7 +886,6 @@ T & avg(tph)\\
 \hline
 \end{tabularx}
 \end{table}
-
 
 \noindent
 \begin{table}
@@ -974,6 +977,95 @@ warpshuffleshared + precomputes & 297.277366 & 0.003769 & 2972.774 & 0.037696 \\
 \end{tabularx}
 \end{table}
 
+\FloatBarrier
+
+Comparing table \ref{tab:nymphacpu} with tables \ref{tab:manegrot} and \ref{tab:uruk} shows that there probably exist several factors influencing performance of Argon2 hashing on different CPUs. Note that Manegrot does not support AVX512F instruction nor AVX2 instruction. Therefore the performance is degraded even taking into account higher frequency of its CPU. Uruk is getting close to results of Nympha, but even while having more CPUs with higher frequency, it is still lacking cca 20 milliseconds. I suppose this can be due to the fact that Nympha contains 32 single core CPUs while Uruk contains 8 CPUs with 18 cores each.
+
+\FloatBarrier
+
+\noindent
+\begin{table}
+\caption{Argon2-gpu-bench running on Manegrot}
+\label{tab:manegrot}
+\begin{tabularx}{\textwidth}{| c | c | c | c | c |}
+\hline
+b & avg(tph) & stdev(tph) & avg(c) | stdev(c)\\
+\hline
+1 & 3385.726 & 119.515742 & 3385.726 & 119.515742\\
+\hline
+2 & 1622.290 & 46.643630 & 3244.581 & 93.287261\\
+\hline
+4 & 818.661144 & 20.524608 & 3290.041 & 82.098433\\
+\hline
+8 & 657.445886 & 14.087495 & 5259.567 & 112.699966\\
+\hline
+16 & 629.229857 & 11.710085 & 10067.678 & 187.361361\\
+\hline
+32 & 606.408693 & 9.880113 & 19405.078 & 316.163620\\
+\hline
+64 & 594.680230 & 6.248621 & 38059.535 & 399.911800\\
+\hline
+128 & 585.261050 & 6.576771 & 74913.42 & 841.826712\\
+\hline
+256 & 580.427723 & 6.157127 & 148589.52 & 1576.225\\
+\hline
+\end{tabularx}
+\end{table}
+
+
+\noindent
+\begin{table}
+\caption{Argon2-gpu-bench running on Uruk}
+\label{tab:uruk}
+\begin{tabularx}{\textwidth}{| c | c | c | c | c |}
+\hline
+b & avg(tph) & stdev(tph) & avg(c) | stdev(c)\\
+\hline
+1 & 1420.081 & 158.506821 & 1420.081 & 158.506821\\
+\hline
+2 & 522.104180 & 83.144792 & 1044.208 & 166.289585\\
+\hline
+4 & 323.664122 & 49.838216 & 1294.656 & 199.352865\\
+\hline
+8 & 370.464088 & 9.467304 & 2963.713 & 75.738437\\
+\hline
+16 & 288.062681 & 36.603874 & 4609.003 & 585.661994\\
+\hline
+32 & 262.378906 & 20.554056 & 8396.125 & 657.729801\\
+\hline
+64 & 248.382633 & 32.444834 & 15896.489 & 2076.469\\
+\hline
+128 & 262.579528 & 56.605614 & 33610.180 & 7245.519\\
+\hline
+256 & 243.868085 & 20.708301 & 62430.24 & 5301.325\\
+\hline
+512 & 266.685205 & 31.304294 & 136542.84 & 16027.799\\
+\hline
+\end{tabularx}
+\end{table}
+
+The table \ref{tab:gpus} summarizes results of running Argon2-gpu-bench on several different GPU models. We can see that results can vary from 294 milliseconds per hash to 4.5 seconds per hash. All runs were computed using maximum amount of GPU memory and precomputing of values for Argon2i was enabled.
+
+\noindent
+\begin{table}
+\caption{comparing Argon2-gpu-bench on various GPUs}
+\label{tab:gpus}
+\begin{tabularx}{\textwidth}{| l | c | c | c | c | c |}
+\hline
+Device & b & avg(tph) & stdev(tph) & avg(c) & stdev(c)\\
+\hline
+Doom & 4 & 4463.151 & 0.566438 & 17852.602 & 2.265753\\
+\hline
+Konos & 10 & 294.535537 & 0.04566 & 2945.355 & 0.45661 \\
+\hline
+White & 15 & 332.779834 & 0.388264 & 4991.698 & 5.823963\\
+\hline
+Zubat & 5 & 1922.469 & 0.60108 & 9612.346 &0.300544\\
+\hline
+\end{tabularx}
+\end{table}
+
+
 \noindent
 \begin{table}
 \caption{Cracker running on Nympha cracking drive with parameters benchmarked on Raspberry Pi}
@@ -982,21 +1074,43 @@ warpshuffleshared + precomputes & 297.277366 & 0.003769 & 2972.774 & 0.037696 \\
 \hline
 T & avg(tph)\\
 \hline
-1 & 1.69139\\
+1 & 0.542015\\
 \hline
-2 & 1.684504\\
+2 & 1.118348\\
 \hline
-4 & 2.718874\\
+4 & 1.182632\\
 \hline
-8 & 4.262887\\
+8 & 5.176745\\
 \hline
-16 & 7.930445\\
+16 & 7.727428\\
 \hline
-32 & 12.130352\\
+32 & 12.965203\\
+\hline
+64 & 1039.793171\\
+\hline
+128 & 2065.304367\\
 \hline
 \end{tabularx}
 \end{table}
 
+\noindent
+\begin{table}
+\caption{Comparing cracking methods for parameters benchmarked with Raspberry Pi}
+\label{tab:rpicrack}
+\begin{tabularx}{\textwidth}{| l | c | c | c | c | c |}
+\hline
+Device & b & avg(tph) & stdev(tph) & avg(c) & stdev(c)\\
+\hline
+Nympha & 512 & 12.559353 & 0.191637 & 6430.389 & 98.118714\\
+\hline
+Konos (GPU) & 118 & 3.132034 & 0.7081000 & 369.580075 & 0.835626\\
+\hline
+White (GPU) & 172 & 2.433951 & 0.000472 & 418.639785 & 0.81221\\
+\hline
+Zubat (GPU) & 18 & 15.791761 & 0.34889 & 947.505723 & 2.093391\\
+\hline
+\end{tabularx}
+\end{table}
 
 
 
@@ -1008,25 +1122,36 @@ This chapter focuses on creating a price model for potential attacker trying to 
 \label{sec:attacker}
 For the purpose of this thesis an attacker is defined as an entity which gained unauthorized access to a LUKS2 volume header with Argon2 used as PBKDF. The header can be part of actual encrypted volume or it can be a detached header stored for example for backup purposes. The volume is not damaged. The attacker has moderate knowledge of information security and computers in general but does not want to invest the time in searching for vulnerabilities in Argon2 or Cryptsetup. The attacker decides to use brute-force or dictionary attack.
 
-The attacker currently does not have any hardware with sufficient computing power and amount of RAM to be used for cracking the passphrase. However, suppose that the attacker has sufficient financial resources to purchase needed hardware or rent cloud computing resources.
+The attacker currently does not have any hardware with sufficient computing power and amount of RAM to be used for cracking the passphrase. However, suppose that the attacker has sufficient financial resources to purchase needed hardware or rent cloud computing resources. there is no upper limit set for financial resources.
 
 \subsection{Hardware}
 While considering cracking a password or a hash, there are several types of hardware to consider. An attacker can use powerful CPUs which can be cheaper solution compared to other possibilities but they are also usually slower because of their generic nature. The fact which is crucial while considering Argon2 is that they can have access to relatively large volume of RAM without degrading their computing performance. It is also less time-consuming to eventually optimize the hash algorithm for CPU than for other types of hardware.
 
-The next option often used in this process is to use GPUs. Their architecture is suitable for computing many parallel identical tasks as is the case for hash cracking. GPUs showed to be effective against PBKDF2 \parencite{mosnacek}. However, the price of a GPU might be higher than the price of a CPU. To use full computing power of GPU it is important that the data being processed is copied into GPU global memory which limited. This fact could  reduce their effectivity in this particular case considering possible high memory demands of Argon2.
+The next option often used in this process is to use GPUs. Their architecture is suitable for computing many parallel identical tasks as is the case for hash cracking. GPUs showed to be effective against PBKDF2 \parencite{mosnacek}. However, the price of a GPU might be higher than the price of a CPU. To use full computing power of GPU it is important that the data being processed is copied into GPU memory which is limited. This fact could  reduce their effectivity in this particular case considering possible high memory demands of Argon2.
 
 Last two options are FPGAs and ASICs. They represent two groups of hardware which can be optimized for highly specific tasks. FPGAs are in general less powerful but they can be easily reprogrammed after production. ASICs can incorporate parts which can be later reprogrammed but definitely not to the same extend as FPGAs. ASICs are also more expensive than FPGAs when produced in small volumes. Moreover, to the best of the author's knowledge, there does not exist any publicly available implementation of Argon2 for FPGAs or ASICs and it would take for an attacker nonnegligible amount of time to create one.
 
 \subsection{Software}
-There does not exist any publicly available software offering feature to crack passphrases of LUKS2 headers. There exists a simple proof of concept program distributed with Cryptsetup called Dict\_search. It mounts dictionary attack against specified device supporting Truecrypt and LUKS1. After slight modifications it can be used also against LUKS2 volumes. It uses API of libcryptsetup. Therefore it obviously introduces slight overhead by creating and deleting structures pertaining to Cryptsetup.
+There does not exist any publicly available software offering feature to crack passphrases of LUKS2 headers. There exists a simple proof of concept program distributed with Cryptsetup called Dict\_search \parencite{cryptsetupdictsearch}. It mounts dictionary attack against specified device supporting Truecrypt and LUKS1. After slight modifications it can be used also against LUKS2 volumes. It uses API of libcryptsetup. Therefore it obviously introduces slight overhead by creating and deleting structures pertaining to Cryptsetup. Modification of this tool is used in this thesis in subsection~\ref{subsec:naive}
 
-Then there is a possibility of extracting the master key from the captured LUKS2 header and trying to find the right password by comparing it to it after being hashed. This removes some slight overload mentioned above. Support for cracking of Argon2 hashes appeared in well-known open source password auditing software John the ripper in July 2016. This allows to use some infrastructure offered by the framework ut the hash function is not optimized in any way.
+Then there is a possibility of extracting the master key from the captured LUKS2 header and trying to find the right password by comparing it to it after being hashed. This removes some slight overload mentioned above. Support for cracking of Argon2 hashes appeared in well-known open source password auditing software John the ripper in July 2016. This allows to use some infrastructure offered by the framework but the hash function is not optimized in any way.
 
-Ondrej Mosnáček created an experimental program for benchmarking speed of Argon2 while running on CPUs and GPUs \parencite{argon2gpu}. The project can use both CUDA and OpenCL technologies to run on multiple GPUs or CPUs. The program currently does not perform password cracking, passwords are generated randomly and they are not compared to any hash. But slight modifications to the project could turn it into a password cracker.
+Ondrej Mosnáček created an experimental program for benchmarking speed of Argon2 while running on CPUs and GPUs \parencite{argon2gpu}. The project can use both CUDA and OpenCL technologies to run on multiple GPUs or CPUs. The program currently does not perform password cracking, passwords are generated randomly and they are not compared to any hash. But slight modifications to the project could turn it into a password cracker. I modified this tool sothat it reads passwords from a provided file, see \parencite{argon2gpuvojta}.
 
 \section{Price model}
-Based on previous assumptions of an attacker's options I try to create a price model which will estimate costs connected with finding the right passphrase to unlock the LUKS2 encrypted volume. These costs include purchase of devices and electricity costs. The model is based on...
+Based on previous assumptions of an attacker's options I tried to create a price model which will estimate costs connected with finding the right passphrase to unlock the LUKS2 encrypted volume. These costs include purchase of devices and electricity costs. Following variables were defined to formalize the model:
 
+\begin{description}
+\item{P} number of passwords to be tried
+
+\item{H} initial price of one machine (CPU, RAM, accessories expressed in dollars
+
+\item{E} price of electricity expressed in dollars per kilowatt
+
+\item{N} number of machines
+
+\item{S} speed of one machine expressed as number of computed hashes per second
+\end{description}
 
 
 \section{Real world cost estimation}
