@@ -200,6 +200,7 @@ void* check(void* threadargs)
         }
         clock_gettime(CLOCK_MONOTONIC, &end);
         struct timespec dif = timediff(start, end);
+        printf ("%ld.%09ld\n", dif.tv_sec, dif.tv_nsec);
         cumultime = timeadd(dif, cumultime);
         loopcount += 1;
     }
@@ -207,7 +208,7 @@ void* check(void* threadargs)
     fclose(f);
     crypt_free(cd);
     struct timespec avgtime = timedivide(cumultime, loopcount);
-    printf ("%ld.%09ld\n", avgtime.tv_sec, avgtime.tv_nsec);
+//    printf ("%ld.%09ld\n", avgtime.tv_sec, avgtime.tv_nsec);
     averages[my_id] = avgtime;
     fprintf (stderr, "Thread %d finished\n", my_id);
     pthread_exit(NULL);
