@@ -766,7 +766,7 @@ The following list describes parameters of the most interesting machines used du
 
 \item{Konos} $2\times10$ cores Intel(R) Xeon(R) CPU E5-2630 v4 at 2.20 GHz, hyperthreading 2 threads per core, supporting AVX2 instruction, 128 GB of RAM, NVIDIA GeForce GTX 1080 Ti with 11178 MiB of GPU memory
 
-\item{nympha} $32\times$ Intel(R) Xeon(R) Gold 6130 CPU at 2.10 GHz, hyperthreading 2 threads per core, supporting AVX512F instruction, 192 GiB of RAM
+\item{nympha} $2\times16$ cores Intel(R) Xeon(R) Gold 6130 CPU at 2.10 GHz, hyperthreading 2 threads per core, supporting AVX512F instruction, 192 GiB of RAM
 
 \item{Manegrot} $4\times$ 8-core Intel Xeon E5-4627v2 at 3.30GHz, no hyperthreading, supporting SSSE3 instruction, 512 GiB of RAM
 
@@ -1142,19 +1142,58 @@ Ondrej Mosnáček created an experimental program for benchmarking speed of Argo
 Based on previous assumptions of an attacker's options I tried to create a price model which will estimate costs connected with finding the right passphrase to unlock the LUKS2 encrypted volume. These costs include purchase of devices and electricity costs. Following variables were defined to formalize the model:
 
 \begin{description}
-\item{P} number of passwords to be tried
-
-\item{H} initial price of one machine (CPU, RAM, accessories expressed in dollars
+\item{D} power draw of one machine expressed in kilowatts
 
 \item{E} price of electricity expressed in dollars per kilowatt
 
-\item{N} number of machines
+\item{F} expected final price of whole attack expressed in dollars
 
-\item{S} speed of one machine expressed as number of computed hashes per second
+\item{H} initial price of one machine (CPU, RAM, accessories expressed in dollars
+
+\item{L} expected length of an attack expressed in days
+
+\item{N} number of machines expressed as a decimal number rounded to the closest higher integer
+
+\item{P} number of passwords an attacker is willing to try expressed as integer
+
+\item{R} price to rent one machine for one day expressed in dollars
+
+\item{S} speed of one machine expressed as number of seconds spent computing one hash
 \end{description}
+
+The model expects that an attacker uses array of homogenous machines and that the speed of Argon2 hash cracking had been at least approximately benchmarked. No assumptions about actual password are expected and therefore the model expets the worst case; that the whole password space \emph{P} has to be processed to find the right password. The model can simulate two different cases.
+
+\begin{enumerate}
+\item an attacker plans to purchase actual physical hardware
+
+\item an attacker rents machines from an online cloud provider (Amazon, Microsoft Azure, Alibaba Cloud etc.)
+\end{enumerate}
+
+The final price is determined by set of following equations:
+
+\begin{equation}
+\label{eq1}
+N = \frac{\frac{S}{60 \times 60 \times 24} \times P}{L}
+\end{equation}
+
+\begin{equation}
+\label{eq2}
+F = ( N \times H ) + ( N \times D \times E \times L)
+\end{equation}
+
+\begin{equation}
+\label{eq3}
+F = N \times R \times L
+\end{equation}
+
+The equation \ref{eq1} determines how many machines are needed to exhaust complete password space \emph{P} in \emph{L} days. The result denoted as \emph{N} can then be used in equations \ref{eq2} or \ref{eq3}.
+
+The equation \ref{eq2} is used in the case of purchasing and using physical hardware. In that case an attacker should estimate power draw of single machine by collecting information from datasheets or rather by performing real world tests. There exist online versions of power consumption calculators. If an attacker decides to allocate computing resources in online clouds, then the equation \ref{eq3} should be used. Online cloud providers usually provide online pricelists for their services.
+
 
 
 \section{Real world cost estimation}
+
 
 
 
