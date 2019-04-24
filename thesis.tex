@@ -34,6 +34,15 @@
 \begin{document}
 \tableofcontents
 \chapter{Introduction}
+This diploma thesis deals with password-based key derivation functions and their application in disk encryption software. At the very beginning of the computer era there were no passwords. They appeared for the first time in 1960's and they were introduced by Fernando Corbató \parencite{ctss}. They are going through evolving process as they try to keep pace with developing technology and new ways in which the technology is being used.
+
+Passwords are becoming more and more important. They protect our secrets, our money, our communication. All these things are valuable not only to us but also to other people and some of them would like to gain access to them for malicious purposes. There are many ways how to gain access to the secret passhprase including guessing, social engineering, exploiting application vulnerabilities etc. This thesis deals with the method mentioned first and it tries to look at it from the attacker's perspective. To be more exact, it considers this option from the perspective of attacker's financial resources. It tries to answer a question: How much would it cost to guess a password opening an encrypted disk volume? The short answers is millions of dollars.
+
+The second chapter introduces basic terminology and rationale for usage of PBKDFs in the scope of disk encryption. It also summarises history and possible attacks against PBKDFs. The third chapter describes in detail the PBKDF2 function and the Argon2 function. During their analysis the rationale for using memory hard functions is shown. The Argon2 function is described in greater detail because it is fundamental for rest of the thesis. At the end of the chapter several other password hashing functions and their features are briefly mentioned.
+
+The fourth chapter analyses the LUKS2 disk encryption scheme and its frontend called Cryptsetup. First the inner working of LUKS2 is introduced with special focus on usage of PBKDFs in various processes. The rationale for benchmarking of PBKDF parameters is explained. This benchmarking function is then used to collect real world data to be used in subsequent analysis. The last part is dedicated to experimental simulation of an attacker trying to break LUKS2 disk encryption by guessing the passphrase. This process inevitably requires processing of PBKDFs. Methodology, tools and highlights from resulting data are shown.
+
+The fifth chapter summarizes options of a potential attacker and introduces the price model suited for estimating final price of an attack agains LUKS2 encrypted volume. The model is applied to real world data based on results from the previous chapter. The option of using CPUs, GPUs and cloud based on-demand allocated resources is taken into account. The sixth chapter provides conclusions and several paths for further research in this area.
 
 \chapter{Password hashing and key derivation functions}
 
@@ -385,6 +394,7 @@ Both concepts came as a reaction to increasing computing power of parallel hardw
 \section{Other PBKDFs}
 
 \chapter{Analysis of LUKS2}
+\label{chap:analysis}
 This chapter deals with the actual practical research performed as a part of the thesis. The important goal of this thesis is to create a price model for potential attacker trying to get unauthorised access to LUKS2 encrypted partition. Another goal is tightly related. As explained in section~\ref{luks2pbkdf}, LUKS2 can determine three parameters for Argon2 through its own benchmarking function. It is highly probable that most of Cryptsetup users do not provide their own Argon2 parameters and therefore use the benchmarking function.
 
 Therefore, before the actual model is created, it is necessary to collect sufficient data about parameters used as a result of  this benchmark under various real world conditions. The process and results are described in section~\ref{sec:benchmark}. These parameters are further used while simulating attacks on LUKS2 encrypted volumes on real machines.  This is described in section~\ref{sec:attack}. Results are used to create an actual price model in chapter~\ref{chap:model}.
@@ -478,9 +488,7 @@ The benchmarking function takes as an input a desired unlocking time specified i
 \label{sec:benchmark}
 In \ref{luks2pbkdf} three parameters for Argon2 were mentioned. They have crucial impact on resistance of the resulting hash against dictionary or brute-force attacks. Their effects are described in detail in section~\ref{argon2}. From the Cryptsetup's point of view, these parameters impact not only security but  user experience as well. If they are set to too low values, the security of encryption keys can be endangered. If they are set to tooo high values, the unlocking process can last undesirably long time or  excesive amount of computing power and memory can be used. Cryptsetup does not suppose that all users know exact implications of choosing particular parameters. Therefore, it introduces a benchmarking function. Note that advanced users can still choose parameters manually.
 
-The benchmarking function takes as an input the desired unlocking time specified in milliseconds. It starts with default parameters and performs several PBKDF computations. By increasing and decreasing parameters during computations it tries to find the most secure (the highest) parameters while not exceeding the unlocking time. Additionally the function performs some estimations to reduce number of required computations because the benchmarking process should not last too long. Average length of benchmark is ... zjistit
-
-Due to this approach the resulting parameters are dependent on several conditions, in particular available hardware and current workload of the system. This can be observed in ... However, as pointed out ..., the resulting parameters are currently very secure.
+The benchmarking function takes as an input the desired unlocking time specified in milliseconds. It starts with default parameters and performs several PBKDF computations. By increasing and decreasing parameters during computations it tries to find the most secure (the highest) parameters while not exceeding the unlocking time. Additionally the function performs some estimations to reduce number of required computations because the benchmarking process should not last too long. Due to this approach the resulting parameters are dependent on several conditions, in particular available hardware and current workload of the system.
 
 Currently there exist some limitations which are hardcoded into Cryptsetup. The minimal number of iterations for Argon2 is 4, maximum number is limited by limit of unsigned 32 bit integer for the given platform. The minimum memory parameter is 32 KiB, maximum is 4 GiB. The minimal degree of parallelism for Argon2 is 1, maximum is 4. All the limits are hardcoded in \parencite{cryptsetupgitpbkdfcheck}. Note that the number of parallel threads will be always at most 4 and it will decrease if not enough CPUs are online at the time of the benchmark.
 
@@ -523,7 +531,7 @@ Simulating various hardware conditions by limiting CPU performance and available
 
 At first I tried to use Control Groups 2 feature of Linux kernel \parencite{cgroups2}. Unfortunately, I was not able to get desired results. In particular I was not able to guarantee that the benchmarking process will really use limited set of CPU cores. Then I tried to use the Cpulimit project \parencite{cpulimit}. Unfortunately I still was not able to guarantee that the benchmarking function uses only certain number of CPU cores.
 
-At last I found the solution for limiting number of available CPU cores. On the laptop running Accessible Coconut, I was able to disable individual cores by modifying the file 
+At last I found the solution for limiting number of available CPU cores. I was able to disable individual cores by modifying the file 
 \begin{tt}
 /sys/devices/system/cpu/cpu\emph{N}/online
 \end{tt}
@@ -535,9 +543,9 @@ maxcpus=\emph{n}
 \end{tt}
  kernel parameter. This device does not offer hyperthreading.
 
-Due to the way in which the Cryptsetup detects available amount of memory, I decided to perform modification to Cryptsetup it self \parencite{cryptsetuputils}. I decided to modify directly the function \emph{crypt\_getphysmemory\_kb} which returns available physical memory in Kb. I modified it sothat it reads the value from an environment variable, see the patch in the thesis git repository.
+Due to the way in which the Cryptsetup detects available amount of memory, I decided to perform modification to Cryptsetup it self \parencite{cryptsetuputils}. I decided to modify directly the function \emph{crypt\_getphysmemory\_kb} which returns available physical memory in Kb. I modified it sothat it reads the value from an environment variable, see the patch in the thesis git repository \parencite{thesisrepo}.
 
-After the benchmark I used the Datamash tool to perform basic statistic computations on resulting CSV data \parencite{datamash}. Raw data as well as Datamash results can be found in the thesis Git repository.
+After the benchmark I used the Datamash tool to perform basic statistic computations on resulting CSV data \parencite{datamash}. Raw data as well as Datamash results can be found in the thesis Git repository \parencite{thesisrepo}.
 
 \FloatBarrier
 
@@ -554,7 +562,7 @@ Tables present some chosen results gained through methodology described in the p
 \item{stdev()} standard deviation
 \end{description}
 
-The table \ref{tab:l8c32g} serves as an introduction and it shows which parameters to expect. The most important is the row concerning unlocking time of 2000 milliseconds as these values were used as baseline for simlating of attacks in the next chapter. Tables \ref{tab:l4c4g}, \ref{tab:l4c2g} and ... demonstrate hardware limitations affecting Argon2 parameters. See the Git repository for more combinations of CPU and memory limitations.
+The table \ref{tab:l8c32g} serves as an introduction and it shows which parameters to expect. The most important is the row concerning unlocking time of 2000 milliseconds as these values were used as baseline for simlating of attacks in the next chapter. Tables \ref{tab:l4c4g} and \ref{tab:l4c2g} demonstrate hardware limitations affecting Argon2 parameters. See the Git repository for more combinations of CPU and memory limitations \parencite{thesisrepo}.
 
 \noindent
 \begin{table}
@@ -616,17 +624,17 @@ Unlocking time & avg(t) & stdev(t) & avg(m) & stdev(m)\\
 \hline
 1000 & 4 & 0 & 781944 & 1715,758\\
 \hline
-2000 & 6 & 0 & 1024000 & 0\\
+2000 & 6 & 0 & 1048576 & 0\\
 \hline
-3000 & 9 & 0 & 1024000 & 0\\
+3000 & 9 & 0 & 1048576 & 0\\
 \hline
-4000 & 12 & 0 & 1024000 & 0\\
+4000 & 12 & 0 & 1048576 & 0\\
 \hline
-5000 & 15 & 0 & 1024000 & 0\\
+5000 & 15 & 0 & 1048576 & 0\\
 \hline
-10000 & 31.26 & 0.438 & 1024000 & 0\\
+10000 & 31.26 & 0.438 & 1048576 & 0\\
 \hline
-20000 & 63.57 & 1.041 & 1024000 & 0\\
+20000 & 63.57 & 1.041 & 1048576 & 0\\
 \hline
 \end{tabularx}
 \end{table}
@@ -758,10 +766,6 @@ The motivation behind performing of experimental simulations described in this c
 The following list describes parameters of the most interesting machines used during the research. For description of all the machines offered in Metacentrum see \parencite{metacentrumhw}.
 
 \begin{description}
-\item{Elmo1} $4\times14$ CPU Intel Xeon Gold 5120 2.20 GHz, hyperthreading 2 threads per core, supporting AVX512F instruction, 768 GB of RAM
-
-%\item{Elmo3}
-
 \item{Doom} $2 |times 8$ cores Intel Xeon E5-2650v2 2.60 GHz, hyperthreading 2 threads per core, supporting SSSE3 instruction, 64 GiB RAM, nVidia Tesla K20 with 4743 MiB of memory
 
 \item{Konos} $2\times10$ cores Intel(R) Xeon(R) CPU E5-2630 v4 at 2.20 GHz, hyperthreading 2 threads per core, supporting AVX2 instruction, 128 GB of RAM, NVIDIA GeForce GTX 1080 Ti with 11178 MiB of GPU memory
@@ -779,13 +783,11 @@ The following list describes parameters of the most interesting machines used du
 
 While performing computations on CPU I always allocated whole computing host and requested maximum number of available CPUS. I requested always at least $(T/L) \times M$ GiB of memory where \emph{T} denotes number of available CPU threads, \emph{L} denotes degree of parallelism for instance of Argon2 being computed and \emph{M} denotes memory cost. While simulating attacks on GPU I always reserved one instance of GPU, 1 CPU and 1 GiB of RAM memory. Reservations of GPUs are always exclusive. All tests used SSDs as underlying storage.
 
-For the sake of completeness experiments were ran also on the laptop used in the process of collecting benchmarked parameters in the previous section. Parameters are described in subsection~\ref{subsec:laptop}.
-
 \subsection{naive method}
 \label{subsec:naive}
 The first chosen attack method is naive but simple. It requires Libcryptsetup library to be present because it directly utilizes the API. The main idea is simply to try to recover the master key through normal means but to perform this action in multiple parallel threads.
 
-I created the tool which performs this attack. The tool was based on proof of concept called Dict\_search \parencite{cryptsetupdictsearch}.  I modified it sothat it uses threads instead of processes and it measures every recovery attempt and provides statistics. I also improved its usability. The tool can be found in the thesis Git repository.
+I created the tool which performs this attack. The tool was based on proof of concept called Dict\_search \parencite{cryptsetupdictsearch}.  I modified it sothat it uses threads instead of processes and it measures every recovery attempt and provides statistics. I also improved its usability. The tool can be found in the thesis Git repository \parencite{thesisrepo}.
 
 
 The tool expects following inputs where letters denoting parameters correspond to the command line options:
@@ -804,7 +806,7 @@ The tool performs basic validation of input parameters and launches defined numb
 
 Memory footprint of this method can be expressed as $M \times T$, where \emph{M} denotes the memory cost parameter used during creation of the encrypted partition and \emph{T} denotes number of cracking threads specified while launching the tool. The number of utilized CPU threads can be expressed as $P \times T$, where \emph{P} denotes the degreee of parallelism of Argon2 used during initialization of the encrypted drive and \emph{T} is number of parallel cracking threads.
 
-Because an attacker would try to speed up the cracking process as soon as possible, I compiled Cryptsetup with support for optimized Argon2 using the \verb+--enable-sse-internal-argon2+ and I applied a simple patch which disabled clearing of internal Argon2 memory after every Argon2 computation. The patch can be found in the Git repository of the thesis.
+Because an attacker would try to speed up the cracking process as soon as possible, I compiled Cryptsetup with support for optimized Argon2 using the \verb+--enable-sse-internal-argon2+ and I applied a simple patch which disabled clearing of internal Argon2 memory after every Argon2 computation. The patch can be found in the Git repository of the thesis \parencite{thesisrepo}.
 
 \subsection{Method based on Argon2-gpu-bench tool}
 This method utilizes a tool called Argon2-gpu-bench written by Ondrej Mosnáček \parencite{argon2gpu}. The tool was originally created to benchmark speed and energy consumption of Argon2 computing hashes. The background scenario was offline brute-force attack against Argon2 hash, which overlaps with goals of my thesis. that is the reason why I selected this tool.
@@ -864,25 +866,25 @@ Considering GPU it is possible to get even slightly better times. The GPU provid
 \begin{table}
 \caption{Cracker running on Nympha cracking drive created with benchmark parameters on laptop}
 \label{tab:nymphacracker}
-\begin{tabularx}{\textwidth}{| c | c |}
+\begin{tabularx}{\textwidth}{| c | c | c |}
 \hline
-T & avg(tph)\\
+T & avg(tph) & stdev(tph)\\
 \hline
-1 & 1522.347\\
+1 & 1584.7674505155 & 50.545681611488\\
 \hline
-2 & 1107.5161\\
+2 & 1634.9176665279 & 82.044594758925\\
 \hline
-4 & 1208.7151\\
+4 & 1906.2277095858 & 106.58529332311\\
 \hline
-8 & 2308.0038\\
+8 & 2502.0319979111 & 178.33914452799\\
 \hline
-16 & 4688.9099\\
+16 & 4302.8584071083 & 385.43973954664\\
 \hline
-32 & 8182.64344\\
+32 & 8482.6342007254 & 816.59626290929\\
 \hline
-64 & 16306.40980\\
+64 & 17180.945616567 & 1810.2488004088\\
 \hline
-128 & 35668.50723\\
+128 & 34929.874538718 & 3893.6171198381\\
 \hline
 \end{tabularx}
 \end{table}
@@ -979,7 +981,7 @@ warpshuffleshared + precomputes & 297.277366 & 0.003769 & 2972.774 & 0.037696 \\
 
 \FloatBarrier
 
-Comparing table \ref{tab:nymphacpu} with tables \ref{tab:manegrot} and \ref{tab:uruk} shows that there probably exist several factors influencing performance of Argon2 hashing on different CPUs. Note that Manegrot does not support AVX512F instruction nor AVX2 instruction. Therefore the performance is degraded even taking into account higher frequency of its CPU. Uruk is getting close to results of Nympha, but even while having more CPUs with higher frequency, it is still lacking cca 20 milliseconds. I suppose this can be due to the fact that Nympha contains 32 single core CPUs while Uruk contains 8 CPUs with 18 cores each.
+Comparing table \ref{tab:nymphacpu} with tables \ref{tab:manegrot} and \ref{tab:uruk} shows that there probably exist several factors influencing performance of Argon2 hashing on different CPUs. Note that Manegrot does not support AVX512F instruction nor AVX2 instruction. Therefore the performance is degraded even taking into account higher frequency of its CPU. Uruk is getting close to results of Nympha, but even while having more CPUs with higher frequency, it is still lacking cca 20 milliseconds.
 
 \FloatBarrier
 
@@ -1054,13 +1056,15 @@ The table \ref{tab:gpus} summarizes results of running Argon2-gpu-bench on sever
 \hline
 Device & b & avg(tph) & stdev(tph) & avg(c) & stdev(c)\\
 \hline
-Doom & 4 & 4463.151 & 0.566438 & 17852.602 & 2.265753\\
+Doom (CUDA) & 4 & 4463.151 & 0.566438 & 17852.602 & 2.265753\\
 \hline
-Konos & 10 & 294.535537 & 0.04566 & 2945.355 & 0.45661 \\
+Konos (CUDA) & 10 & 294.535537 & 0.04566 & 2945.355 & 0.45661 \\
 \hline
-White & 15 & 332.779834 & 0.388264 & 4991.698 & 5.823963\\
+Konos (OpenCL) & 330.875352 & 0.00042542 & 3308.754 & 0.000425425\\ 
 \hline
-Zubat & 5 & 1922.469 & 0.60108 & 9612.346 &0.300544\\
+White  (CUDA) & 15 & 332.779834 & 0.388264 & 4991.698 & 5.823963\\
+\hline
+Zubat (CUDA) & 5 & 1922.469 & 0.60108 & 9612.346 &0.300544\\
 \hline
 \end{tabularx}
 \end{table}
@@ -1070,25 +1074,25 @@ Zubat & 5 & 1922.469 & 0.60108 & 9612.346 &0.300544\\
 \begin{table}
 \caption{Cracker running on Nympha cracking drive with parameters benchmarked on Raspberry Pi}
 \label{tab:nymphacrackerrpi}
-\begin{tabularx}{\textwidth}{| c | c |}
+\begin{tabularx}{\textwidth}{| c | c | c |}
 \hline
-T & avg(tph)\\
+T & avg(tph) & stdev(tph)\\
 \hline
-1 & 0.542015\\
+1 & 191.1086647873 & 28.144991133841\\
 \hline
-2 & 1.118348\\
+2 & 181.3873000524 & 19.477671236564\\
 \hline
-4 & 1.182632\\
+4 & 175.174665196 & 17.050759284106\\
 \hline
-8 & 5.176745\\
+8 & 217.2155391269 & 25.309739052278\\
 \hline
-16 & 7.727428\\
+16 & 348.0360111828 & 44.765986824601\\
 \hline
-32 & 12.965203\\
+32 & 757.1984403583 & 134.52586365155\\
 \hline
-64 & 1039.793171\\
+64 & 1574.5352730001 & 227.50342685639\\
 \hline
-128 & 2065.304367\\
+128 & 3352.7277294633 & 609.03763595655\\
 \hline
 \end{tabularx}
 \end{table}
@@ -1101,7 +1105,7 @@ T & avg(tph)\\
 \hline
 Device & b & avg(tph) & stdev(tph) & avg(c) & stdev(c)\\
 \hline
-Nympha & 512 & 12.559353 & 0.191637 & 6430.389 & 98.118714\\
+Nympha (CPU) & 512 & 12.559353 & 0.191637 & 6430.389 & 98.118714\\
 \hline
 Konos (GPU) & 118 & 3.132034 & 0.7081000 & 369.580075 & 0.835626\\
 \hline
@@ -1139,6 +1143,7 @@ Then there is a possibility of extracting the master key from the captured LUKS2
 Ondrej Mosnáček created an experimental program for benchmarking speed of Argon2 while running on CPUs and GPUs \parencite{argon2gpu}. The project can use both CUDA and OpenCL technologies to run on multiple GPUs or CPUs. The program currently does not perform password cracking, passwords are generated randomly and they are not compared to any hash. But slight modifications to the project could turn it into a password cracker. I modified this tool sothat it reads passwords from a provided file, see \parencite{argon2gpuvojta}.
 
 \section{Price model}
+\label{sec:model}
 Based on previous assumptions of an attacker's options I tried to create a price model which will estimate costs connected with finding the right passphrase to unlock the LUKS2 encrypted volume. These costs include purchase of devices and electricity costs. Following variables were defined to formalize the model:
 
 \begin{description}
@@ -1191,13 +1196,184 @@ The equation \ref{eq1} determines how many machines are needed to exhaust comple
 The equation \ref{eq2} is used in the case of purchasing and using physical hardware. In that case an attacker should estimate power draw of single machine by collecting information from datasheets or rather by performing real world tests. There exist online versions of power consumption calculators. If an attacker decides to allocate computing resources in online clouds, then the equation \ref{eq3} should be used. Online cloud providers usually provide online pricelists for their services.
 
 
-
 \section{Real world cost estimation}
+In this section I apply the model defined in section \ref{sec:model} to real world data. Please note that results acquired through this price model are only estimates based on data sources described below and experiments performed throughout this thesis described in chapter~\ref{chap:analysis}.
+
+Following subsections show that to crack a passhprase eight characters long used for LUKS2 volume created on modern laptop, there are needed hundreds of thousants or even millions of machines and the expected price is in range of billions of dollars. Even if parameters are benchmarked on relatively low performance hardware such as Raspberry Pi, there are still needed thousants of machines and the price stays in millions of dollars. When compared to similar research performed earlier with PBKDF2, it is visible that the price of an attack increased with ARgon2 \parencite{pbkdfresearch}.
+
+\subsection{Sources of real world data}
+Information about price and TDP of CPUs were collected from \parencite{intelspecs}, where as information about GPUs were collected from \parencite{teslak20}, \parencite{teslap100}, \parencite{geforceprice} and \parencite{geforce}. Information about prices of RAM memory were collected from \parencite{memoryprice}. Estimated electricity price is based on \parencite{electricity}. Prices of cloud services are based on available offers from Amazon \parencite{amazon} \parencite{amazoncalc}, Microsoft Azure \parencite{azure} and Alibaba Cloud \parencite{alibaba}.
+
+Note that power draw of machines is based on TDP of CPU or GPU as based in particular technical specifications. Power draw of RAM and other peripheral components is not taken into account as it is relatively small and at the same time it is hard to set certain average value. I understand that TDP is not exact representation of actual power draw but as experimental machines were not under my physical control, I decided to use this value.
+
+I define the \emph{P} as space of passhprases eight characters long containing upper case letters, lower case letters and numbers.
+
+$$P = (26 + 26 + 10)^8 = 2,.183401056 \times 10^{14}$$
+
+\subsection{Case 1 - modern laptop}
+For the first case, suppose that an attacker decides to buy machines comparable to the machine Nympha which can compute one hash in cca 217 ms. Also suppose that an attacker gets hold of an encrypted drive encrypted with LUKS2 with parameters of 6 iterations, 1048576 KiB of memory required and degree of parallelism 4.
+
+\noindent
+\begin{table}
+\caption{number of Nympha-like machines to exhaust password space depending on expected length of attack}
+\label{tab:at1}
+\begin{tabularx}{\textwidth}{| l | c |}
+\hline
+E & N\\
+\hline
+1 year & 1502404\\
+\hline
+2 years & 751202\\
+\hline
+5 years & 300481\\
+\hline
+10 years & 150240\\
+\hline
+\end{tabularx}
+\end{table}
+
+Further, let's set $H = 2 \times 1900 + 14 \times 70 = 4780$ as total price of 2 CPUs and 14 16 GiB memory modules. TDP of the particular CPU is 125 watts, running 24 hours per day the power draw is 3 kilowatts. Let's set $E = 0.21$ as if an attacker was located in United States.
+
+$$F = ( N \times 4780 ) + ( N \times 3 \times 0.21 \times L)$$
+
+Inserting respective \emph{N} and \emph{L} values according to the table \ref{tab:at1} produces following results.
+
+\noindent
+\begin{table}
+\caption{final prices for first model case using physical hardware}
+\label{tab:at2}
+\begin{tabularx}{\textwidth}{| l | c | c |}
+\hline
+L & N & F\\
+\hline
+1 year & 1502404 & 7526968919.8\\
+\hline
+2 years & 751202 & 3936223359.8\\
+\hline
+5 years & 300481 & 1781777209.75\\
+\hline
+10 years & 150240 & 1063624080\\
+\hline
+\end{tabularx}
+\end{table}
+
+The table \ref{tab:at1} shows that prices are in range of billions of dollars. Just to put this into some context, if an attacker would like to crack the passphrase in one year, according to this model the amount is equal to circa 3.4 percent of Czech Republic GDP \parencite{czechgdp}.
+
+Considering cloud options there are multiple choices. For example Microsoft Azure cloud offers F72s v2 instances offering 72 virtual CPUs based on Intel Xeon Platinum 8168 which can reach sustained turbo frequencies for all cores up to 3.4 GHz and supports AVX512F instruction set. The instance provides only 144 GiB of RAM but it is sufficient as a rough estimate. Following table shows expected final prices counting in discounts for long term usage. Values were calculated by placing appropriate price values showed at \parencite{azure} into equation \ref{eq3}.
+
+\noindent
+\begin{table}
+\caption{final prices for first model case using Microsoft Azure Cloud}
+\label{tab:at3}
+\begin{tabularx}{\textwidth}{| l | c | c |}
+\hline
+L & N & F\\
+\hline
+1 year & 1502404 & 23684641848.384\\
+\hline
+2 years & 751202 & 23684641848.384\\
+\hline
+5 years & 300481 & 14689067771.58\\
+\hline
+10 years & 150240 & 14689018886.4\\
+\hline
+\end{tabularx}
+\end{table}
+
+The table \ref{tab:at3} shows that renting an online instance for the same computation is definitely not the cheaper option. Even with expected time of ten years the price is still above ten billions of dollars per hash.
+
+\subsection{Case 2 - Raspberry Pi}
+As the second example suppose that an attacker gains access to a drive encrypted with parameters benchmarked on Raspberry Pi. In particular parameters were 4 iterations, 95296.58 KiB of memory and degree of paralellism 4. Suppose that an attacker decides to use NVIDIA GeForce GTX 1080 Ti with 11178 MiB of GPU memory equal with provided one by Konos machine. In the table \ref{tab:rpicrack} it is shown that it takes 3.132034 milliseconds to compute one Argon2 hash.
+
+\noindent
+\begin{table}
+\caption{number of Konos-like machines to exhaust password space depending on expected length of attack}
+\label{tab:at4}
+\begin{tabularx}{\textwidth}{| l | c |}
+\hline
+E & N\\
+\hline
+1 year & 21685\\	
+\hline
+2 years & 10843\\
+\hline
+5 years & 4337\\
+\hline
+10 years & 2169\\
+\hline
+\end{tabularx}
+\end{table}
+
+Suppose $H = 1000$, NVidia unfortunately does not provide suggested customer price, therefore the price was estimated according to \parencite{geforceprice}. $D = \frac{250 \times 24}{1000} = 6$ kilowatts. 
+
+\noindent
+\begin{table}
+\caption{final prices for the second model case using physical hardware}
+\label{tab:at5}
+\begin{tabularx}{\textwidth}{| l | c | c |}
+\hline
+L & N & F\\
+\hline
+1 year & 21685 & 31657931.5\\
+\hline
+2 years & 10843 & 20816391.4\\
+\hline
+5 years & 4337 & 14309931.5\\
+\hline
+10 years & 2169 & 12144231\\
+\hline
+\end{tabularx}
+\end{table}
+
+The table \ref{tab:at5} confirms that drastical decrease in parameters lowers also the expected attack price. Note that the memory parameter was decreased almost ten times. The price is still above ten millions of dollars.
+
+Although this GPU did not achieve the best hash computing time, it provided relatively low price compared to NVidia Tesla P100 (estimated 1000  dollarsvs estimated 4500 dollars). But it is possible to rent Tesla P100 in the cloud. As an example let's take the instance NCV2 providing up to 4 GPUs per instance provided by Microsoft Azure. The table \ref{tab:at6} shows the results and confirms that renting GPUs online is not the cheaper option again.
+
+\noindent
+\begin{table}
+\caption{final prices for the second model case using Microsoft Azure Cloud}
+\label{tab:at6}
+\begin{tabularx}{\textwidth}{| l | c | c |}
+\hline
+L & N & F\\
+\hline
+1 year & 21685 & 250472549.13\\
+\hline
+2 years & 10843 & 250484099.628\\
+\hline
+5 years & 4337 & 174550046.325\\
+\hline
+10 years & 2169 & 174590293.05\\
+\hline
+\end{tabularx}
+\end{table}
 
 
 
 
 \chapter{Conclusions}
+The thesis introduced password-based key derivation functions and their usage in disk volume encryption focusing on LUKS2 encryption scheme. Resistance of LUKS2 to brute-force or dictionary-based password cracking was researched and experimentally verified.
+
+Firstly a custom tool was used to collect real world Argon2 parameters as benchmarked by Cryptsetup. Two very different but real hardware configurations were used; a modern high-end laptop and a single-board computer. Factors influencing such benchmarks were briefly described. These data were then used as a basis for experimental simulation of guessing attack on LUKS2 passphrase.
+
+There were introduced two methods. The first method used API provided by Cryptsetup. The second method used slightly modified tool originally created for benchmarking Argon2 performance. The first method proved to be less effective and it was not considered in further research. Both methods were applied on a hardware provided by MetaCentrum VO organization. This hardware provided tens of CPU cores and hundrets of gibibites of RAM per single machine because it was assumed that determined attacker would buy or rent such machines. Both CPUs and GPUs were used if applicable. Results were collected and showed.
+
+Based on information about Argon2 and collected data the price model was created. This model was then applied to real world data described in previous chapters. Note that some data had to be only estimated (power draw of machines, hardware prices etc). The model showed that resistance of Argon2 to brute-force guessing had greatly improved compared to PBKDF2.
+
+To point out one example, cracking in ten years an eight characters long passphrase used to unlock encrypted volume in cca two seconds on Raspberry PI could take up to 2169 NVidia Tesla P100 GPUs costing cca 12 million dollars. Trying to crack a volume created on modern laptop would require up to 150240 powerful machines running for ten years costing over one billion dollars.
+
+\section{Further research suggestions}
+There are many ways in which topic of PBKDFs and their resilience to guessing attacks could be explored more. In this section I try to suggest several areas for further research.
+
+The main method for simulating of an attack agains Argon2 was based on benchmarking tool. Only computation of Argon2 is involved, no actual decryption of volumes is performed. It would be interesting to create a fully working cracking tool and test its performance, eventually making the price model more precise. This process could be connected with measuring of real power draw of physical machines while performing the attack. This values would make the model even more precise.
+
+Another part which could be researched more are cloud-based computing services. The prices and estimates described in the fifth chapter of the thesis were made only based on theoretical information and no actual computation was made using these resources. The real efficiency might differ and in that case it might positively or negatively influence the resulting price and suitability for the attack.
+
+The Argon2-gpu-bench tool could be probably more improved with support for modern GPUs and their features. As shown in table \ref{tab:gpus}, the performance on older Nvidia Geforce GPU was better than on more recent P100 GPU which should theoretically be more powerful.
+
+
+
+
 
 \printbibliography
 \end{document}
