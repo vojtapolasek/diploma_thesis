@@ -1,0 +1,287 @@
+patching file lib/crypto_backend/argon2/core.c
+checking whether make supports nested variables... yes
+checking for a BSD-compatible install... /usr/bin/install -c
+checking whether build environment is sane... yes
+checking for a thread-safe mkdir -p... /bin/mkdir -p
+checking for gawk... gawk
+checking whether make sets $(MAKE)... yes
+checking build system type... x86_64-unknown-linux-gnu
+checking host system type... x86_64-unknown-linux-gnu
+checking whether make supports the include directive... yes (GNU style)
+checking for gcc... gcc
+checking whether the C compiler works... yes
+checking for C compiler default output file name... a.out
+checking for suffix of executables... 
+checking whether we are cross compiling... no
+checking for suffix of object files... o
+checking whether we are using the GNU C compiler... yes
+checking whether gcc accepts -g... yes
+checking for gcc option to accept ISO C89... none needed
+checking whether gcc understands -c and -o together... yes
+checking dependency style of gcc... gcc3
+checking how to run the C preprocessor... gcc -E
+checking for grep that handles long lines and -e... /bin/grep
+checking for egrep... /bin/grep -E
+checking for ANSI C header files... yes
+checking for sys/types.h... yes
+checking for sys/stat.h... yes
+checking for stdlib.h... yes
+checking for string.h... yes
+checking for memory.h... yes
+checking for strings.h... yes
+checking for inttypes.h... yes
+checking for stdint.h... yes
+checking for unistd.h... yes
+checking minix/config.h usability... no
+checking minix/config.h presence... no
+checking for minix/config.h... no
+checking whether it is safe to define __EXTENSIONS__... yes
+checking for gcc... (cached) gcc
+checking whether we are using the GNU C compiler... (cached) yes
+checking whether gcc accepts -g... (cached) yes
+checking for gcc option to accept ISO C89... (cached) none needed
+checking whether gcc understands -c and -o together... (cached) yes
+checking dependency style of gcc... (cached) gcc3
+checking how to run the C preprocessor... gcc -E
+checking whether make sets $(MAKE)... (cached) yes
+checking how to print strings... printf
+checking for a sed that does not truncate output... /bin/sed
+checking for fgrep... /bin/grep -F
+checking for ld used by gcc... /usr/bin/ld
+checking if the linker (/usr/bin/ld) is GNU ld... yes
+checking for BSD- or MS-compatible name lister (nm)... /usr/bin/nm -B
+checking the name lister (/usr/bin/nm -B) interface... BSD nm
+checking whether ln -s works... yes
+checking the maximum length of command line arguments... 3458764513820540925
+checking how to convert x86_64-unknown-linux-gnu file names to x86_64-unknown-linux-gnu format... func_convert_file_noop
+checking how to convert x86_64-unknown-linux-gnu file names to toolchain format... func_convert_file_noop
+checking for /usr/bin/ld option to reload object files... -r
+checking for objdump... objdump
+checking how to recognize dependent libraries... pass_all
+checking for dlltool... no
+checking how to associate runtime and link libraries... printf %s\n
+checking for ar... ar
+checking for archiver @FILE support... @
+checking for strip... strip
+checking for ranlib... ranlib
+checking command to parse /usr/bin/nm -B output from gcc object... ok
+checking for sysroot... no
+checking for a working dd... /bin/dd
+checking how to truncate binary pipes... /bin/dd bs=4096 count=1
+checking for mt... mt
+checking if mt is a manifest tool... no
+checking for dlfcn.h... yes
+checking for objdir... .libs
+checking if gcc supports -fno-rtti -fno-exceptions... no
+checking for gcc option to produce PIC... -fPIC -DPIC
+checking if gcc PIC flag -fPIC -DPIC works... yes
+checking if gcc static flag -static works... yes
+checking if gcc supports -c -o file.o... yes
+checking if gcc supports -c -o file.o... (cached) yes
+checking whether the gcc linker (/usr/bin/ld -m elf_x86_64) supports shared libraries... yes
+checking whether -lc should be explicitly linked in... no
+checking dynamic linker characteristics... GNU/Linux ld.so
+checking how to hardcode library paths into programs... immediate
+checking whether stripping libraries is possible... yes
+checking if libtool supports shared libraries... yes
+checking whether to build shared libraries... yes
+checking whether to build static libraries... no
+checking for pkg-config... /usr/bin/pkg-config
+checking pkg-config is at least version 0.9.0... yes
+checking for C/C++ restrict keyword... __restrict
+checking for dirent.h that defines DIR... yes
+checking for library containing opendir... none required
+checking for ANSI C header files... (cached) yes
+checking fcntl.h usability... yes
+checking fcntl.h presence... yes
+checking for fcntl.h... yes
+checking malloc.h usability... yes
+checking malloc.h presence... yes
+checking for malloc.h... yes
+checking for inttypes.h... (cached) yes
+checking sys/ioctl.h usability... yes
+checking sys/ioctl.h presence... yes
+checking for sys/ioctl.h... yes
+checking sys/mman.h usability... yes
+checking sys/mman.h presence... yes
+checking for sys/mman.h... yes
+checking sys/sysmacros.h usability... yes
+checking sys/sysmacros.h presence... yes
+checking for sys/sysmacros.h... yes
+checking sys/statvfs.h usability... yes
+checking sys/statvfs.h presence... yes
+checking for sys/statvfs.h... yes
+checking ctype.h usability... yes
+checking ctype.h presence... yes
+checking for ctype.h... yes
+checking for unistd.h... (cached) yes
+checking locale.h usability... yes
+checking locale.h presence... yes
+checking for locale.h... yes
+checking byteswap.h usability... yes
+checking byteswap.h presence... yes
+checking for byteswap.h... yes
+checking endian.h usability... yes
+checking endian.h presence... yes
+checking for endian.h... yes
+checking for stdint.h... (cached) yes
+checking uuid/uuid.h usability... yes
+checking uuid/uuid.h presence... yes
+checking for uuid/uuid.h... yes
+checking libdevmapper.h usability... yes
+checking libdevmapper.h presence... yes
+checking for libdevmapper.h... yes
+checking linux/keyctl.h usability... yes
+checking linux/keyctl.h presence... yes
+checking for linux/keyctl.h... yes
+checking whether __NR_add_key is declared... yes
+checking whether __NR_keyctl is declared... yes
+checking whether __NR_request_key is declared... yes
+checking for key_serial_t... no
+checking for uuid_clear in -luuid... yes
+checking for library containing clock_gettime... none required
+checking for posix_memalign... yes
+checking for clock_gettime... yes
+checking for posix_fallocate... yes
+checking for explicit_bzero... no
+checking for an ANSI C-conforming const... yes
+checking whether byte ordering is bigendian... no
+checking for off_t... yes
+checking for special C compiler options needed for large files... no
+checking for _FILE_OFFSET_BITS value needed for large files... no
+checking for _LARGEFILE_SOURCE value needed for large files... no
+checking whether gcc needs -traditional... no
+checking whether strerror_r is declared... yes
+checking for strerror_r... yes
+checking whether strerror_r returns char *... yes
+checking whether NLS is requested... yes
+checking for msgfmt... /usr/bin/msgfmt
+checking for gmsgfmt... /usr/bin/msgfmt
+checking for xgettext... /usr/bin/xgettext
+checking for msgmerge... /usr/bin/msgmerge
+checking for ld used by gcc... /usr/bin/ld -m elf_x86_64
+checking if the linker (/usr/bin/ld -m elf_x86_64) is GNU ld... yes
+checking for shared library run path origin... done
+checking for CFPreferencesCopyAppValue... no
+checking for CFLocaleCopyCurrent... no
+checking for GNU gettext in libc... yes
+checking whether to use NLS... yes
+checking where the gettext function comes from... libc
+checking for poptConfigFileToString in -lpopt... yes
+checking for DEVMAPPER... no
+checking for dm_task_set_name in -ldevmapper... yes
+checking for dm_task_set_message in -ldevmapper... yes
+checking whether dm_task_secure_data is declared... yes
+checking whether dm_task_retry_remove is declared... yes
+checking whether dm_task_deferred_remove is declared... yes
+checking whether dm_device_has_mounted_fs is declared... yes
+checking whether dm_device_has_holders is declared... yes
+checking whether DM_UDEV_DISABLE_DISK_RULES_FLAG is declared... yes
+checking for JSON_C... yes
+checking whether json_object_object_add_ex is declared... no
+checking linux/if_alg.h usability... yes
+checking linux/if_alg.h presence... yes
+checking for linux/if_alg.h... yes
+checking for OPENSSL... yes
+checking if Argon2 SSE optimization can be used... yes
+checking for systemd tmpfiles config directory... /usr/lib/tmpfiles.d
+checking that generated files are newer than configure... done
+configure: creating ./config.status
+config.status: creating Makefile
+config.status: creating lib/libcryptsetup.pc
+config.status: creating po/Makefile.in
+config.status: creating scripts/cryptsetup.conf
+config.status: creating tests/Makefile
+config.status: creating config.h
+config.status: executing depfiles commands
+config.status: executing libtool commands
+config.status: executing po-directories commands
+config.status: creating po/POTFILES
+config.status: creating po/Makefile
+make  all-recursive
+make[1]: Entering directory '/scratch.ssd/vojtapolasek/job_10472502.arien-pro.ics.muni.cz/cryptsetup-2.1.0'
+Making all in po
+make[2]: Entering directory '/scratch.ssd/vojtapolasek/job_10472502.arien-pro.ics.muni.cz/cryptsetup-2.1.0/po'
+make[2]: Nothing to be done for 'all'.
+make[2]: Leaving directory '/scratch.ssd/vojtapolasek/job_10472502.arien-pro.ics.muni.cz/cryptsetup-2.1.0/po'
+Making all in tests
+make[2]: Entering directory '/scratch.ssd/vojtapolasek/job_10472502.arien-pro.ics.muni.cz/cryptsetup-2.1.0/tests'
+make[2]: Nothing to be done for 'all'.
+make[2]: Leaving directory '/scratch.ssd/vojtapolasek/job_10472502.arien-pro.ics.muni.cz/cryptsetup-2.1.0/tests'
+make[2]: Entering directory '/scratch.ssd/vojtapolasek/job_10472502.arien-pro.ics.muni.cz/cryptsetup-2.1.0'
+  CC       lib/utils_crypt.o
+  CC       lib/utils_loop.o
+  CC       lib/utils_io.o
+  CC       lib/utils_blkid.o
+  CC       src/utils_tools.o
+  CC       src/utils_password.o
+  CC       src/utils_luks2.o
+  CC       src/cryptsetup.o
+  CC       lib/libcryptsetup_la-setup.lo
+  CC       lib/libcryptsetup_la-utils.lo
+  CC       lib/libcryptsetup_la-utils_benchmark.lo
+  CC       lib/libcryptsetup_la-utils_crypt.lo
+  CC       lib/libcryptsetup_la-utils_loop.lo
+  CC       lib/libcryptsetup_la-utils_devpath.lo
+  CC       lib/libcryptsetup_la-utils_wipe.lo
+  CC       lib/libcryptsetup_la-utils_fips.lo
+  CC       lib/libcryptsetup_la-utils_device.lo
+  CC       lib/libcryptsetup_la-utils_keyring.lo
+  CC       lib/libcryptsetup_la-utils_device_locking.lo
+  CC       lib/libcryptsetup_la-utils_pbkdf.lo
+  CC       lib/libcryptsetup_la-libdevmapper.lo
+  CC       lib/libcryptsetup_la-volumekey.lo
+  CC       lib/libcryptsetup_la-random.lo
+  CC       lib/libcryptsetup_la-crypt_plain.lo
+  CC       lib/libcryptsetup_la-base64.lo
+  CC       lib/integrity/libcryptsetup_la-integrity.lo
+  CC       lib/loopaes/libcryptsetup_la-loopaes.lo
+  CC       lib/tcrypt/libcryptsetup_la-tcrypt.lo
+  CC       lib/luks1/libcryptsetup_la-af.lo
+  CC       lib/luks1/libcryptsetup_la-keyencryption.lo
+  CC       lib/luks1/libcryptsetup_la-keymanage.lo
+  CC       lib/verity/libcryptsetup_la-verity_hash.lo
+  CC       lib/verity/libcryptsetup_la-verity_fec.lo
+  CC       lib/verity/libcryptsetup_la-verity.lo
+  CC       lib/verity/libcryptsetup_la-rs_encode_char.lo
+  CC       lib/verity/libcryptsetup_la-rs_decode_char.lo
+  CC       lib/luks2/libcryptsetup_la-luks2_disk_metadata.lo
+  CC       lib/luks2/libcryptsetup_la-luks2_json_format.lo
+  CC       lib/luks2/libcryptsetup_la-luks2_json_metadata.lo
+  CC       lib/luks2/libcryptsetup_la-luks2_luks1_convert.lo
+  CC       lib/luks2/libcryptsetup_la-luks2_digest.lo
+  CC       lib/luks2/libcryptsetup_la-luks2_digest_pbkdf2.lo
+  CC       lib/luks2/libcryptsetup_la-luks2_keyslot.lo
+  CC       lib/luks2/libcryptsetup_la-luks2_keyslot_luks2.lo
+  CC       lib/luks2/libcryptsetup_la-luks2_token_keyring.lo
+  CC       lib/luks2/libcryptsetup_la-luks2_token.lo
+  CC       lib/libcryptsetup_la-utils_blkid.lo
+  CC       lib/libutils_io_la-utils_io.lo
+  CCLD     libutils_io.la
+  CC       lib/crypto_backend/libcrypto_backend_la-crypto_cipher_kernel.lo
+  CC       lib/crypto_backend/libcrypto_backend_la-crypto_storage.lo
+  CC       lib/crypto_backend/libcrypto_backend_la-pbkdf_check.lo
+  CC       lib/crypto_backend/libcrypto_backend_la-crc32.lo
+  CC       lib/crypto_backend/libcrypto_backend_la-argon2_generic.lo
+  CC       lib/crypto_backend/libcrypto_backend_la-cipher_generic.lo
+  CC       lib/crypto_backend/libcrypto_backend_la-crypto_openssl.lo
+  CC       lib/crypto_backend/argon2/blake2/libargon2_la-blake2b.lo
+  CC       lib/crypto_backend/argon2/libargon2_la-argon2.lo
+  CC       lib/crypto_backend/argon2/libargon2_la-core.lo
+  CC       lib/crypto_backend/argon2/libargon2_la-encoding.lo
+  CC       lib/crypto_backend/argon2/libargon2_la-thread.lo
+  CC       lib/crypto_backend/argon2/libargon2_la-opt.lo
+  CCLD     libargon2.la
+  CCLD     libcrypto_backend.la
+  CCLD     libcryptsetup.la
+  CCLD     cryptsetup
+  CC       src/veritysetup.o
+  CCLD     veritysetup
+  CC       src/integritysetup.o
+  CCLD     integritysetup
+  CC       src/cryptsetup_reencrypt.o
+  CCLD     cryptsetup-reencrypt
+make[2]: Leaving directory '/scratch.ssd/vojtapolasek/job_10472502.arien-pro.ics.muni.cz/cryptsetup-2.1.0'
+make[1]: Leaving directory '/scratch.ssd/vojtapolasek/job_10472502.arien-pro.ics.muni.cz/cryptsetup-2.1.0'
+copying
+copying done

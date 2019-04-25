@@ -1,0 +1,12 @@
+stdmem1.csv
+max(iterations)	min(iterations)	mean(iterations)	pstdev(iterations)	max(memory)	min(memory)	mean(memory)	pstdev(memory)
+4	4	4	0	155720	149943	155588,13	567,56267768415
+stdmem2.csv
+max(iterations)	min(iterations)	mean(iterations)	pstdev(iterations)	max(memory)	min(memory)	mean(memory)	pstdev(memory)
+4	4	4	0	293600	290996	292743,65	477,97678552415
+stdmem3.csv
+max(iterations)	min(iterations)	mean(iterations)	pstdev(iterations)	max(memory)	min(memory)	mean(memory)	pstdev(memory)
+4	4	4	0	404186	275265	324983,08	26844,636135243
+stdmem4.csv
+max(iterations)	min(iterations)	mean(iterations)	pstdev(iterations)	max(memory)	min(memory)	mean(memory)	pstdev(memory)
+4	4	4	0	295859	287821	292344,17	1726,4215363288

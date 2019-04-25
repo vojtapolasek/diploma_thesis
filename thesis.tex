@@ -789,7 +789,6 @@ The first chosen attack method is naive but simple. It requires Libcryptsetup li
 
 I created the tool which performs this attack. The tool was based on proof of concept called Dict\_search \parencite{cryptsetupdictsearch}.  I modified it sothat it uses threads instead of processes and it measures every recovery attempt and provides statistics. I also improved its usability. The tool can be found in the thesis Git repository \parencite{thesisrepo}.
 
-
 The tool expects following inputs where letters denoting parameters correspond to the command line options:
 
 \begin{description}
@@ -810,6 +809,8 @@ Because an attacker would try to speed up the cracking process as soon as possib
 
 \subsection{Method based on Argon2-gpu-bench tool}
 This method utilizes a tool called Argon2-gpu-bench written by Ondrej Mosnáček \parencite{argon2gpu}. The tool was originally created to benchmark speed and energy consumption of Argon2 computing hashes. The background scenario was offline brute-force attack against Argon2 hash, which overlaps with goals of my thesis. that is the reason why I selected this tool.
+
+Note that this is not a password guessing tool in its current implementation. It only computes provided Argon2 hashes. The scenario expects that an attacker would use this tool to precompute Argon2 hashes and later, possibly in parallel, would use hashes as decryption keys to recover the master key. the right password could be verified by decrypting several sectors of a volume with recovered master key and searching for well-known signatures.
 
 The tool can compute Argon2 using three different modes. It can utilize standard CPU implementation and automatically choose the most optimized one according to supported CPU instructions. Clearing of internal memory is disabled for performance reasons. It also contains Argon2 implementation for OpenCL platform and three different GPU kernels (implementations) to be used with CUDA platform. Every GPU kernel handles the GPU memory in a different way, possibly producing different results under different parameters.
 

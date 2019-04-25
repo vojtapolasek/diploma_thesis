@@ -1,0 +1,130 @@
+Submodule path 'ext/argon2': checked out '57478dff430e8906560f75db57b24bc3a2892615'
+-- The CXX compiler identification is GNU 6.3.0
+-- Check for working CXX compiler: /usr/bin/c++
+-- Check for working CXX compiler: /usr/bin/c++ -- works
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Looking for C++ include pthread.h
+-- Looking for C++ include pthread.h - found
+-- Looking for pthread_create
+-- Looking for pthread_create - not found
+-- Looking for pthread_create in pthreads
+-- Looking for pthread_create in pthreads - not found
+-- Looking for pthread_create in pthread
+-- Looking for pthread_create in pthread - found
+-- Found Threads: TRUE  
+-- Found CUDA: /software/cuda/9.0 (found version "9.0") 
+-- The C compiler identification is GNU 6.3.0
+-- Check for working C compiler: /usr/bin/cc
+-- Check for working C compiler: /usr/bin/cc -- works
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Performing Test FEATURE_sse2_NOFLAG
+-- Performing Test FEATURE_sse2_NOFLAG - Success
+-- Performing Test FEATURE_ssse3_NOFLAG
+-- Performing Test FEATURE_ssse3_NOFLAG - Failed
+-- Performing Test FEATURE_ssse3_FLAG
+-- Performing Test FEATURE_ssse3_FLAG - Success
+-- Performing Test FEATURE_xop_NOFLAG
+-- Performing Test FEATURE_xop_NOFLAG - Failed
+-- Performing Test FEATURE_xop_FLAG
+-- Performing Test FEATURE_xop_FLAG - Success
+-- Performing Test FEATURE_avx2_NOFLAG
+-- Performing Test FEATURE_avx2_NOFLAG - Failed
+-- Performing Test FEATURE_avx2_FLAG
+-- Performing Test FEATURE_avx2_FLAG - Success
+-- Performing Test FEATURE_avx512f_NOFLAG
+-- Performing Test FEATURE_avx512f_NOFLAG - Failed
+-- Performing Test FEATURE_avx512f_FLAG
+-- Performing Test FEATURE_avx512f_FLAG - Success
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /scratch.ssd/vojtapolasek/job_10495563.arien-pro.ics.muni.cz/argon2-gpu/build
+Scanning dependencies of target argon2-gpu-common
+[  1%] Building CXX object CMakeFiles/argon2-gpu-common.dir/lib/argon2-gpu-common/argon2params.cpp.o
+[  3%] Building CXX object CMakeFiles/argon2-gpu-common.dir/lib/argon2-gpu-common/blake2b.cpp.o
+[  5%] Linking CXX shared library libargon2-gpu-common.so
+[  5%] Built target argon2-gpu-common
+Scanning dependencies of target argon2-opencl
+[  7%] Building CXX object CMakeFiles/argon2-opencl.dir/lib/argon2-opencl/device.cpp.o
+[  9%] Building CXX object CMakeFiles/argon2-opencl.dir/lib/argon2-opencl/globalcontext.cpp.o
+[ 11%] Building CXX object CMakeFiles/argon2-opencl.dir/lib/argon2-opencl/kernelloader.cpp.o
+[ 12%] Building CXX object CMakeFiles/argon2-opencl.dir/lib/argon2-opencl/programcontext.cpp.o
+[ 14%] Building CXX object CMakeFiles/argon2-opencl.dir/lib/argon2-opencl/processingunit.cpp.o
+[ 16%] Building CXX object CMakeFiles/argon2-opencl.dir/lib/argon2-opencl/kernelrunner.cpp.o
+[ 18%] Linking CXX shared library libargon2-opencl.so
+[ 18%] Built target argon2-opencl
+[ 20%] Building NVCC (Device) object CMakeFiles/argon2-cuda.dir/lib/argon2-cuda/argon2-cuda_generated_kernelrunner.cu.o
+Scanning dependencies of target argon2-cuda
+[ 22%] Building CXX object CMakeFiles/argon2-cuda.dir/lib/argon2-cuda/cudaexception.cpp.o
+[ 24%] Building CXX object CMakeFiles/argon2-cuda.dir/lib/argon2-cuda/device.cpp.o
+[ 25%] Building CXX object CMakeFiles/argon2-cuda.dir/lib/argon2-cuda/globalcontext.cpp.o
+[ 27%] Building CXX object CMakeFiles/argon2-cuda.dir/lib/argon2-cuda/programcontext.cpp.o
+[ 29%] Building CXX object CMakeFiles/argon2-cuda.dir/lib/argon2-cuda/processingunit.cpp.o
+[ 31%] Linking CXX shared library libargon2-cuda.so
+[ 31%] Built target argon2-cuda
+Scanning dependencies of target argon2-sse2
+[ 33%] Building C object ext/argon2/CMakeFiles/argon2-sse2.dir/arch/x86_64/lib/argon2-sse2.c.o
+[ 35%] Linking C static library libargon2-sse2.a
+[ 35%] Built target argon2-sse2
+Scanning dependencies of target argon2-ssse3
+[ 37%] Building C object ext/argon2/CMakeFiles/argon2-ssse3.dir/arch/x86_64/lib/argon2-ssse3.c.o
+[ 38%] Linking C static library libargon2-ssse3.a
+[ 38%] Built target argon2-ssse3
+Scanning dependencies of target argon2-xop
+[ 40%] Building C object ext/argon2/CMakeFiles/argon2-xop.dir/arch/x86_64/lib/argon2-xop.c.o
+[ 42%] Linking C static library libargon2-xop.a
+[ 42%] Built target argon2-xop
+Scanning dependencies of target argon2-avx2
+[ 44%] Building C object ext/argon2/CMakeFiles/argon2-avx2.dir/arch/x86_64/lib/argon2-avx2.c.o
+[ 46%] Linking C static library libargon2-avx2.a
+[ 46%] Built target argon2-avx2
+Scanning dependencies of target argon2-avx512f
+[ 48%] Building C object ext/argon2/CMakeFiles/argon2-avx512f.dir/arch/x86_64/lib/argon2-avx512f.c.o
+[ 50%] Linking C static library libargon2-avx512f.a
+[ 50%] Built target argon2-avx512f
+Scanning dependencies of target argon2
+[ 51%] Building C object ext/argon2/CMakeFiles/argon2.dir/lib/argon2.c.o
+[ 53%] Building C object ext/argon2/CMakeFiles/argon2.dir/lib/core.c.o
+[ 55%] Building C object ext/argon2/CMakeFiles/argon2.dir/lib/encoding.c.o
+[ 57%] Building C object ext/argon2/CMakeFiles/argon2.dir/lib/genkat.c.o
+[ 59%] Building C object ext/argon2/CMakeFiles/argon2.dir/lib/impl-select.c.o
+[ 61%] Building C object ext/argon2/CMakeFiles/argon2.dir/lib/thread.c.o
+[ 62%] Building C object ext/argon2/CMakeFiles/argon2.dir/lib/blake2/blake2.c.o
+[ 64%] Building C object ext/argon2/CMakeFiles/argon2.dir/arch/x86_64/lib/argon2-arch.c.o
+[ 66%] Building C object ext/argon2/CMakeFiles/argon2.dir/arch/x86_64/lib/cpu-flags.c.o
+[ 68%] Linking C shared library libargon2.so
+[ 68%] Built target argon2
+Scanning dependencies of target argon2-gpu-test
+[ 70%] Building CXX object CMakeFiles/argon2-gpu-test.dir/src/argon2-gpu-test/main.cpp.o
+[ 72%] Building CXX object CMakeFiles/argon2-gpu-test.dir/src/argon2-gpu-test/testcase.cpp.o
+[ 74%] Linking CXX executable argon2-gpu-test
+[ 74%] Built target argon2-gpu-test
+Scanning dependencies of target argon2-gpu-bench
+[ 75%] Building CXX object CMakeFiles/argon2-gpu-bench.dir/src/argon2-gpu-bench/cpuexecutive.cpp.o
+[ 77%] Building CXX object CMakeFiles/argon2-gpu-bench.dir/src/argon2-gpu-bench/cudaexecutive.cpp.o
+[ 79%] Building CXX object CMakeFiles/argon2-gpu-bench.dir/src/argon2-gpu-bench/openclexecutive.cpp.o
+[ 81%] Building CXX object CMakeFiles/argon2-gpu-bench.dir/src/argon2-gpu-bench/benchmark.cpp.o
+[ 83%] Building CXX object CMakeFiles/argon2-gpu-bench.dir/src/argon2-gpu-bench/main.cpp.o
+[ 85%] Linking CXX executable argon2-gpu-bench
+[ 85%] Built target argon2-gpu-bench
+Scanning dependencies of target argon2-test
+[ 87%] Building C object ext/argon2/CMakeFiles/argon2-test.dir/tests/test.c.o
+[ 88%] Linking C executable argon2-test
+[ 88%] Built target argon2-test
+Scanning dependencies of target argon2-bench2
+[ 90%] Building C object ext/argon2/CMakeFiles/argon2-bench2.dir/src/bench2.c.o
+[ 92%] Linking C executable argon2-bench2
+[ 92%] Built target argon2-bench2
+Scanning dependencies of target argon2-exec
+[ 94%] Building C object ext/argon2/CMakeFiles/argon2-exec.dir/src/run.c.o
+[ 96%] Linking C executable argon2
+[ 96%] Built target argon2-exec
+Scanning dependencies of target argon2-genkat
+[ 98%] Building C object ext/argon2/CMakeFiles/argon2-genkat.dir/src/genkat.c.o
+[100%] Linking C executable argon2-genkat
+[100%] Built target argon2-genkat

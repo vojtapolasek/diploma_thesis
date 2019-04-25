@@ -1,0 +1,802 @@
+make: *** No rule to make target 'clean'.  Stop.
+configure: WARNING: Argon2 bundled (slow) reference implementation will be used, please consider to use system library with --enable-libargon2.
+ar: `u' modifier ignored since `D' is the default (see `U')
+ar: `u' modifier ignored since `D' is the default (see `U')
+ar: `u' modifier ignored since `D' is the default (see `U')
+libtool: warning: library '/scratch.ssd/vojtapolasek/job_10515287.arien-pro.ics.muni.cz/usr/lib/x86_64-linux-gnu/libpopt.la' was moved.
+libtool: warning: library '/scratch.ssd/vojtapolasek/job_10515287.arien-pro.ics.muni.cz/usr/lib/x86_64-linux-gnu/libpopt.la' was moved.
+libtool: warning: library '/scratch.ssd/vojtapolasek/job_10515287.arien-pro.ics.muni.cz/usr/lib/x86_64-linux-gnu/libpopt.la' was moved.
+libtool: warning: library '/scratch.ssd/vojtapolasek/job_10515287.arien-pro.ics.muni.cz/usr/lib/x86_64-linux-gnu/libpopt.la' was moved.
+libtool: warning: library '/scratch.ssd/vojtapolasek/job_10515287.arien-pro.ics.muni.cz/usr/lib/x86_64-linux-gnu/libpopt.la' was moved.
+libtool: warning: library '/scratch.ssd/vojtapolasek/job_10515287.arien-pro.ics.muni.cz/usr/lib/x86_64-linux-gnu/libpopt.la' was moved.
+libtool: warning: library '/scratch.ssd/vojtapolasek/job_10515287.arien-pro.ics.muni.cz/usr/lib/x86_64-linux-gnu/libpopt.la' was moved.
+libtool: warning: library '/scratch.ssd/vojtapolasek/job_10515287.arien-pro.ics.muni.cz/usr/lib/x86_64-linux-gnu/libpopt.la' was moved.
+1 threads.
+Thread 0, using test.disk0.
+Thread 0 ready.
+Thread 0 finished
+total calculation 1911.123693670 s 
+final average 0.191108664 s
+2 threads.
+Thread 0, using test.disk0.
+Thread 1, using test.disk1.
+Thread 0 ready.
+Thread 1 ready.
+Thread 1 finished
+Thread 0 finished
+total calculation 907.513131777 s 
+final average 0.181387299 s
+4 threads.
+Thread 0, using test.disk0.
+Thread 1, using test.disk1.
+Thread 2, using test.disk2.
+Thread 3, using test.disk3.
+Thread 0 ready.
+Thread 2 ready.
+Thread 3 ready.
+Thread 1 ready.
+Thread 2 finished
+Thread 3 finished
+Thread 0 finished
+Thread 1 finished
+total calculation 438.492272392 s 
+final average 0.175174664 s
+8 threads.
+Thread 1, using test.disk1.
+Thread 0, using test.disk0.
+Thread 2, using test.disk2.
+Thread 3, using test.disk3.
+Thread 4, using test.disk4.
+Thread 5, using test.disk5.
+Thread 6, using test.disk6.
+Thread 7, using test.disk7.
+Thread 4 ready.
+Thread 0 ready.
+Thread 2 ready.
+Thread 6 ready.
+Thread 1 ready.
+Thread 3 ready.
+Thread 5 ready.
+Thread 7 ready.
+Thread 1 finished
+Thread 7 finished
+Thread 0 finished
+Thread 3 finished
+Thread 4 finished
+Thread 5 finished
+Thread 6 finished
+Thread 2 finished
+total calculation 272.935014869 s 
+final average 0.217215538 s
+16 threads.
+Thread 1, using test.disk1.
+Thread 0, using test.disk0.
+Thread 2, using test.disk2.
+Thread 3, using test.disk3.
+Thread 4, using test.disk4.
+Thread 5, using test.disk5.
+Thread 6, using test.disk6.
+Thread 7, using test.disk7.
+Thread 8, using test.disk8.
+Thread 9, using test.disk9.
+Thread 10, using test.disk10.
+Thread 11, using test.disk11.
+Thread 12, using test.disk12.
+Thread 13, using test.disk13.
+Thread 14, using test.disk14.
+Thread 15, using test.disk15.
+Thread 1 ready.
+Thread 3 ready.
+Thread 0 ready.
+Thread 4 ready.
+Thread 5 ready.
+Thread 2 ready.
+Thread 6 ready.
+Thread 9 ready.
+Thread 12 ready.
+Thread 7 ready.
+Thread 8 ready.
+Thread 11 ready.
+Thread 10 ready.
+Thread 13 ready.
+Thread 14 ready.
+Thread 15 ready.
+Thread 11 finished
+Thread 10 finished
+Thread 9 finished
+Thread 5 finished
+Thread 14 finished
+Thread 4 finished
+Thread 12 finished
+Thread 7 finished
+Thread 6 finished
+Thread 13 finished
+Thread 3 finished
+Thread 8 finished
+Thread 0 finished
+Thread 2 finished
+Thread 1 finished
+Thread 15 finished
+total calculation 218.479108571 s 
+final average 0.348036010 s
+32 threads.
+Thread 0, using test.disk0.
+Thread 1, using test.disk1.
+Thread 2, using test.disk2.
+Thread 3, using test.disk3.
+Thread 4, using test.disk4.
+Thread 5, using test.disk5.
+Thread 6, using test.disk6.
+Thread 7, using test.disk7.
+Thread 8, using test.disk8.
+Thread 9, using test.disk9.
+Thread 10, using test.disk10.
+Thread 11, using test.disk11.
+Thread 12, using test.disk12.
+Thread 13, using test.disk13.
+Thread 14, using test.disk14.
+Thread 15, using test.disk15.
+Thread 16, using test.disk16.
+Thread 17, using test.disk17.
+Thread 18, using test.disk18.
+Thread 5 ready.
+Thread 19, using test.disk19.
+Thread 1 ready.
+Thread 20, using test.disk20.
+Thread 21, using test.disk21.
+Thread 22, using test.disk22.
+Thread 23, using test.disk23.
+Thread 0 ready.
+Thread 7 ready.
+Thread 6 ready.
+Thread 24, using test.disk24.
+Thread 25, using test.disk25.
+Thread 3 ready.
+Thread 8 ready.
+Thread 10 ready.
+Thread 26, using test.disk26.
+Thread 27, using test.disk27.
+Thread 4 ready.
+Thread 9 ready.
+Thread 2 ready.
+Thread 12 ready.
+Thread 14 ready.
+Thread 11 ready.
+Thread 28, using test.disk28.
+Thread 13 ready.
+Thread 16 ready.
+Thread 15 ready.
+Thread 17 ready.
+Thread 29, using test.disk29.
+Thread 22 ready.
+Thread 30, using test.disk30.
+Thread 19 ready.
+Thread 18 ready.
+Thread 20 ready.
+Thread 21 ready.
+Thread 23 ready.
+Thread 31, using test.disk31.
+Thread 24 ready.
+Thread 25 ready.
+Thread 27 ready.
+Thread 26 ready.
+Thread 28 ready.
+Thread 29 ready.
+Thread 30 ready.
+Thread 31 ready.
+Thread 17 finished
+Thread 3 finished
+Thread 22 finished
+Thread 30 finished
+Thread 21 finished
+Thread 27 finished
+Thread 15 finished
+Thread 13 finished
+Thread 8 finished
+Thread 4 finished
+Thread 16 finished
+Thread 29 finished
+Thread 1 finished
+Thread 20 finished
+Thread 9 finished
+Thread 25 finished
+Thread 23 finished
+Thread 10 finished
+Thread 14 finished
+Thread 11 finished
+Thread 2 finished
+Thread 19 finished
+Thread 24 finished
+Thread 12 finished
+Thread 0 finished
+Thread 18 finished
+Thread 6 finished
+Thread 7 finished
+Thread 28 finished
+Thread 31 finished
+Thread 5 finished
+Thread 26 finished
+total calculation 237.822564750 s 
+final average 0.757199379 s
+64 threads.
+Thread 1, using test.disk1.
+Thread 0, using test.disk0.
+Thread 2, using test.disk2.
+Thread 3, using test.disk3.
+Thread 4, using test.disk4.
+Thread 5, using test.disk5.
+Thread 6, using test.disk6.
+Thread 7, using test.disk7.
+Thread 8, using test.disk8.
+Thread 9, using test.disk9.
+Thread 10, using test.disk10.
+Thread 11, using test.disk11.
+Thread 12, using test.disk12.
+Thread 13, using test.disk13.
+Thread 14, using test.disk14.
+Thread 15, using test.disk15.
+Thread 16, using test.disk16.
+Thread 17, using test.disk17.
+Thread 18, using test.disk18.
+Thread 19, using test.disk19.
+Thread 20, using test.disk20.
+Thread 21, using test.disk21.
+Thread 22, using test.disk22.
+Thread 23, using test.disk23.
+Thread 24, using test.disk24.
+Thread 3 ready.
+Thread 25, using test.disk25.
+Thread 2 ready.
+Thread 26, using test.disk26.
+Thread 27, using test.disk27.
+Thread 0 ready.
+Thread 28, using test.disk28.
+Thread 8 ready.
+Thread 5 ready.
+Thread 1 ready.
+Thread 29, using test.disk29.
+Thread 6 ready.
+Thread 30, using test.disk30.
+Thread 7 ready.
+Thread 31, using test.disk31.
+Thread 32, using test.disk32.
+Thread 4 ready.
+Thread 33, using test.disk33.
+Thread 14 ready.
+Thread 16 ready.
+Thread 34, using test.disk34.
+Thread 13 ready.
+Thread 12 ready.
+Thread 9 ready.
+Thread 35, using test.disk35.
+Thread 10 ready.
+Thread 11 ready.
+Thread 36, using test.disk36.
+Thread 15 ready.
+Thread 20 ready.
+Thread 21 ready.
+Thread 18 ready.
+Thread 19 ready.
+Thread 17 ready.
+Thread 26 ready.
+Thread 23 ready.
+Thread 22 ready.
+Thread 37, using test.disk37.
+Thread 38, using test.disk38.
+Thread 24 ready.
+Thread 25 ready.
+Thread 29 ready.
+Thread 32 ready.
+Thread 27 ready.
+Thread 28 ready.
+Thread 30 ready.
+Thread 31 ready.
+Thread 39, using test.disk39.
+Thread 33 ready.
+Thread 34 ready.
+Thread 40, using test.disk40.
+Thread 35 ready.
+Thread 41, using test.disk41.
+Thread 42, using test.disk42.
+Thread 36 ready.
+Thread 37 ready.
+Thread 43, using test.disk43.
+Thread 38 ready.
+Thread 44, using test.disk44.
+Thread 39 ready.
+Thread 45, using test.disk45.
+Thread 40 ready.
+Thread 46, using test.disk46.
+Thread 41 ready.
+Thread 42 ready.
+Thread 47, using test.disk47.
+Thread 48, using test.disk48.
+Thread 43 ready.
+Thread 49, using test.disk49.
+Thread 44 ready.
+Thread 45 ready.
+Thread 50, using test.disk50.
+Thread 51, using test.disk51.
+Thread 46 ready.
+Thread 52, using test.disk52.
+Thread 47 ready.
+Thread 53, using test.disk53.
+Thread 48 ready.
+Thread 54, using test.disk54.
+Thread 55, using test.disk55.
+Thread 49 ready.
+Thread 56, using test.disk56.
+Thread 50 ready.
+Thread 51 ready.
+Thread 57, using test.disk57.
+Thread 52 ready.
+Thread 58, using test.disk58.
+Thread 53 ready.
+Thread 54 ready.
+Thread 59, using test.disk59.
+Thread 55 ready.
+Thread 60, using test.disk60.
+Thread 56 ready.
+Thread 61, using test.disk61.
+Thread 57 ready.
+Thread 58 ready.
+Thread 62, using test.disk62.
+Thread 63, using test.disk63.
+Thread 59 ready.
+Thread 60 ready.
+Thread 61 ready.
+Thread 62 ready.
+Thread 63 ready.
+Thread 31 finished
+Thread 61 finished
+Thread 29 finished
+Thread 53 finished
+Thread 17 finished
+Thread 60 finished
+Thread 13 finished
+Thread 1 finished
+Thread 49 finished
+Thread 38 finished
+Thread 24 finished
+Thread 42 finished
+Thread 6 finished
+Thread 54 finished
+Thread 50 finished
+Thread 19 finished
+Thread 3 finished
+Thread 44 finished
+Thread 14 finished
+Thread 34 finished
+Thread 45 finished
+Thread 47 finished
+Thread 62 finished
+Thread 36 finished
+Thread 40 finished
+Thread 25 finished
+Thread 16 finished
+Thread 28 finished
+Thread 20 finished
+Thread 46 finished
+Thread 57 finished
+Thread 33 finished
+Thread 27 finished
+Thread 4 finished
+Thread 35 finished
+Thread 18 finished
+Thread 30 finished
+Thread 63 finished
+Thread 26 finished
+Thread 51 finished
+Thread 56 finished
+Thread 37 finished
+Thread 58 finished
+Thread 5 finished
+Thread 21 finished
+Thread 32 finished
+Thread 8 finished
+Thread 52 finished
+Thread 39 finished
+Thread 59 finished
+Thread 22 finished
+Thread 11 finished
+Thread 48 finished
+Thread 12 finished
+Thread 2 finished
+Thread 9 finished
+Thread 41 finished
+Thread 10 finished
+Thread 43 finished
+Thread 15 finished
+Thread 55 finished
+Thread 7 finished
+Thread 0 finished
+Thread 23 finished
+total calculation 247.958102783 s 
+final average 1.003134378 s
+128 threads.
+Thread 0, using test.disk0.
+Thread 1, using test.disk1.
+Thread 2, using test.disk2.
+Thread 3, using test.disk3.
+Thread 4, using test.disk4.
+Thread 5, using test.disk5.
+Thread 6, using test.disk6.
+Thread 7, using test.disk7.
+Thread 8, using test.disk8.
+Thread 9, using test.disk9.
+Thread 10, using test.disk10.
+Thread 11, using test.disk11.
+Thread 12, using test.disk12.
+Thread 13, using test.disk13.
+Thread 14, using test.disk14.
+Thread 15, using test.disk15.
+Thread 16, using test.disk16.
+Thread 17, using test.disk17.
+Thread 18, using test.disk18.
+Thread 19, using test.disk19.
+Thread 4 ready.
+Thread 20, using test.disk20.
+Thread 21, using test.disk21.
+Thread 0 ready.
+Thread 22, using test.disk22.
+Thread 23, using test.disk23.
+Thread 2 ready.
+Thread 9 ready.
+Thread 24, using test.disk24.
+Thread 25, using test.disk25.
+Thread 3 ready.
+Thread 7 ready.
+Thread 5 ready.
+Thread 26, using test.disk26.
+Thread 1 ready.
+Thread 6 ready.
+Thread 10 ready.
+Thread 27, using test.disk27.
+Thread 11 ready.
+Thread 8 ready.
+Thread 13 ready.
+Thread 28, using test.disk28.
+Thread 16 ready.
+Thread 12 ready.
+Thread 14 ready.
+Thread 18 ready.
+Thread 20 ready.
+Thread 29, using test.disk29.
+Thread 19 ready.
+Thread 17 ready.
+Thread 15 ready.
+Thread 30, using test.disk30.
+Thread 22 ready.
+Thread 21 ready.
+Thread 25 ready.
+Thread 31, using test.disk31.
+Thread 23 ready.
+Thread 24 ready.
+Thread 26 ready.
+Thread 32, using test.disk32.
+Thread 33, using test.disk33.
+Thread 34, using test.disk34.
+Thread 28 ready.
+Thread 27 ready.
+Thread 35, using test.disk35.
+Thread 36, using test.disk36.
+Thread 30 ready.
+Thread 31 ready.
+Thread 29 ready.
+Thread 37, using test.disk37.
+Thread 32 ready.
+Thread 38, using test.disk38.
+Thread 39, using test.disk39.
+Thread 33 ready.
+Thread 34 ready.
+Thread 40, using test.disk40.
+Thread 35 ready.
+Thread 41, using test.disk41.
+Thread 37 ready.
+Thread 42, using test.disk42.
+Thread 36 ready.
+Thread 43, using test.disk43.
+Thread 39 ready.
+Thread 38 ready.
+Thread 44, using test.disk44.
+Thread 45, using test.disk45.
+Thread 41 ready.
+Thread 40 ready.
+Thread 46, using test.disk46.
+Thread 42 ready.
+Thread 47, using test.disk47.
+Thread 43 ready.
+Thread 48, using test.disk48.
+Thread 49, using test.disk49.
+Thread 44 ready.
+Thread 45 ready.
+Thread 50, using test.disk50.
+Thread 51, using test.disk51.
+Thread 46 ready.
+Thread 47 ready.
+Thread 52, using test.disk52.
+Thread 48 ready.
+Thread 53, using test.disk53.
+Thread 49 ready.
+Thread 54, using test.disk54.
+Thread 55, using test.disk55.
+Thread 50 ready.
+Thread 51 ready.
+Thread 56, using test.disk56.
+Thread 57, using test.disk57.
+Thread 52 ready.
+Thread 58, using test.disk58.
+Thread 54 ready.
+Thread 53 ready.
+Thread 59, using test.disk59.
+Thread 60, using test.disk60.
+Thread 55 ready.
+Thread 56 ready.
+Thread 61, using test.disk61.
+Thread 62, using test.disk62.
+Thread 57 ready.
+Thread 58 ready.
+Thread 63, using test.disk63.
+Thread 59 ready.
+Thread 64, using test.disk64.
+Thread 60 ready.
+Thread 65, using test.disk65.
+Thread 61 ready.
+Thread 66, using test.disk66.
+Thread 62 ready.
+Thread 67, using test.disk67.
+Thread 63 ready.
+Thread 68, using test.disk68.
+Thread 64 ready.
+Thread 69, using test.disk69.
+Thread 65 ready.
+Thread 70, using test.disk70.
+Thread 66 ready.
+Thread 71, using test.disk71.
+Thread 72, using test.disk72.
+Thread 67 ready.
+Thread 68 ready.
+Thread 73, using test.disk73.
+Thread 69 ready.
+Thread 74, using test.disk74.
+Thread 70 ready.
+Thread 71 ready.
+Thread 75, using test.disk75.
+Thread 76, using test.disk76.
+Thread 72 ready.
+Thread 77, using test.disk77.
+Thread 78, using test.disk78.
+Thread 73 ready.
+Thread 79, using test.disk79.
+Thread 74 ready.
+Thread 80, using test.disk80.
+Thread 75 ready.
+Thread 81, using test.disk81.
+Thread 76 ready.
+Thread 77 ready.
+Thread 82, using test.disk82.
+Thread 78 ready.
+Thread 83, using test.disk83.
+Thread 79 ready.
+Thread 84, using test.disk84.
+Thread 80 ready.
+Thread 85, using test.disk85.
+Thread 81 ready.
+Thread 86, using test.disk86.
+Thread 82 ready.
+Thread 87, using test.disk87.
+Thread 83 ready.
+Thread 85 ready.
+Thread 88, using test.disk88.
+Thread 84 ready.
+Thread 89, using test.disk89.
+Thread 86 ready.
+Thread 90, using test.disk90.
+Thread 91, using test.disk91.
+Thread 87 ready.
+Thread 92, using test.disk92.
+Thread 88 ready.
+Thread 93, using test.disk93.
+Thread 89 ready.
+Thread 94, using test.disk94.
+Thread 91 ready.
+Thread 90 ready.
+Thread 95, using test.disk95.
+Thread 96, using test.disk96.
+Thread 92 ready.
+Thread 97, using test.disk97.
+Thread 93 ready.
+Thread 98, using test.disk98.
+Thread 94 ready.
+Thread 99, using test.disk99.
+Thread 95 ready.
+Thread 100, using test.disk100.
+Thread 101, using test.disk101.
+Thread 96 ready.
+Thread 97 ready.
+Thread 102, using test.disk102.
+Thread 103, using test.disk103.
+Thread 98 ready.
+Thread 99 ready.
+Thread 104, using test.disk104.
+Thread 100 ready.
+Thread 105, using test.disk105.
+Thread 101 ready.
+Thread 106, using test.disk106.
+Thread 102 ready.
+Thread 107, using test.disk107.
+Thread 103 ready.
+Thread 108, using test.disk108.
+Thread 104 ready.
+Thread 109, using test.disk109.
+Thread 105 ready.
+Thread 110, using test.disk110.
+Thread 111, using test.disk111.
+Thread 106 ready.
+Thread 107 ready.
+Thread 112, using test.disk112.
+Thread 108 ready.
+Thread 113, using test.disk113.
+Thread 109 ready.
+Thread 114, using test.disk114.
+Thread 110 ready.
+Thread 115, using test.disk115.
+Thread 111 ready.
+Thread 116, using test.disk116.
+Thread 112 ready.
+Thread 117, using test.disk117.
+Thread 113 ready.
+Thread 118, using test.disk118.
+Thread 114 ready.
+Thread 119, using test.disk119.
+Thread 115 ready.
+Thread 116 ready.
+Thread 120, using test.disk120.
+Thread 117 ready.
+Thread 121, using test.disk121.
+Thread 118 ready.
+Thread 122, using test.disk122.
+Thread 123, using test.disk123.
+Thread 119 ready.
+Thread 124, using test.disk124.
+Thread 120 ready.
+Thread 125, using test.disk125.
+Thread 121 ready.
+Thread 126, using test.disk126.
+Thread 127, using test.disk127.
+Thread 122 ready.
+Thread 123 ready.
+Thread 124 ready.
+Thread 125 ready.
+Thread 126 ready.
+Thread 127 ready.
+Thread 62 finished
+Thread 25 finished
+Thread 124 finished
+Thread 80 finished
+Thread 44 finished
+Thread 61 finished
+Thread 72 finished
+Thread 42 finished
+Thread 26 finished
+Thread 79 finished
+Thread 92 finished
+Thread 47 finished
+Thread 121 finished
+Thread 52 finished
+Thread 54 finished
+Thread 112 finished
+Thread 21 finished
+Thread 78 finished
+Thread 76 finished
+Thread 107 finished
+Thread 2 finished
+Thread 53 finished
+Thread 77 finished
+Thread 58 finished
+Thread 30 finished
+Thread 41 finished
+Thread 116 finished
+Thread 59 finished
+Thread 45 finished
+Thread 74 finished
+Thread 28 finished
+Thread 110 finished
+Thread 29 finished
+Thread 109 finished
+Thread 55 finished
+Thread 73 finished
+Thread 83 finished
+Thread 123 finished
+Thread 11 finished
+Thread 63 finished
+Thread 127 finished
+Thread 102 finished
+Thread 10 finished
+Thread 84 finished
+Thread 22 finished
+Thread 97 finished
+Thread 66 finished
+Thread 14 finished
+Thread 43 finished
+Thread 75 finished
+Thread 36 finished
+Thread 87 finished
+Thread 64 finished
+Thread 98 finished
+Thread 91 finished
+Thread 81 finished
+Thread 9 finished
+Thread 13 finished
+Thread 103 finished
+Thread 24 finished
+Thread 99 finished
+Thread 117 finished
+Thread 32 finished
+Thread 108 finished
+Thread 57 finished
+Thread 100 finished
+Thread 6 finished
+Thread 34 finished
+Thread 90 finished
+Thread 49 finished
+Thread 51 finished
+Thread 70 finished
+Thread 17 finished
+Thread 60 finished
+Thread 65 finished
+Thread 33 finished
+Thread 85 finished
+Thread 0 finished
+Thread 35 finished
+Thread 31 finished
+Thread 15 finished
+Thread 5 finished
+Thread 18 finished
+Thread 86 finished
+Thread 69 finished
+Thread 39 finished
+Thread 105 finished
+Thread 27 finished
+Thread 67 finished
+Thread 120 finished
+Thread 56 finished
+Thread 1 finished
+Thread 48 finished
+Thread 118 finished
+Thread 94 finished
+Thread 106 finished
+Thread 20 finished
+Thread 38 finished
+Thread 104 finished
+Thread 113 finished
+Thread 88 finished
+Thread 40 finished
+Thread 101 finished
+Thread 12 finished
+Thread 114 finished
+Thread 96 finished
+Thread 93 finished
+Thread 115 finished
+Thread 7 finished
+Thread 8 finished
+Thread 126 finished
+Thread 19 finished
+Thread 37 finished
+Thread 71 finished
+Thread 23 finished
+Thread 122 finished
+Thread 82 finished
+Thread 95 finished
+Thread 4 finished
+Thread 111 finished
+Thread 46 finished
+Thread 68 finished
+Thread 3 finished
+Thread 119 finished
+Thread 16 finished
+Thread 125 finished
+Thread 50 finished
+Thread 89 finished
+total calculation 266.143311966 s 
+final average 3.006227360 s

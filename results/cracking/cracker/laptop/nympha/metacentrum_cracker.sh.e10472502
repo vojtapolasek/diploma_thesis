@@ -1,0 +1,13 @@
+make: *** No rule to make target 'clean'.  Stop.
+configure: WARNING: Argon2 bundled (slow) reference implementation will be used, please consider to use system library with --enable-libargon2.
+ar: `u' modifier ignored since `D' is the default (see `U')
+ar: `u' modifier ignored since `D' is the default (see `U')
+ar: `u' modifier ignored since `D' is the default (see `U')
+libtool: warning: library '/scratch.ssd/vojtapolasek/job_10472502.arien-pro.ics.muni.cz/usr/lib/x86_64-linux-gnu/libpopt.la' was moved.
+libtool: warning: library '/scratch.ssd/vojtapolasek/job_10472502.arien-pro.ics.muni.cz/usr/lib/x86_64-linux-gnu/libpopt.la' was moved.
+libtool: warning: library '/scratch.ssd/vojtapolasek/job_10472502.arien-pro.ics.muni.cz/usr/lib/x86_64-linux-gnu/libpopt.la' was moved.
+libtool: warning: library '/scratch.ssd/vojtapolasek/job_10472502.arien-pro.ics.muni.cz/usr/lib/x86_64-linux-gnu/libpopt.la' was moved.
+libtool: warning: library '/scratch.ssd/vojtapolasek/job_10472502.arien-pro.ics.muni.cz/usr/lib/x86_64-linux-gnu/libpopt.la' was moved.
+libtool: warning: library '/scratch.ssd/vojtapolasek/job_10472502.arien-pro.ics.muni.cz/usr/lib/x86_64-linux-gnu/libpopt.la' was moved.
+libtool: warning: library '/scratch.ssd/vojtapolasek/job_10472502.arien-pro.ics.muni.cz/usr/lib/x86_64-linux-gnu/libpopt.la' was moved.
+libtool: warning: library '/scratch.ssd/vojtapolasek/job_10472502.arien-pro.ics.muni.cz/usr/lib/x86_64-linux-gnu/libpopt.la' was moved.
