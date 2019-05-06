@@ -18,6 +18,7 @@
 \usepackage{longtable}
 %\usepackage[chars=60, lines=30]{stdpage}
 \usepackage{algorithm2e}
+\SetAlCapSkip{3mm}
 
 %\thesislong{abstract}{
 %This thesis deals with tools for dynamic security analysis of web applications. It introduces 14 tools divided into 4 categories: reconnaissance tools, tools for discovery of specific vulnerabilities, intercepting web proxies, and complex vulnerability scanners. Tools are compared according to their features, licence, price, OWASP Top 10 coverage, and ability to be integrated into Atlassian stack. The thesis researches three selected tools in more details: Sqlmap, W3af, and Arachni. In the end, the thesis contains results produced by the three tools while performing audit of open-source deliberately vulnerable web applications.
@@ -44,7 +45,7 @@ The fourth chapter analyses the LUKS2 disk encryption scheme and its frontend ca
 
 The fifth chapter summarizes options of a potential attacker and introduces the price model suited for estimating final price of an attack agains LUKS2 encrypted volume. The model is applied to real world data based on results from the previous chapter. The option of using CPUs, GPUs and cloud based on-demand allocated resources is taken into account. The sixth chapter provides conclusions and several paths for further research in this area.
 
-\chapter{Password hashing and key derivation functions}
+\chapter{Password hashing and key derivation\\functions}
 
 \section{Definitions}
 \label{definitions}
@@ -130,27 +131,27 @@ The purpose of \emph{iteration count} parameter is to defend against brute force
 The function is described by following algorithm. Verbal description is also provided. Following abbreviations and conventions are used in the algorithm and description:
 
 \begin{description}
-\item{P} an octet string representing a passphrase
+\item{P} -- an octet string representing a passphrase
 
-\item{S} an octet string representing a cryptographic salt
+\item{S} -- an octet string representing a cryptographic salt
 
-\item{C} a positive integer representing iteration count
+\item{C} -- a positive integer representing iteration count
 
-\item{dkLen} a positive integer representing length of the derived key counted in octets
+\item{dkLen} -- a positive integer representing length of the derived key counted in octets
 
-\item{DK}an octet string representing the derived key
+\item{DK} -- an octet string representing the derived key
 
-\item{PRF} - a pseudorandom function
+\item{PRF} -- a pseudorandom function
 
-\item{hLen} - length of output of chosen pseudorandom function counted in octets
+\item{hLen} -- length of output of chosen pseudorandom function counted in octets
 
-\item{CEIL(x)} the ceiling function returning the smallest integer which is greater or equal to X
+\item{CEIL(x)} -- the ceiling function returning the smallest integer which is greater or equal to X
 
-\item{F} a helper function for better description
+\item{F} -- a helper function for better description
 
-\item{||} concatenation of strings
+\item{||} -- concatenation of strings
 
-\item{INT(x)} a big§-endian encoding of integer x
+\item{INT(x)} -- a big§-endian encoding of integer x
 \end{description}
 
 
@@ -180,7 +181,7 @@ The function is described by following algorithm. Verbal description is also pro
 \( u_j \leftarrow \) \KwPrf{P, \( u_{j-1} \)} \;
 }
 \Return{\(u_1 \oplus u_2 \oplus \dots \oplus u_c \)} \;
-}
+	}
 \caption{PBKDF2 function algorithm}
 \label{pbkdf2alg}
 \end{algorithm}
@@ -351,9 +352,10 @@ Argon2d computes \(J_1\) and \(J_2\) based on data stored in memory. Therefore i
 Where the function int32(s) converts the 32 bit string s into non-negative integer represented in little endian. The function extract(s, i) extracts ith set 32 bits long from bitstring s while s is indexed from 0.
 
 Argon2i computes indexes by running two rounds of the compression function \emph{G} in counter mode in the following way
-
-\(x \leftarrow G(ZERO, LE64(r) || LE64(l) || LE64(s) || LE64(m') || LE64(t) || LE64(y) || LE64(i) || ZERO) \)
-
+\begin{eqnarray*}
+x &\leftarrow& G(ZERO, LE64(r) || LE64(l) || LE64(s) || LE64(m') || LE64(t) ||\\
+ && || LE64(y) || LE64(i) || ZERO) 
+\end{eqnarray*}
 The result x is 64 bits long and therefore it can be viewed as two 32 bit strings
 
 \(x_1 || x_2 \leftarrow x\)
@@ -570,9 +572,9 @@ The table \ref{tab:l8c32g} serves as an introduction and it shows which paramete
 \begin{table}
 \caption{Benchmark results for laptop with 8 threads and 32 GiB of memory}
 \label{tab:l8c32g}
-\begin{tabularx}{\textwidth}{| c | c | c | c | c |}
+\begin{tabularx}{\textwidth}{| X | X | X | X | X |}
 \hline
-time in ms & avg(t)  in iterations & stdev(t) in iterations & avg(M) in KiB & stdev(M) in KiB\\
+time in ms & avg(t) in iterations & stdev(t) in iterations & avg(M) in KiB & stdev(M) in KiB\\
 \hline
 1000 & 4 & 0 & 804032.75 & 3886\\
 \hline
@@ -595,7 +597,7 @@ time in ms & avg(t)  in iterations & stdev(t) in iterations & avg(M) in KiB & st
 \begin{table}
 \caption{Benchmark results for laptop with 4 cores and 4 GiB of memory}
 \label{tab:l4c4g}
-\begin{tabularx}{\textwidth}{| c | c | c | c | c |}
+\begin{tabularx}{\textwidth}{| X | X | X | X | X |}
 \hline
 time in ms & avg(t)  in iterations & stdev(t) in iterations & avg(M) in KiB & stdev(M) in KiB\\
 \hline
@@ -620,7 +622,7 @@ time in ms & avg(t)  in iterations & stdev(t) in iterations & avg(M) in KiB & st
 \begin{table}
 \caption{Benchmark results for laptop with 4 cores and 2 GiB of memory}
 \label{tab:l4c2g}
-\begin{tabularx}{\textwidth}{| c | c | c | c | c |}
+\begin{tabularx}{\textwidth}{| X | X | X | X | X |}
 \hline
 time in ms & avg(t)  in iterations & stdev(t) in iterations & avg(M) in KiB & stdev(M) in KiB\\
 \hline
@@ -659,7 +661,7 @@ Tables \ref{tab:comp2000} and \ref{tab:comp1000} compare benchmarking results fo
 \begin{table}
 \caption{Comparing results for various Cryptsetup compilation options with unlocking time of 2000 ms}
 \label{tab:comp2000}
-\begin{tabularx}{\textwidth}{| l | c | c | c | c |}
+\begin{tabularx}{\textwidth}{| X | X | X | X | X |}
 \hline
 flags & avg(t)  in iterations & stdev(t) in iterations & avg(M) in KiB & stdev(M) in KiB\\
 \hline
@@ -680,7 +682,7 @@ external & 6 & 0 & 1048576 & 0\\
 \begin{table}
 \caption{Comparing results for various Cryptsetup compilation options with unlocking time of 1000 ms}
 \label{tab:comp1000}
-\begin{tabularx}{\textwidth}{| l | c | c | c | c |}
+\begin{tabularx}{\textwidth}{| X | X | X | X | X |}
 \hline
 flags in ms & avg(t)  in iterations & stdev(t) in iterations & avg(M) in KiB & stdev(M) in KiB\\
 \hline
@@ -705,7 +707,7 @@ The table \ref{tab:r4c1g} shows benchmarking results for the Raspberry Pi.  Noti
 \begin{table}
 \caption{Benchmark results for Raspberry Pi with 4 cores and 1 GiB of memory}
 \label{tab:r4c1g}
-\begin{tabularx}{\textwidth}{| c | c | c | c | c |}
+\begin{tabularx}{\textwidth}{| X | X | X | X | X |}
 \hline
 time in ms & avg(t)  in iterations & stdev(t) in iterations & avg(M) in KiB & stdev(M) in KiB\\
 \hline
@@ -732,7 +734,7 @@ By comparing tables \ref{tab:r4c1g} and \ref{tab:r4c1go} it can be seen that the
 \begin{table}
 \caption{Benchmark results for Raspberry Pi with optimizations}
 \label{tab:r4c1go}
-\begin{tabularx}{\textwidth}{| c | c | c | c | c |}
+\begin{tabularx}{\textwidth}{| X | X | X | X | X |}
 \hline
 time in ms & avg(t)  in iterations & stdev(t) in iterations & avg(M) in KiB & stdev(M) in KiB\\
 \hline
@@ -869,7 +871,7 @@ Considering GPU it is possible to get even slightly better times. The GPU provid
 \begin{table}
 \caption{Cracker running on Nympha cracking drive created with benchmark parameters on laptop}
 \label{tab:nymphacracker}
-\begin{tabularx}{\textwidth}{| c | c | c |}
+\begin{tabularx}{\textwidth}{| X | X | X |}
 \hline
 threads & avg(time per hash) in ms & stdev(time per hash) in ms\\
 \hline
@@ -896,7 +898,7 @@ threads & avg(time per hash) in ms & stdev(time per hash) in ms\\
 \begin{table}
 \caption{Argon2-gpu-bench running on Nympha in CPU mode}
 \label{tab:nymphacpu}
-\begin{tabularx}{\textwidth}{| c | c | c | c | c |}
+\begin{tabularx}{\textwidth}{| X | X | X | X | X |}
 \hline
 batch size & avg(time per hash) in ms & stdev(time per hash) in ms & avg(time per batch) in ms & stdev(time per batch) in ms\\
 \hline
@@ -927,7 +929,7 @@ batch size & avg(time per hash) in ms & stdev(time per hash) in ms & avg(time pe
 \begin{table}
 \caption{Argon2-gpu-bench running on Konos in CUDA mode}
 \label{tab:konosgpu}
-\begin{tabularx}{\textwidth}{| c | c | c | c | c |}
+\begin{tabularx}{\textwidth}{| X | X | X | X | X |}
 \hline
 batch size & avg(time per hash) in ms & stdev(time per hash) in ms & avg(time per batch) in ms & stdev(time per batch) in ms\\
 \hline
@@ -959,7 +961,7 @@ batch size & avg(time per hash) in ms & stdev(time per hash) in ms & avg(time pe
 \begin{table}
 \caption{Argon2-gpu-bench running on Konos in CUDA mode comparing various options}
 \label{tab:konosgpuopt}
-\begin{tabularx}{\textwidth}{| l | c | c | c | c |}
+\begin{tabularx}{\textwidth}{| X | X | X | X | X |}
 \hline
 option & avg(time per hash) in ms & stdev(time per hash) in ms & avg(time per batch) in ms & stdev(time per batch) in ms\\
 \hline
@@ -992,7 +994,7 @@ Comparing table \ref{tab:nymphacpu} with tables \ref{tab:manegrot} and \ref{tab:
 \begin{table}
 \caption{Argon2-gpu-bench running on Manegrot}
 \label{tab:manegrot}
-\begin{tabularx}{\textwidth}{| c | c | c | c | c |}
+\begin{tabularx}{\textwidth}{| X | X | X | X | X |}
 \hline
 batch size & avg(time per hash) in ms & stdev(time per hash) in ms & avg(time per batch) in ms & stdev(time per batch) in ms\\
 \hline
@@ -1022,7 +1024,7 @@ batch size & avg(time per hash) in ms & stdev(time per hash) in ms & avg(time pe
 \begin{table}
 \caption{Argon2-gpu-bench running on Uruk}
 \label{tab:uruk}
-\begin{tabularx}{\textwidth}{| c | c | c | c | c |}
+\begin{tabularx}{\textwidth}{| X | X | X | X | X |}
 \hline
 batch size & avg(time per hash) in ms & stdev(time per hash) in ms & avg(time per batch) in ms & stdev(time per batch) in ms\\
 \hline
@@ -1055,7 +1057,7 @@ The table \ref{tab:gpus} summarizes results of running Argon2-gpu-bench on sever
 \begin{table}
 \caption{comparing Argon2-gpu-bench on various GPUs}
 \label{tab:gpus}
-\begin{tabularx}{\textwidth}{| l | c | c | c | c | c |}
+\begin{tabularx}{\textwidth}{| X | X | X | X | X | X |}
 \hline
 device & batch size & avg(time per hash) in ms & stdev(time per hash) in ms & avg(time per batch) in ms & stdev(time per batch) in ms\\
 \hline
@@ -1077,7 +1079,7 @@ Zubat (CUDA) & 5 & 1922.469 & 0.60108 & 9612.346 &0.300544\\
 \begin{table}
 \caption{Cracker running on Nympha cracking drive with parameters benchmarked on Raspberry Pi}
 \label{tab:nymphacrackerrpi}
-\begin{tabularx}{\textwidth}{| c | c | c |}
+\begin{tabularx}{\textwidth}{| X | X | X |}
 \hline
 threads & avg(tph) & stdev(tph)\\
 \hline
@@ -1104,7 +1106,7 @@ threads & avg(tph) & stdev(tph)\\
 \begin{table}
 \caption{Comparing cracking methods for parameters benchmarked with Raspberry Pi}
 \label{tab:rpicrack}
-\begin{tabularx}{\textwidth}{| l | c | c | c | c | c |}
+\begin{tabularx}{\textwidth}{| X | X | X | X | X | X |}
 \hline
 device & batch size & avg(time per hash) in ms & stdev(time per hash) in ms & avg(time per batch) in ms & stdev(time per batch) in ms\\
 \hline
@@ -1220,7 +1222,7 @@ For the first case, suppose that an attacker decides to buy machines comparable 
 \begin{table}
 \caption{number of Nympha-like machines to exhaust password space depending on expected length of attack}
 \label{tab:at1}
-\begin{tabularx}{\textwidth}{| l | c |}
+\begin{tabularx}{\textwidth}{| X | X |}
 \hline
 L in years & number of machines\\
 \hline
@@ -1245,7 +1247,7 @@ Inserting respective \emph{N} and \emph{L} values according to the table \ref{ta
 \begin{table}
 \caption{final prices for first model case using physical hardware}
 \label{tab:at2}
-\begin{tabularx}{\textwidth}{| l | c | c |}
+\begin{tabularx}{\textwidth}{| X | X | X |}
 \hline
 L  in years & number of machines & F in dollars\\
 \hline
@@ -1268,7 +1270,7 @@ Considering cloud options there are multiple choices. For example Microsoft Azur
 \begin{table}
 \caption{final prices for first model case using Microsoft Azure Cloud}
 \label{tab:at3}
-\begin{tabularx}{\textwidth}{| l | c | c |}
+\begin{tabularx}{\textwidth}{| X | X | X |}
 \hline
 L  in years & number of machines & F in dollars\\
 \hline
@@ -1292,7 +1294,7 @@ As the second example suppose that an attacker gains access to a drive encrypted
 \begin{table}
 \caption{number of Konos-like machines to exhaust password space depending on expected length of attack}
 \label{tab:at4}
-\begin{tabularx}{\textwidth}{| l | c |}
+\begin{tabularx}{\textwidth}{| X | X |}
 \hline
 L in years & number of machines\\
 \hline
@@ -1313,7 +1315,7 @@ Suppose $H = 1000$, NVidia unfortunately does not provide suggested customer pri
 \begin{table}
 \caption{final prices for the second model case using physical hardware}
 \label{tab:at5}
-\begin{tabularx}{\textwidth}{| l | c | c |}
+\begin{tabularx}{\textwidth}{| X | X | X |}
 \hline
 L  in years & number of machines & F in dollars\\
 \hline
@@ -1336,7 +1338,7 @@ Although this GPU did not achieve the best hash computing time, it provided rela
 \begin{table}
 \caption{final prices for the second model case using Microsoft Azure Cloud}
 \label{tab:at6}
-\begin{tabularx}{\textwidth}{| l | c | c |}
+\begin{tabularx}{\textwidth}{| X | X | X |}
 \hline
 L  in years & number of machines & F in dollars\\
 \hline
