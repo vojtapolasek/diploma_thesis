@@ -550,16 +550,18 @@ After the benchmark I used the Datamash tool to perform basic statistic computat
 \FloatBarrier
 
 \subsection{Collected benchmarking results}
-Tables present some chosen results gained through methodology described in the previous subsection. Following conventions are used:
+Following tables present chosen results gained through methodology described in the previous subsection. Following conventions  in table headers are used:
 
 \begin{description}
-\item{avg(T)} average time cost
+\item{time} requested unlocking time in milliseconds
 
-\item{stddev(M} memory cost
+\item{avg(T)} average benchmarked Argon2 time cost expressed as a number of iterations
 
-\item{avg()} average
+\item{stdev(T)} standard deviation of benchmarked Argon2 time cost expressed as a number of iterations
 
-\item{stdev()} standard deviation
+\item{avg(M)} average benchmarked Argon2 memory cost expressed in KiB
+
+\item{stdev(M)} standard deviation of benchmarked Argon2 memory cost expressed in KiB
 \end{description}
 
 The table \ref{tab:l8c32g} serves as an introduction and it shows which parameters to expect. The most important is the row concerning unlocking time of 2000 milliseconds as these values were used as baseline for simlating of attacks in the next chapter. Tables \ref{tab:l4c4g} and \ref{tab:l4c2g} demonstrate hardware limitations affecting Argon2 parameters. See the Git repository for more combinations of CPU and memory limitations \parencite{thesisrepo}.
@@ -570,7 +572,7 @@ The table \ref{tab:l8c32g} serves as an introduction and it shows which paramete
 \label{tab:l8c32g}
 \begin{tabularx}{\textwidth}{| c | c | c | c | c |}
 \hline
-Unlocking time & avg(t) & stdev(t) & avg(m) & stdev(m)\\
+time in ms & avg(t)  in iterations & stdev(t) in iterations & avg(M) in KiB & stdev(M) in KiB\\
 \hline
 1000 & 4 & 0 & 804032.75 & 3886\\
 \hline
@@ -595,7 +597,7 @@ Unlocking time & avg(t) & stdev(t) & avg(m) & stdev(m)\\
 \label{tab:l4c4g}
 \begin{tabularx}{\textwidth}{| c | c | c | c | c |}
 \hline
-Unlocking time & avg(t) & stdev(t) & avg(m) & stdev(m)\\
+time in ms & avg(t)  in iterations & stdev(t) in iterations & avg(M) in KiB & stdev(M) in KiB\\
 \hline
 1000 & 4 & 0 & 785173.44 & 4532\\
 \hline
@@ -620,7 +622,7 @@ Unlocking time & avg(t) & stdev(t) & avg(m) & stdev(m)\\
 \label{tab:l4c2g}
 \begin{tabularx}{\textwidth}{| c | c | c | c | c |}
 \hline
-Unlocking time & avg(t) & stdev(t) & avg(m) & stdev(m)\\
+time in ms & avg(t)  in iterations & stdev(t) in iterations & avg(M) in KiB & stdev(M) in KiB\\
 \hline
 1000 & 4 & 0 & 781944 & 1715,758\\
 \hline
@@ -659,7 +661,7 @@ Tables \ref{tab:comp2000} and \ref{tab:comp1000} compare benchmarking results fo
 \label{tab:comp2000}
 \begin{tabularx}{\textwidth}{| l | c | c | c | c |}
 \hline
-flags & avg(t) & stdev(t) & avg(m) & stdev(m)\\
+flags & avg(t)  in iterations & stdev(t) in iterations & avg(M) in KiB & stdev(M) in KiB\\
 \hline
 none & 6 & 0 & 1048576 & 0\\
 \hline
@@ -680,7 +682,7 @@ external & 6 & 0 & 1048576 & 0\\
 \label{tab:comp1000}
 \begin{tabularx}{\textwidth}{| l | c | c | c | c |}
 \hline
-flags & avg(t) & stdev(t) & avg(m) & stdev(m)\\
+flags in ms & avg(t)  in iterations & stdev(t) in iterations & avg(M) in KiB & stdev(M) in KiB\\
 \hline
 none & 4 & 0 & 804032.75 & 3886.047\\
 \hline
@@ -705,7 +707,7 @@ The table \ref{tab:r4c1g} shows benchmarking results for the Raspberry Pi.  Noti
 \label{tab:r4c1g}
 \begin{tabularx}{\textwidth}{| c | c | c | c | c |}
 \hline
-Unlocking time & avg(t) & stdev(t) & avg(m) & stdev(m)\\
+time in ms & avg(t)  in iterations & stdev(t) in iterations & avg(M) in KiB & stdev(M) in KiB\\
 \hline
 1000 & 4 & 0 & 43291.74 & 3628\\
 \hline
@@ -732,7 +734,7 @@ By comparing tables \ref{tab:r4c1g} and \ref{tab:r4c1go} it can be seen that the
 \label{tab:r4c1go}
 \begin{tabularx}{\textwidth}{| c | c | c | c | c |}
 \hline
-Unlocking time & avg(t) & stdev(t) & avg(m) & stdev(m)\\
+time in ms & avg(t)  in iterations & stdev(t) in iterations & avg(M) in KiB & stdev(M) in KiB\\
 \hline
 1000 & 4 & 0 & 25639.15 & 4745.422\\
 \hline
@@ -844,17 +846,17 @@ originally the tool generated random strings 64 bytes long. I modified the tool 
 Here I describe and compare results collected by two methods described in previous subsections. These numbers serve as direct basis for the price model described in the next chapter. the following list shows column headings used in tables with their description and appropriate units:
 
 \begin{description}
-\item{T} number of threads passed as parameter to cracker
+\item{threads} number of threads passed as parameter to cracker
 
-\item{b} number of concurent Argon2 computations passed through \verb+-b+ parameter to the Argon2-gpu-bench tool
+\item{batch size} number of concurent Argon2 computations passed through \verb+-b+ parameter to the Argon2-gpu-bench tool
 
-\item{avg(tph)} average time spent calculating one hash in milliseconds
+\item{avg(time per hash)} average time spent calculating one hash in milliseconds
 
-\item{stdev(tph)} standard deviation of time spent computing one hash in milliseconds
+\item{stdev(time per hash)} standard deviation of time spent computing one hash in milliseconds
 
-\item{avg(c)} average time spent computing one batch of hashes in milliseconds
+\item{avg(time per batch)} average time spent computing one batch of hashes in milliseconds
 
-\item{stdev(c)} standard deviation of time spent computing one batch of hashes in milliseconds
+\item{stdev(time per batch)} standard deviation of time spent computing one batch of hashes in milliseconds
 \end{description}
 
 Tables \ref{tab:nymphacracker}, \ref{tab:nymphacpu}  and \ref{tab:konosgpu} show us a baseline of results. Nympha and Konos were the most powerful machines for computing Argon2 I managed to find in MetaCentrum. We can see that cracking hashes with high memory parameter (1049576 KiB) is highly ineffective with the naive approach. The best result was achieved while running two concurrent unlocking operations, therefore occupying 8 threads. This configuration enabled computation of 1 hash per 1.107 seconds.
@@ -869,7 +871,7 @@ Considering GPU it is possible to get even slightly better times. The GPU provid
 \label{tab:nymphacracker}
 \begin{tabularx}{\textwidth}{| c | c | c |}
 \hline
-T & avg(tph) & stdev(tph)\\
+threads & avg(time per hash) in ms & stdev(time per hash) in ms\\
 \hline
 1 & 1584.7674505155 & 50.545681611488\\
 \hline
@@ -896,7 +898,7 @@ T & avg(tph) & stdev(tph)\\
 \label{tab:nymphacpu}
 \begin{tabularx}{\textwidth}{| c | c | c | c | c |}
 \hline
-b & avg(tph) & stdev(tph) & avg(c) | stdev(c)\\
+batch size & avg(time per hash) in ms & stdev(time per hash) in ms & avg(time per batch) in ms & stdev(time per batch) in ms\\
 \hline
 1 & 1641.408 & 29.667225 & 1641.408 & 29.667225 \\
 \hline
@@ -927,7 +929,7 @@ b & avg(tph) & stdev(tph) & avg(c) | stdev(c)\\
 \label{tab:konosgpu}
 \begin{tabularx}{\textwidth}{| c | c | c | c | c |}
 \hline
-b & avg(tph) & stdev(tph) & avg(c) | stdev(c)\\
+batch size & avg(time per hash) in ms & stdev(time per hash) in ms & avg(time per batch) in ms & stdev(time per batch) in ms\\
 \hline
 1 & 2996.175 & 0.057949 & 2996.175 & 0.057949\\
 \hline
@@ -959,7 +961,7 @@ b & avg(tph) & stdev(tph) & avg(c) | stdev(c)\\
 \label{tab:konosgpuopt}
 \begin{tabularx}{\textwidth}{| l | c | c | c | c |}
 \hline
-option & avg(tph) & stdev(tph) & avg(c) | stdev(c)\\
+option & avg(time per hash) in ms & stdev(time per hash) in ms & avg(time per batch) in ms & stdev(time per batch) in ms\\
 \hline
 master & 306.682325 & 0.04252 & 3066.823 & 0.4252 \\
 \hline
@@ -992,7 +994,7 @@ Comparing table \ref{tab:nymphacpu} with tables \ref{tab:manegrot} and \ref{tab:
 \label{tab:manegrot}
 \begin{tabularx}{\textwidth}{| c | c | c | c | c |}
 \hline
-b & avg(tph) & stdev(tph) & avg(c) | stdev(c)\\
+batch size & avg(time per hash) in ms & stdev(time per hash) in ms & avg(time per batch) in ms & stdev(time per batch) in ms\\
 \hline
 1 & 3385.726 & 119.515742 & 3385.726 & 119.515742\\
 \hline
@@ -1022,7 +1024,7 @@ b & avg(tph) & stdev(tph) & avg(c) | stdev(c)\\
 \label{tab:uruk}
 \begin{tabularx}{\textwidth}{| c | c | c | c | c |}
 \hline
-b & avg(tph) & stdev(tph) & avg(c) | stdev(c)\\
+batch size & avg(time per hash) in ms & stdev(time per hash) in ms & avg(time per batch) in ms & stdev(time per batch) in ms\\
 \hline
 1 & 1420.081 & 158.506821 & 1420.081 & 158.506821\\
 \hline
@@ -1055,7 +1057,7 @@ The table \ref{tab:gpus} summarizes results of running Argon2-gpu-bench on sever
 \label{tab:gpus}
 \begin{tabularx}{\textwidth}{| l | c | c | c | c | c |}
 \hline
-Device & b & avg(tph) & stdev(tph) & avg(c) & stdev(c)\\
+device & batch size & avg(time per hash) in ms & stdev(time per hash) in ms & avg(time per batch) in ms & stdev(time per batch) in ms\\
 \hline
 Doom (CUDA) & 4 & 4463.151 & 0.566438 & 17852.602 & 2.265753\\
 \hline
@@ -1077,7 +1079,7 @@ Zubat (CUDA) & 5 & 1922.469 & 0.60108 & 9612.346 &0.300544\\
 \label{tab:nymphacrackerrpi}
 \begin{tabularx}{\textwidth}{| c | c | c |}
 \hline
-T & avg(tph) & stdev(tph)\\
+threads & avg(tph) & stdev(tph)\\
 \hline
 1 & 191.1086647873 & 28.144991133841\\
 \hline
@@ -1104,7 +1106,7 @@ T & avg(tph) & stdev(tph)\\
 \label{tab:rpicrack}
 \begin{tabularx}{\textwidth}{| l | c | c | c | c | c |}
 \hline
-Device & b & avg(tph) & stdev(tph) & avg(c) & stdev(c)\\
+device & batch size & avg(time per hash) in ms & stdev(time per hash) in ms & avg(time per batch) in ms & stdev(time per batch) in ms\\
 \hline
 Nympha (CPU) & 512 & 12.559353 & 0.191637 & 6430.389 & 98.118714\\
 \hline
@@ -1205,7 +1207,7 @@ Following subsections show that to crack a passhprase eight characters long used
 \subsection{Sources of real world data}
 Information about price and TDP of CPUs were collected from \parencite{intelspecs}, where as information about GPUs were collected from \parencite{teslak20}, \parencite{teslap100}, \parencite{geforceprice} and \parencite{geforce}. Information about prices of RAM memory were collected from \parencite{memoryprice}. Estimated electricity price is based on \parencite{electricity}. Prices of cloud services are based on available offers from Amazon \parencite{amazon} \parencite{amazoncalc}, Microsoft Azure \parencite{azure} and Alibaba Cloud \parencite{alibaba}.
 
-Note that power draw of machines is based on TDP of CPU or GPU as based in particular technical specifications. Power draw of RAM and other peripheral components is not taken into account as it is relatively small and at the same time it is hard to set certain average value. I understand that TDP is not exact representation of actual power draw but as experimental machines were not under my physical control, I decided to use this value.
+Note that power draw of machines is based on TDP of CPU or GPU as listed in particular technical specifications. Power draw of RAM and other peripheral components is not taken into account as it is relatively small and at the same time it is hard to set certain average value. I understand that TDP is not exact representation of actual power draw but as experimental machines were not under my physical control, I decided to use this value.
 
 I define the \emph{P} as space of passhprases eight characters long containing upper case letters, lower case letters and numbers.
 
@@ -1220,15 +1222,15 @@ For the first case, suppose that an attacker decides to buy machines comparable 
 \label{tab:at1}
 \begin{tabularx}{\textwidth}{| l | c |}
 \hline
-E & N\\
+L in years & number of machines\\
 \hline
-1 year & 1502404\\
+1 & 1502404\\
 \hline
-2 years & 751202\\
+2 & 751202\\
 \hline
-5 years & 300481\\
+5 & 300481\\
 \hline
-10 years & 150240\\
+10 & 150240\\
 \hline
 \end{tabularx}
 \end{table}
@@ -1245,15 +1247,15 @@ Inserting respective \emph{N} and \emph{L} values according to the table \ref{ta
 \label{tab:at2}
 \begin{tabularx}{\textwidth}{| l | c | c |}
 \hline
-L & N & F\\
+L  in years & number of machines & F in dollars\\
 \hline
-1 year & 1502404 & 7526968919.8\\
+1 & 1502404 & 7526968919.8\\
 \hline
-2 years & 751202 & 3936223359.8\\
+2 & 751202 & 3936223359.8\\
 \hline
-5 years & 300481 & 1781777209.75\\
+5 & 300481 & 1781777209.75\\
 \hline
-10 years & 150240 & 1063624080\\
+10 & 150240 & 1063624080\\
 \hline
 \end{tabularx}
 \end{table}
@@ -1268,7 +1270,7 @@ Considering cloud options there are multiple choices. For example Microsoft Azur
 \label{tab:at3}
 \begin{tabularx}{\textwidth}{| l | c | c |}
 \hline
-L & N & F\\
+L  in years & number of machines & F in dollars\\
 \hline
 1 year & 1502404 & 23684641848.384\\
 \hline
@@ -1292,15 +1294,15 @@ As the second example suppose that an attacker gains access to a drive encrypted
 \label{tab:at4}
 \begin{tabularx}{\textwidth}{| l | c |}
 \hline
-E & N\\
+L in years & number of machines\\
 \hline
-1 year & 21685\\	
+1 & 21685\\	
 \hline
-2 years & 10843\\
+2 & 10843\\
 \hline
-5 years & 4337\\
+5 & 4337\\
 \hline
-10 years & 2169\\
+10 & 2169\\
 \hline
 \end{tabularx}
 \end{table}
@@ -1313,15 +1315,15 @@ Suppose $H = 1000$, NVidia unfortunately does not provide suggested customer pri
 \label{tab:at5}
 \begin{tabularx}{\textwidth}{| l | c | c |}
 \hline
-L & N & F\\
+L  in years & number of machines & F in dollars\\
 \hline
-1 year & 21685 & 31657931.5\\
+1 & 21685 & 31657931.5\\
 \hline
-2 years & 10843 & 20816391.4\\
+2 & 10843 & 20816391.4\\
 \hline
-5 years & 4337 & 14309931.5\\
+5 & 4337 & 14309931.5\\
 \hline
-10 years & 2169 & 12144231\\
+10 & 2169 & 12144231\\
 \hline
 \end{tabularx}
 \end{table}
@@ -1336,21 +1338,18 @@ Although this GPU did not achieve the best hash computing time, it provided rela
 \label{tab:at6}
 \begin{tabularx}{\textwidth}{| l | c | c |}
 \hline
-L & N & F\\
+L  in years & number of machines & F in dollars\\
 \hline
-1 year & 21685 & 250472549.13\\
+1 & 21685 & 250472549.13\\
 \hline
-2 years & 10843 & 250484099.628\\
+2 & 10843 & 250484099.628\\
 \hline
-5 years & 4337 & 174550046.325\\
+5 & 4337 & 174550046.325\\
 \hline
-10 years & 2169 & 174590293.05\\
+10 & 2169 & 174590293.05\\
 \hline
 \end{tabularx}
 \end{table}
-
-
-
 
 \chapter{Conclusions}
 The thesis introduced password-based key derivation functions and their usage in disk volume encryption focusing on LUKS2 encryption scheme. Resistance of LUKS2 to brute-force or dictionary-based password cracking was researched and experimentally verified.
