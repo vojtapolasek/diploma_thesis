@@ -15,15 +15,16 @@
 \usepackage{tabularx}
 \usepackage{placeins}
 \usepackage{tabu}
-\usepackage{longtable}
 %\usepackage[chars=60, lines=30]{stdpage}
 \usepackage{algorithm2e}
 \SetAlCapSkip{3mm}
+\usepackage{siunitx}
+
 
 %\thesislong{abstract}{
 %This thesis deals with tools for dynamic security analysis of web applications. It introduces 14 tools divided into 4 categories: reconnaissance tools, tools for discovery of specific vulnerabilities, intercepting web proxies, and complex vulnerability scanners. Tools are compared according to their features, licence, price, OWASP Top 10 coverage, and ability to be integrated into Atlassian stack. The thesis researches three selected tools in more details: Sqlmap, W3af, and Arachni. In the end, the thesis contains results produced by the three tools while performing audit of open-source deliberately vulnerable web applications.
 %}
-\thesissetup{advisor=Ing. Milan Brož}
+\thesissetup{advisor=Ing. Milan Brož\, Ph.D.}
 %\thesislong{thanks}{I would like to thank Andriy Stetsko for professional supervision, Tomáš Kuba for technical help while facing numerous problems, Radim Göth for invaluable help while collecting initial testing data, and Jiří Pecl for help while polishing final look of the thesis. My thanks also go to my girlfriend Věruška and my family for support during writing of this thesis.}
 %doplnit zadani
 
@@ -37,7 +38,7 @@
 \chapter{Introduction}
 This diploma thesis deals with password-based key derivation functions and their application in disk encryption software. At the very beginning of the computer era there were no passwords. They appeared for the first time in 1960's and they were introduced by Fernando Corbató \parencite{ctss}. They are going through evolving process as they try to keep pace with developing technology and new ways in which the technology is being used.
 
-Passwords are becoming more and more important. They protect our secrets, our money, our communication. All these things are valuable not only to us but also to other people and some of them would like to gain access to them for malicious purposes. There are many ways how to gain access to the secret passhprase including guessing, social engineering, exploiting application vulnerabilities etc. This thesis deals with the method mentioned first and it tries to look at it from the attacker's perspective. To be more exact, it considers this option from the perspective of attacker's financial resources. It tries to answer a question: How much would it cost to guess a password opening an encrypted disk volume? The short answers is millions of dollars.
+Passwords are becoming more and more important. They protect our secrets, our money, our communication. All these things are valuable not only to us but also to other people and some of them would like to gain access to them for malicious purposes. There are many ways how to gain access to the secret passhprase including guessing, social engineering, exploiting application vulnerabilities etc. This thesis deals with the method mentioned first and it tries to look at it from the attacker's perspective. To be more exact, it considers this option from the perspective of attacker's financial resources. It tries to answer a question: How much would it cost to guess a password opening an encrypted disk volume? It will be shown that to guess a password for LUKS encrypted volume even if created on low performance hardware costs currently more than hundred million dollars and involves thousants of purchased or rented machines.
 
 The second chapter introduces basic terminology and rationale for usage of PBKDFs in the scope of disk encryption. It also summarises history and possible attacks against PBKDFs. The third chapter describes in detail the PBKDF2 function and the Argon2 function. During their analysis the rationale for using memory hard functions is shown. The Argon2 function is described in greater detail because it is fundamental for rest of the thesis. At the end of the chapter several other password hashing functions and their features are briefly mentioned.
 
@@ -131,27 +132,27 @@ The purpose of \emph{iteration count} parameter is to defend against brute force
 The function is described by following algorithm. Verbal description is also provided. Following abbreviations and conventions are used in the algorithm and description:
 
 \begin{description}
-\item{P} -- an octet string representing a passphrase
+\item[P] -- an octet string representing a passphrase
 
-\item{S} -- an octet string representing a cryptographic salt
+\item[S] -- an octet string representing a cryptographic salt
 
-\item{C} -- a positive integer representing iteration count
+\item[C] -- a positive integer representing iteration count
 
-\item{dkLen} -- a positive integer representing length of the derived key counted in octets
+\item[dkLen] -- a positive integer representing length of the derived key counted in octets
 
-\item{DK} -- an octet string representing the derived key
+\item[DK] -- an octet string representing the derived key
 
-\item{PRF} -- a pseudorandom function
+\item[PRF] -- a pseudorandom function
 
-\item{hLen} -- length of output of chosen pseudorandom function counted in octets
+\item[hLen] -- length of output of chosen pseudorandom function counted in octets
 
-\item{CEIL(x)} -- the ceiling function returning the smallest integer which is greater or equal to X
+\item[CEIL(x)] -- the ceiling function returning the smallest integer which is greater or equal to X
 
-\item{F} -- a helper function for better description
+\item[F] -- a helper function for better description
 
-\item{||} -- concatenation of strings
+\item[||] -- concatenation of strings
 
-\item{INT(x)} -- a big§-endian encoding of integer x
+\item[INT(x)] -- a big§-endian encoding of integer x
 \end{description}
 
 
@@ -209,29 +210,29 @@ The function can be implemented on specialised hardware, but the previously ment
 The function expects following primary input parameters. Primary means that parameters must always be supplied by user.
 
 \begin{description}
-\item{P} the message of any length from 0 to \(2^{32} - 1\) bytes. In case of PBKDF this is the passphrase.
+\item[P] -- the message of any length from 0 to \(2^{32} - 1\) bytes. In case of PBKDF this is the passphrase.
 
-\item{S} nonce with length from 8 to \(2^{32} - 1\) bytes. In case of PBKDF this is the \emph{cryptographic salt}.
+\item[S] -- nonce with length from 8 to \(2^{32} - 1\) bytes. In case of PBKDF this is the \emph{cryptographic salt}.
 \end{description}
 
 The function also accepts secondary inputs, which do not need to be supplied.
 
 \begin{description}
-\item{p} degree of parallelism as an integer with a value from 1 to \(2^{24} - 1\). The value determines the number of parallel computational chains to be run. Chains are not independent, synchronisation occurs.
+\item[p] -- degree of parallelism as an integer with a value from 1 to \(2^{24} - 1\). The value determines the number of parallel computational chains to be run. Chains are not independent, synchronisation occurs.
 
-\item{\(\tau\)} tag length in bytes in range from 4 to \(2^{32} - 1\). This determines an output of the function, in case of PBKDF key length.
+\item[\(\tau\)] -- tag length in bytes in range from 4 to \(2^{32} - 1\). This determines an output of the function, in case of PBKDF key length.
 
-\item{m} memory size as an integer number in range from 8\emph{p} to \(2^{32} - 1\). The integer determines amount of kilobytes of memory which should be used for computation of the function.
+\item[m] -- memory size as an integer number in range from 8\emph{p} to \(2^{32} - 1\). The integer determines amount of kilobytes of memory which should be used for computation of the function.
 
-\item{t} number of iterations as an integer in range from 1 to \(2^{32} - 1\). This parameter is used to tune the length of the function run by specifying number of iterations.
+\item[t] -- number of iterations as an integer in range from 1 to \(2^{32} - 1\). This parameter is used to tune the length of the function run by specifying number of iterations.
 
-\item{v} one byte version umber, currently hardcoded to 0x13.
+\item[v] -- one byte version umber, currently hardcoded to 0x13.
 
-\item{K} signifies a secret value (key) with length from 0 to \(2^{32} - 1\) bytes. By default no key is assumed.
+\item[K] -- a secret value (key) with length from 0 to \(2^{32} - 1\) bytes. By default no key is assumed.
 
-\item{X} associated data with length from 0 to \(2^{32} - 1\) bytes.
+\item[X] -- associated data with length from 0 to \(2^{32} - 1\) bytes.
 
-\item{y} type (mode) of Argon2 to be used. 0 for Argon2D, 1 for Argon2I, 2 for Argon2ID.
+\item[y] -- type (mode) of Argon2 to be used. 0 for Argon2D, 1 for Argon2I, 2 for Argon2ID.
 \end{description}
 
 Argon2 makes use of the permutation function \emph{P} which is based on Blake2b hashfunction \parencite{blake2}. The function actually copies blake2b design but additionally it uses 64 bit multiplications. This particular modification makes the function more complicated to implement and optimize for ASICs, while the running speed on X86 processors should be degraded only negligibly. See \parencite{argon2draft}{section~3.6} for detailed explanation.
@@ -268,17 +269,17 @@ The argon2 operation can be described as follows. The emphasized variables are A
 This subsection describes Argon2 through pseudocode. In addition to input parameters mentioned earlier, following notations will be used:
 
 \begin{description}
-\item{\(||\)} concatenation of two strings
+\item[\(||\)] -- concatenation of two strings
 
-\item{floor(x)} function returns the largest integer which is not bigger than x
+\item[floor(x)] -- function returns the largest integer which is not bigger than x
 
-\item{ceil(x)} function returns the smallest integer which is not smaller than x
+\item[ceil(x)] -- function returns the smallest integer which is not smaller than x
 
-\item{LE32(x)} converts 32 bit long integer x to byte string in little endian
+\item[LE32(x)] -- converts 32 bit long integer x to byte string in little endian
 
-\item{length(s)} returns length of string s in bytes as a 32 bytes long integer
+\item[length(s)] -- returns length of string s in bytes as a 32 bytes long integer
 
-\item{allocate(x)} allocates x bytes of memory
+\item[allocate(x)] -- allocates x bytes of memory
 \end{description}
 
 \begin{algorithm}
@@ -332,11 +333,11 @@ This subsection describes Argon2 through pseudocode. In addition to input parame
 Argon2 comes in three versions:
 
 \begin{description}
-\item{Argon2D} data-dependent variant of Argon2. This version uses previously computed data while performing computations and memory access. It is recommended to be used for cryptocurrencies and other proof-of-work applications as well for hashing on backend servers. In general, this version is suited for an environment where no side-channel timing attacks are expected. It provides better protection against brute-force attacks usin specialised hardware and tradeoff attacks.
+\item[Argon2D] -- data-dependent variant of Argon2. This version uses previously computed data while performing computations and memory access. It is recommended to be used for cryptocurrencies and other proof-of-work applications as well for hashing on backend servers. In general, this version is suited for an environment where no side-channel timing attacks are expected. It provides better protection against brute-force attacks usin specialised hardware and tradeoff attacks.
 
-\item{Argon2I} data-independent version. This version does not rely on previously computed data while performing calculations in memory. The version is recommended for key derivation and password hashing, where side-channel timing attacks are more probable because an adversary can have physical access to the machine. The mode is slower because it performs multiple passes over memory to defend against tradeoff attacks.
+\item[Argon2I] -- data-independent version. This version does not rely on previously computed data while performing calculations in memory. The version is recommended for key derivation and password hashing, where side-channel timing attacks are more probable because an adversary can have physical access to the machine. The mode is slower because it performs multiple passes over memory to defend against tradeoff attacks.
 
-\item{Argon2ID} combination of previous versions. In this mode the function behaves as Argon2I during computation of the first half of the first iteration over the memory. During remaining operation the Argon2D mode is used. The mode combines benefits of mitigation of side-channel timing attacks and brute force attacks.
+\item[Argon2ID] -- combination of previous versions. In this mode the function behaves as Argon2I during computation of the first half of the first iteration over the memory. During remaining operation the Argon2D mode is used. The mode combines benefits of mitigation of side-channel timing attacks and brute force attacks.
 \end{description}
 
 The difference lies in line number xx in the algorithm~\ref{argon2alg}. In particular indexes \emph{l} and \emph{z} are computed differently within different Argon2 versions. The allocated memory is represented as a matrix \(B[I][J]\) with \emph{p} rows and \(q = m' / p\) columns. Before computing indexes \emph{l} and \emph{z}, values \(J_1\) and \(J_2\) have to be calculated. This is the difference among Argon2 versions. AFter calculating of these values, further processing needs to be done but this stays the same for all versions.
@@ -367,21 +368,21 @@ The result x is 64 bits long and therefore it can be viewed as two 32 bit string
 Inputs for the function \emph{G} are described below. Note that no data from memory blocks are used. therefore Argon2i is data-independent.
 
 \begin{description}
-\item{r} the pass number
+\item[r] -- the pass number
 
-\item{l} the lane number
+\item[l] -- the lane number
 
-\item{s} the slice number
+\item[s] -- the slice number
 
-\item{\(m'\)} total number of memory blocks
+\item[\(m'\)] -- total number of memory blocks
 
-\item{t} total number of passes
+\item[t] -- total number of passes
 
-\item{y} Argon2 mode
+\item[y] -- Argon2 mode
 
-\item{i} counter starting from 1 in every segment
+\item[i] -- counter starting from 1 in every segment
 
-\item{ZERO} string of zeroes, in the first case 1024 bytes long, in the second case 968 bytes long
+\item[ZERO] -- string of zeroes, in the first case 1024 bytes long, in the second case 968 bytes long
 \end{description}
 
 Argon2id behaves as Argon2i if the pass number is 0 and at the same time the slice number is 0 or 1. Othervise it behaves like Argon2D.
@@ -415,13 +416,13 @@ PBKDF2 function is used as a key derivation function in LUKS version 1. It is us
 During initialisation, the PBKDF2 function is used to create a checksum of a master key. This key is subsequently used for symmetric encryption of actual data stored on the encrypted disk. The function receives following parameters:
 
 \begin{description}
-\item[masterKey] a new randomly generated master key of user specified length
+\item[masterKey] -- a new randomly generated master key of user specified length
 
-\item[phdr.mk-digest-salt] a random number 32 bytes long which is used to prevent attacks against password using precomputed tables \parencite[see][section 5.6.3]{itmc14}
+\item[phdr.mk-digest-salt] -- a random number 32 bytes long which is used to prevent attacks against password using precomputed tables \parencite[see][section 5.6.3]{itmc14}
 
-\item[phdr.mk-digest-iteration-count] number of iterations for PBKDF2, see section~\ref{sec:pbkdf2}
+\item[phdr.mk-digest-iteration-count] -- number of iterations for PBKDF2, see section~\ref{sec:pbkdf2}
 
-\item[LUKS\-DIGEST\-SIZE] length of he computed digest in bytes, default is 20
+\item[LUKS\-DIGEST\-SIZE] -- length of he computed digest in bytes, default is 20
 \end{description}
 
 The generated 20 bytes long checksum is stored in the LUKS header together with the iteration count and salt. Please note that the \emph{phdr.mk-digest-iteration-count} parameter is obtained by performing a benchmark with minimum of 1000 iterations.
@@ -429,13 +430,13 @@ The generated 20 bytes long checksum is stored in the LUKS header together with 
 During adding of a new password, PBKDF2 is used to process the passphrase supplied by user. It receives following parameters:
 
 \begin{description}
-\item[password] a passphrase supplied by an user
+\item[password] -- a passphrase supplied by an user
 
-\item[ks.salt] randomly generated salt used for this particular key slot with length of 32 bytes
+\item[ks.salt] -- randomly generated salt used for this particular key slot with length of 32 bytes
 
-\item[ks.iteration-count] number of PBKDF2 iterations
+\item[ks.iteration-count] -- number of PBKDF2 iterations
 
-\item[MasterKeyLength] length of the derived key
+\item[MasterKeyLength] -- length of the derived key
 \end{description}
 
 The resulting key derived from the passphrase is used to encrypt the master key. This key has to be present in memory either because initialisation happened recently or it was successfully recovered through a different key stored in different key slot. Together with the encrypted master key, the salt and iteration count are also written into the key slot.
@@ -447,25 +448,25 @@ The function is also used during the master key recovery. This process is perfor
 In the first case the function receives following parameters:
 
 \begin{description}
-\item[pwd] user supplied passphrase
+\item[pwd] -- user supplied passphrase
 
-\item[ks.salt] the salt value read from currently tried key slot
+\item[ks.salt] -- the salt value read from currently tried key slot
 
-\item[ks.iteration-count] the iteration count read from currently tried key slot
+\item[ks.iteration-count] -- the iteration count read from currently tried key slot
 
-\item[masterKeyLength] length of the derived key
+\item[masterKeyLength] -- length of the derived key
 \end{description}
 
 In the second case the function receives following parameters:
 
 \begin{description}
-\item[masterKeyCandidate] candidate master key, see above
+\item[masterKeyCandidate] -- candidate master key, see above
 
-\item[ph.mk-digest-salt] the salt value which was used during the initialisation phase and stored in the header
+\item[ph.mk-digest-salt] -- the salt value which was used during the initialisation phase and stored in the header
 
-\item[ph.mk-digest-iter] number of PBKDF2 iterations used during the initialisation phase and also stored in the header
+\item[ph.mk-digest-iter] -- number of PBKDF2 iterations used during the initialisation phase and also stored in the header
 
-\item[LUKS\_DIGEST\_SIZE] 20 bytes
+\item[LUKS\_DIGEST\_SIZE] -- 20 bytes
 \end{description}
 
 The process of changing a password is composed of previously mentioned operations and hence I am not mentioning it here in greater details. To sum it up, firstly the master key is recovered, then a new password is added to a new key slot and the previous one is revoked.
@@ -555,15 +556,15 @@ After the benchmark I used the Datamash tool to perform basic statistic computat
 Following tables present chosen results gained through methodology described in the previous subsection. Following conventions  in table headers are used:
 
 \begin{description}
-\item{time} requested unlocking time in milliseconds
+\item[time] -- requested unlocking time in milliseconds
 
-\item{avg(T)} average benchmarked Argon2 time cost expressed as a number of iterations
+\item[avg(T)] -- average benchmarked Argon2 time cost expressed as a number of iterations
 
-\item{stdev(T)} standard deviation of benchmarked Argon2 time cost expressed as a number of iterations
+\item[stdev(T)] -- standard deviation of benchmarked Argon2 time cost expressed as a number of iterations
 
-\item{avg(M)} average benchmarked Argon2 memory cost expressed in KiB
+\item[avg(M)] -- average benchmarked Argon2 memory cost expressed in KiB
 
-\item{stdev(M)} standard deviation of benchmarked Argon2 memory cost expressed in KiB
+\item[stdev(M)] -- standard deviation of benchmarked Argon2 memory cost expressed in KiB
 \end{description}
 
 The table \ref{tab:l8c32g} serves as an introduction and it shows which parameters to expect. The most important is the row concerning unlocking time of 2000 milliseconds as these values were used as baseline for simlating of attacks in the next chapter. Tables \ref{tab:l4c4g} and \ref{tab:l4c2g} demonstrate hardware limitations affecting Argon2 parameters. See the Git repository for more combinations of CPU and memory limitations \parencite{thesisrepo}.
@@ -648,20 +649,20 @@ time in ms & avg(t)  in iterations & stdev(t) in iterations & avg(M) in KiB & st
 Tables \ref{tab:comp2000} and \ref{tab:comp1000} compare benchmarking results for unlocking time of 1000 and 2000 ms respectively. Cryptsetup was compiled with different options explained below:
 
 \begin{description}
-\item{none} no special options were added
+\item[none] -- no special options were added
 
-\item{SSE} the \verb+--enable-internal-sse-argon2+ configuration option was added. If this option is specified, additional checks for special CPU features are performed (SSE2, SSE3, AVX2, AVX512). If they are detected, Argon2 is compiled with support for the most advanced one.
+\item[SSE] -- the \verb+--enable-internal-sse-argon2+ configuration option was added. If this option is specified, additional checks for special CPU features are performed (SSE2, SSE3, AVX2, AVX512). If they are detected, Argon2 is compiled with support for the most advanced one.
 
-\item{native} the \verb+-march=native+ flag is passed to the compiler, optimizing the source code for the particular platform
+\item[native] -- the \verb+-march=native+ flag is passed to the compiler, optimizing the source code for the particular platform
 
-\item{external} Cryptsetup is compiled against external Argon2 library
+\item[external] -- Cryptsetup is compiled against external Argon2 library
 \end{description}
 
 \noindent
 \begin{table}
 \caption{Comparing results for various Cryptsetup compilation options with unlocking time of 2000 ms}
 \label{tab:comp2000}
-\begin{tabularx}{\textwidth}{| X | X | X | X | X |}
+\begin{tabularx}{\textwidth}{| l | X | X | X | X |}
 \hline
 flags & avg(t)  in iterations & stdev(t) in iterations & avg(M) in KiB & stdev(M) in KiB\\
 \hline
@@ -682,7 +683,7 @@ external & 6 & 0 & 1048576 & 0\\
 \begin{table}
 \caption{Comparing results for various Cryptsetup compilation options with unlocking time of 1000 ms}
 \label{tab:comp1000}
-\begin{tabularx}{\textwidth}{| X | X | X | X | X |}
+\begin{tabularx}{\textwidth}{| l | X | X | X | X |}
 \hline
 flags in ms & avg(t)  in iterations & stdev(t) in iterations & avg(M) in KiB & stdev(M) in KiB\\
 \hline
@@ -770,19 +771,19 @@ The motivation behind performing of experimental simulations described in this c
 The following list describes parameters of the most interesting machines used during the research. For description of all the machines offered in Metacentrum see \parencite{metacentrumhw}.
 
 \begin{description}
-\item{Doom} $2 |times 8$ cores Intel Xeon E5-2650v2 2.60 GHz, hyperthreading 2 threads per core, supporting SSSE3 instruction, 64 GiB RAM, nVidia Tesla K20 with 4743 MiB of memory
+\item[Doom] -- $2 |times 8$ cores Intel Xeon E5-2650v2 2.60 GHz, hyperthreading 2 threads per core, supporting SSSE3 instruction, 64 GiB RAM, nVidia Tesla K20 with 4743 MiB of memory
 
-\item{Konos} $2\times10$ cores Intel(R) Xeon(R) CPU E5-2630 v4 at 2.20 GHz, hyperthreading 2 threads per core, supporting AVX2 instruction, 128 GB of RAM, NVIDIA GeForce GTX 1080 Ti with 11178 MiB of GPU memory
+\item[Konos] -- $2\times10$ cores Intel(R) Xeon(R) CPU E5-2630 v4 at 2.20 GHz, hyperthreading 2 threads per core, supporting AVX2 instruction, 128 GB of RAM, NVIDIA GeForce GTX 1080 Ti with 11178 MiB of GPU memory
 
-\item{nympha} $2\times16$ cores Intel(R) Xeon(R) Gold 6130 CPU at 2.10 GHz, hyperthreading 2 threads per core, supporting AVX512F instruction, 192 GiB of RAM
+\item[Nympha] -- $2\times16$ cores Intel(R) Xeon(R) Gold 6130 CPU at 2.10 GHz, hyperthreading 2 threads per core, supporting AVX512F instruction, 192 GiB of RAM
 
-\item{Manegrot} $4\times$ 8-core Intel Xeon E5-4627v2 at 3.30GHz, no hyperthreading, supporting SSSE3 instruction, 512 GiB of RAM
+\item[Manegrot] -- $4\times$ 8-core Intel Xeon E5-4627v2 at 3.30GHz, no hyperthreading, supporting SSSE3 instruction, 512 GiB of RAM
 
-\item{Uruk} $8\times18$ cores Intel Xeon Gold 6140  3.70 GHz, hyperthreading 2 threads per core, supporting AVX512F instruction, 2.86 TiB of RAM
+\item[Uruk] -- $8\times18$ cores Intel Xeon Gold 6140  3.70 GHz, hyperthreading 2 threads per core, supporting AVX512F instruction, 2.86 TiB of RAM
 
-\item{White} $2\times12$ core Intel Xeon Gold 6138 2.0 GHz, no hyperthreading, supporting SSSE3 instruction, 512 GiB of RAM, GPU Tesla P100 with 16280 MiB of memory
+\item[White] -- $2\times12$ core Intel Xeon Gold 6138 2.0 GHz, no hyperthreading, supporting SSSE3 instruction, 512 GiB of RAM, GPU Tesla P100 with 16280 MiB of memory
 
-\item{Zubat} $2\times8$ core Intel Xeon E5-2630v3 2.40GHz, hyperthreading 2 threads per core, supporting SSSE3 instruction, 128 GiB of RAM, GPU Tesla K20Xm with 5700 MiB of memory
+\item[Zubat] -- $2\times8$ core Intel Xeon E5-2630v3 2.40GHz, hyperthreading 2 threads per core, supporting SSSE3 instruction, 128 GiB of RAM, GPU Tesla K20Xm with 5700 MiB of memory
 \end{description}
 
 While performing computations on CPU I always allocated whole computing host and requested maximum number of available CPUS. I requested always at least $(T/L) \times M$ GiB of memory where \emph{T} denotes number of available CPU threads, \emph{L} denotes degree of parallelism for instance of Argon2 being computed and \emph{M} denotes memory cost. While simulating attacks on GPU I always reserved one instance of GPU, 1 CPU and 1 GiB of RAM memory. Reservations of GPUs are always exclusive. All tests used SSDs as underlying storage.
@@ -796,13 +797,13 @@ I created the tool which performs this attack. The tool was based on proof of co
 The tool expects following inputs where letters denoting parameters correspond to the command line options:
 
 \begin{description}
-\item{t} type of encrypted volume (LUKS1, Truecrypt, LUKS2) This can be very easily extended to other types supported by Cryptsetup.
+\item[t] -- type of encrypted volume, so far there are supported LUKS1, Truecrypt and LUKS2 and other types supported by Cryptsetup can be easily added by adding appropriate handler into the source code
 
-\item{i} base name of input device files
+\item[i] -- base name of input device files
 
-\item{p} input password file with one password per line
+\item[p] -- input password file with one password per line
 
-\item{T} number of parallel threads
+\item[T] -- number of parallel threads
 \end{description}
 
 The tool performs basic validation of input parameters and launches defined number of threads. Every thread receives a handler to the specified file containing the encrypted partition. Every thread opens the file with passwords and starts attempting to unlock the keyslot with passwords read from the input file. The file is internaly divided into segments and every thread reads a different segment. The tool runs until the passphrase is found or all the passhprases in the input file had been tried.
@@ -825,15 +826,15 @@ Argon2-gpu-bench can also precompute values for Argon2i and Argon2id, speeding u
 Following list describes chosen input parameters for the application. Letters match command line options.
 
 \begin{description}
-\item{L} degree of parallelism
+\item[L] -- Argon2 degree of parallelism
 
-\item{M} memory cost parameter
+\item[M] -- Argon2 memory cost parameter
 
-\item{T} number of Argon2 iterations
+\item[T] -- number of Argon2 iterations
 
-\item{s} number of computations
+\item[s] -- number of computations
 
-\item{b} number of hashes computed in every computation (batches)
+\item[b] -- number of hashes computed in every computation (batches)
 \end{description}
 
 Please notice the \emph{s} and \emph{b} parameters, they are important while interpreting results collected through this tool. The tool performs \emph{s} consecutive discrete computations. Every such computation is measured separately and the tool outputs its length including time of writing and reading of data for OpenCL and CUDA modes. In every such phase \emph{b} hopefully parallel hash computations is performed. I say hopefully because it is not always possible or desirable. Lenght of every such small computation is measured and averaged at the end of the whole benchmark.  So at the end the tool performs $s \times b$ computations.
@@ -848,17 +849,17 @@ originally the tool generated random strings 64 bytes long. I modified the tool 
 Here I describe and compare results collected by two methods described in previous subsections. These numbers serve as direct basis for the price model described in the next chapter. the following list shows column headings used in tables with their description and appropriate units:
 
 \begin{description}
-\item{threads} number of threads passed as parameter to cracker
+\item[threads] -- number of threads passed as parameter to cracker
 
-\item{batch size} number of concurent Argon2 computations passed through \verb+-b+ parameter to the Argon2-gpu-bench tool
+\item[batch size] -- number of concurent Argon2 computations passed through \verb+-b+ parameter to the Argon2-gpu-bench tool
 
-\item{avg(time per hash)} average time spent calculating one hash in milliseconds
+\item[avg(time per hash)] -- average time spent calculating one hash in milliseconds
 
-\item{stdev(time per hash)} standard deviation of time spent computing one hash in milliseconds
+\item[stdev(time per hash)] -- standard deviation of time spent computing one hash in milliseconds
 
-\item{avg(time per batch)} average time spent computing one batch of hashes in milliseconds
+\item[avg(time per batch)] -- average time spent computing one batch of hashes in milliseconds
 
-\item{stdev(time per batch)} standard deviation of time spent computing one batch of hashes in milliseconds
+\item[stdev(time per batch)] -- standard deviation of time spent computing one batch of hashes in milliseconds
 \end{description}
 
 Tables \ref{tab:nymphacracker}, \ref{tab:nymphacpu}  and \ref{tab:konosgpu} show us a baseline of results. Nympha and Konos were the most powerful machines for computing Argon2 I managed to find in MetaCentrum. We can see that cracking hashes with high memory parameter (1049576 KiB) is highly ineffective with the naive approach. The best result was achieved while running two concurrent unlocking operations, therefore occupying 8 threads. This configuration enabled computation of 1 hash per 1.107 seconds.
@@ -1152,54 +1153,47 @@ Ondrej Mosnáček created an experimental program for benchmarking speed of Argo
 Based on previous assumptions of an attacker's options I tried to create a price model which will estimate costs connected with finding the right passphrase to unlock the LUKS2 encrypted volume. These costs include purchase of devices and electricity costs. Following variables were defined to formalize the model:
 
 \begin{description}
-\item{D} power draw of one machine expressed in kilowatts
+\item[D] -- power draw of one machine expressed in kilowatt hours
 
-\item{E} price of electricity expressed in dollars per kilowatt
+\item[E] -- price of electricity expressed in dollars per kilowatt hour
 
-\item{F} expected final price of whole attack expressed in dollars
+\item[F] -- expected final price of whole attack expressed in dollars
 
-\item{H} initial price of one machine (CPU, RAM, accessories expressed in dollars
+\item[H] -- initial price of one machine (CPU, RAM, accessories expressed in dollars
 
-\item{L} expected length of an attack expressed in days
+\item[L] -- expected length of an attack expressed in days
 
-\item{N} number of machines expressed as a decimal number rounded to the closest higher integer
+\item[N] -- number of machines expressed as an integer
 
-\item{P} number of passwords an attacker is willing to try expressed as integer
+\item[P] -- number of passwords contained in the chosen password space
 
-\item{R} price to rent one machine for one day expressed in dollars
+\item[R] -- price to rent one machine for one day expressed in dollars
 
-\item{S} speed of one machine expressed as number of seconds spent computing one hash
+\item[S] -- speed of one machine expressed as number of seconds spent computing one hash
 \end{description}
 
-The model expects that an attacker uses array of homogenous machines and that the speed of Argon2 hash cracking had been at least approximately benchmarked. No assumptions about actual password are expected and therefore the model expets the worst case; that the whole password space \emph{P} has to be processed to find the right password. The model can simulate two different cases.
-
-\begin{enumerate}
-\item an attacker plans to purchase actual physical hardware
-
-\item an attacker rents machines from an online cloud provider (Amazon, Microsoft Azure, Alibaba Cloud etc.)
-\end{enumerate}
+The model expects that an attacker uses array of homogenous machines and that the speed of Argon2 hash cracking was at least approximately benchmarked. The model does not assume any hints about the password. The model expects that passwords are distributed uniformly through the password space and therefore an attacker should on average search through one half of \emph{P} to recover the password. The model can simulate two different cases. In the first case an attacker plans to purchase actual physical hardware and in the second case an attacker rents machines from an online cloud provider (Amazon, Microsoft Azure, Alibaba Cloud etc.)
 
 The final price is determined by set of following equations:
 
 \begin{equation}
 \label{eq1}
-N = \frac{\frac{S}{60 \times 60 \times 24} \times P}{L}
+N = \frac{\frac{S}{60 \times 60 \times 24} \times \frac{P}{2}}{L}
 \end{equation}
 
 \begin{equation}
 \label{eq2}
-F = ( N \times H ) + ( N \times D \times E \times L)
+F = ( N \times H ) + ( N \times D \times E \times 24 \times L)
 \end{equation}
 
 \begin{equation}
 \label{eq3}
-F = N \times R \times L
+F = N \times R \times 24 \times L
 \end{equation}
 
 The equation \ref{eq1} determines how many machines are needed to exhaust complete password space \emph{P} in \emph{L} days. The result denoted as \emph{N} can then be used in equations \ref{eq2} or \ref{eq3}.
 
 The equation \ref{eq2} is used in the case of purchasing and using physical hardware. In that case an attacker should estimate power draw of single machine by collecting information from datasheets or rather by performing real world tests. There exist online versions of power consumption calculators. If an attacker decides to allocate computing resources in online clouds, then the equation \ref{eq3} should be used. Online cloud providers usually provide online pricelists for their services.
-
 
 \section{Real world cost estimation}
 In this section I apply the model defined in section \ref{sec:model} to real world data. Please note that results acquired through this price model are only estimates based on data sources described below and experiments performed throughout this thesis described in chapter~\ref{chap:analysis}.
@@ -1207,7 +1201,7 @@ In this section I apply the model defined in section \ref{sec:model} to real wor
 Following subsections show that to crack a passhprase eight characters long used for LUKS2 volume created on modern laptop, there are needed hundreds of thousants or even millions of machines and the expected price is in range of billions of dollars. Even if parameters are benchmarked on relatively low performance hardware such as Raspberry Pi, there are still needed thousants of machines and the price stays in millions of dollars. When compared to similar research performed earlier with PBKDF2, it is visible that the price of an attack increased with ARgon2 \parencite{pbkdfresearch}.
 
 \subsection{Sources of real world data}
-Information about price and TDP of CPUs were collected from \parencite{intelspecs}, where as information about GPUs were collected from \parencite{teslak20}, \parencite{teslap100}, \parencite{geforceprice} and \parencite{geforce}. Information about prices of RAM memory were collected from \parencite{memoryprice}. Estimated electricity price is based on \parencite{electricity}. Prices of cloud services are based on available offers from Amazon \parencite{amazon} \parencite{amazoncalc}, Microsoft Azure \parencite{azure} and Alibaba Cloud \parencite{alibaba}.
+Information about price and TDP of CPUs were collected from \parencite{intelspecs}, where as information about GPUs were collected from \parencite{teslak20}, \parencite{teslap100}, \parencite{geforceprice} and \parencite{geforce}. Information about prices of RAM memory were collected from \parencite{memoryprice}. Estimated electricity price is based on \parencite{electricity} and \parencite{euroelectricity}. Prices of cloud services are based on available offers from Amazon \parencite{amazon} \parencite{amazoncalc}, Microsoft Azure \parencite{azure} and Alibaba Cloud \parencite{alibaba}.
 
 Note that power draw of machines is based on TDP of CPU or GPU as listed in particular technical specifications. Power draw of RAM and other peripheral components is not taken into account as it is relatively small and at the same time it is hard to set certain average value. I understand that TDP is not exact representation of actual power draw but as experimental machines were not under my physical control, I decided to use this value.
 
@@ -1215,8 +1209,10 @@ I define the \emph{P} as space of passhprases eight characters long containing u
 
 $$P = (26 + 26 + 10)^8 = 2,.183401056 \times 10^{14}$$
 
+I set the \emph{E} constant to 0.21. This was the price of electricity per kilowatt hour in dollars as shown in \parencite{electricity}. The average price in EU was even slightly higher after conversion from euro to dollars reaching 0.23.
+
 \subsection{Case 1 - modern laptop}
-For the first case, suppose that an attacker decides to buy machines comparable to the machine Nympha which can compute one hash in cca 217 ms. Also suppose that an attacker gets hold of an encrypted drive encrypted with LUKS2 with parameters of 6 iterations, 1048576 KiB of memory required and degree of parallelism 4.
+For the first case, suppose that an attacker decides to buy machines comparable to the machine Nympha which can compute one hash in cca 217 ms. Also suppose that an attacker gets hold of a drive encrypted with LUKS2 with parameters of 6 iterations, 1048576 KiB of memory required and degree of parallelism 4.
 
 \noindent
 \begin{table}
@@ -1226,20 +1222,20 @@ For the first case, suppose that an attacker decides to buy machines comparable 
 \hline
 L in years & number of machines\\
 \hline
-1 & 1502404\\
+1 & 751202\\
 \hline
-2 & 751202\\
+2 & 375601\\
 \hline
-5 & 300481\\
+5 & 150241\\
 \hline
-10 & 150240\\
+10 & 75121\\
 \hline
 \end{tabularx}
 \end{table}
 
-Further, let's set $H = 2 \times 1900 + 14 \times 70 = 4780$ as total price of 2 CPUs and 14 16 GiB memory modules. TDP of the particular CPU is 125 watts, running 24 hours per day the power draw is 3 kilowatts. Let's set $E = 0.21$ as if an attacker was located in United States.
+Further, let's set $H = 2 \times 1900 + 14 \times 70 = 4780$ as total price of 2 16-core CPUs and 14 16 GiB memory modules. TDP of the particular CPU is 125 watts, running 24 hours per day the power draw is 3 kilowatts.
 
-$$F = ( N \times 4780 ) + ( N \times 3 \times 0.21 \times L)$$
+$$F = ( N \times 4780 ) + ( N \times 3 \times 0.21 \times 24 \times L)$$
 
 Inserting respective \emph{N} and \emph{L} values according to the table \ref{tab:at1} produces following results.
 
@@ -1251,20 +1247,20 @@ Inserting respective \emph{N} and \emph{L} values according to the table \ref{ta
 \hline
 L  in years & number of machines & F in dollars\\
 \hline
-1 & 1502404 & 7526968919.8\\
+1 & 751202 & 7736479157.6\\
 \hline
-2 & 751202 & 3936223359.8\\
+2 & 375601  & 5941106377.6\\
 \hline
-5 & 300481 & 1781777209.75\\
+5 & 150241 & 4863902134.0\\
 \hline
-10 & 150240 & 1063624080\\
+10 & 75121 & 4504856128.0\\
 \hline
 \end{tabularx}
 \end{table}
 
-The table \ref{tab:at1} shows that prices are in range of billions of dollars. Just to put this into some context, if an attacker would like to crack the passphrase in one year, according to this model the amount is equal to circa 3.4 percent of Czech Republic GDP \parencite{czechgdp}.
+The table \ref{tab:at1} shows that prices are in range of billions of dollars. Just to put this into some context, if an attacker would like to crack the passphrase in one year, according to this model the amount is equal to circa 3.4 percent of Czech Republic GDP \parencite{czechgdp}. Notice that although the number of machines was cut by one half for \emph{L} set to 10 years, the total price dropped only by cca 7.3 percent.
 
-Considering cloud options there are multiple choices. For example Microsoft Azure cloud offers F72s v2 instances offering 72 virtual CPUs based on Intel Xeon Platinum 8168 which can reach sustained turbo frequencies for all cores up to 3.4 GHz and supports AVX512F instruction set. The instance provides only 144 GiB of RAM but it is sufficient as a rough estimate. Following table shows expected final prices counting in discounts for long term usage. Values were calculated by placing appropriate price values showed at \parencite{azure} into equation \ref{eq3}.
+Considering cloud options there are multiple choices. For example Microsoft Azure cloud offers F72s v2 instances offering 72 virtual CPUs based on Intel Xeon Platinum 8168 which can reach sustained turbo frequencies for all cores up to 3.4 GHz and supports AVX512F instruction set. The instance provides only 144 GiB of RAM but it is sufficient as a rough estimate. Following table shows expected final prices counting in discounts for long term usage. Values were calculated by placing appropriate price values showed at \parencite{azure} into equation \ref{eq3}. In particular, at the time of writing (spring 2019) the price were set at \$1.7996 per hour if the instance is reserved for one year and \$1.1161 if it is reserved for three years. The price without reservation discounts was \$3.06 per hour and was not taken into consideration at all.
 
 \noindent
 \begin{table}
@@ -1274,18 +1270,18 @@ Considering cloud options there are multiple choices. For example Microsoft Azur
 \hline
 L  in years & number of machines & F in dollars\\
 \hline
-1 year & 1502404 & 23684641848.384\\
+1 & 751202 & 11842320924.19\\
 \hline
-2 years & 751202 & 23684641848.384\\
+2 & 375601 & 11842320924.19\\
 \hline
-5 years & 300481 & 14689067771.58\\
+5 & 150241 & 7344558328.38\\
 \hline
-10 years & 150240 & 14689018886.4\\
+10 & 75121 & 7344607213.559999\\
 \hline
 \end{tabularx}
 \end{table}
 
-The table \ref{tab:at3} shows that renting an online instance for the same computation is definitely not the cheaper option. Even with expected time of ten years the price is still above ten billions of dollars per hash.
+The table \ref{tab:at3} shows that renting an online instance for the same computation is definitely not the cheaper option. Even with expected time of ten years the price is still above seven billions of dollars per hash.
 
 \subsection{Case 2 - Raspberry Pi}
 As the second example suppose that an attacker gains access to a drive encrypted with parameters benchmarked on Raspberry Pi. In particular parameters were 4 iterations, 95296.58 KiB of memory and degree of paralellism 4. Suppose that an attacker decides to use NVIDIA GeForce GTX 1080 Ti with 11178 MiB of GPU memory equal with provided one by Konos machine. In the table \ref{tab:rpicrack} it is shown that it takes 3.132034 milliseconds to compute one Argon2 hash.
@@ -1298,13 +1294,13 @@ As the second example suppose that an attacker gains access to a drive encrypted
 \hline
 L in years & number of machines\\
 \hline
-1 & 21685\\	
+1 & 10843\\	
 \hline
-2 & 10843\\
+2 & 5422\\
 \hline
-5 & 4337\\
+5 & 2169\\
 \hline
-10 & 2169\\
+10 & 1085\\
 \hline
 \end{tabularx}
 \end{table}
@@ -1319,20 +1315,20 @@ Suppose $H = 1000$, NVidia unfortunately does not provide suggested customer pri
 \hline
 L  in years & number of machines & F in dollars\\
 \hline
-1 & 21685 & 31657931.5\\
+1 & 10843 & 130523696.8\\
 \hline
-2 & 10843 & 20816391.4\\
+2 & 5422 & 125113734.39\\
 \hline
-5 & 4337 & 14309931.5\\
+5 & 2169 & 121871772.0\\
 \hline
-10 & 2169 & 12144231\\
+10 & 1085 & 120842959.99\\
 \hline
 \end{tabularx}
 \end{table}
 
-The table \ref{tab:at5} confirms that drastical decrease in parameters lowers also the expected attack price. Note that the memory parameter was decreased almost ten times. The price is still above ten millions of dollars.
+The table \ref{tab:at5} confirms that drastical decrease in parameters lowers also the expected attack price. Note that the memory parameter was decreased almost ten times. The price is still above hundred millions of dollars. Notice also that the price to buy initial hardware affects the final price less with longer expected time of attack.
 
-Although this GPU did not achieve the best hash computing time, it provided relatively low price compared to NVidia Tesla P100 (estimated 1000  dollarsvs estimated 4500 dollars). But it is possible to rent Tesla P100 in the cloud. As an example let's take the instance NCV2 providing up to 4 GPUs per instance provided by Microsoft Azure. The table \ref{tab:at6} shows the results and confirms that renting GPUs online is not the cheaper option again.
+Although this GPU did not achieve the best hash computing time, it provided relatively low price compared to NVidia Tesla P100 (estimated 1000  dollars versus estimated 4500 dollars). But it is possible to rent Tesla P100 in the cloud. As an example let's take the instance NCV2 providing up to 4 GPUs per instance provided by Microsoft Azure. The table \ref{tab:at6} shows the results and demonstrates that in certain extreme situations it might be cheaper to rent online resources. Note that at the time of writing (spring 2019) the renting price was set to \$1.3187 per hour for one year reserved instance and \$0.9189 for three years reserved instance.
 
 \noindent
 \begin{table}
@@ -1342,13 +1338,13 @@ Although this GPU did not achieve the best hash computing time, it provided rela
 \hline
 L  in years & number of machines & F in dollars\\
 \hline
-1 & 21685 & 250472549.13\\
+1 & 10843 & 125256297.52\\
 \hline
-2 & 10843 & 250484099.628\\
+2 & 5422 & 125267849.33\\
 \hline
-5 & 4337 & 174550046.325\\
+5 & 2169 & 87297521.58\\
 \hline
-10 & 2169 & 174590293.05\\
+10 & 1085 & 87337769.4\\
 \hline
 \end{tabularx}
 \end{table}
