@@ -3,7 +3,7 @@
 \thesissetup{author=Bc. Vojtěch Polášek,id=410266, departmentEn = Department of Computer Systems and Communications, programmeEn = Informatics, fieldEn = Information Technology Security, assignment = {}}
 \thesissetup{type= mgr}
 \thesissetup{title=Argon2 security margin for disk encryption passwords}
-%\thesissetup{keywords = {security, web application, dynamic analysis,  SQL injection, software vulnerability, continuous integration}}
+\thesissetup{keywords = {security, password hashing, key derivation, disk encryption, password cracking}}
 \usepackage[english]{babel}
 \usepackage{alltt}
 \usepackage{hyperref}
@@ -21,14 +21,19 @@
 \usepackage{siunitx}
 
 
-%\thesislong{abstract}{
-%This thesis deals with tools for dynamic security analysis of web applications. It introduces 14 tools divided into 4 categories: reconnaissance tools, tools for discovery of specific vulnerabilities, intercepting web proxies, and complex vulnerability scanners. Tools are compared according to their features, licence, price, OWASP Top 10 coverage, and ability to be integrated into Atlassian stack. The thesis researches three selected tools in more details: Sqlmap, W3af, and Arachni. In the end, the thesis contains results produced by the three tools while performing audit of open-source deliberately vulnerable web applications.
-%}
+\thesislong{abstract}{
+Passwords are popular authentication method in the field of information technologies. Passwords were created for humans to be remembered. Sometimes they are not ideal for usage in encryption software. Therefore, there exist key derivation functions, which transform a password into more suitable cryptographic key.
+This thesis deals with such functions, in particular considering their usage in disk encryption. The most popular function PBKDF2 is described together with its vulnerabilities and attacks. To mitigate them it was decided to use so called memory-hard functions. One of such functions is Argon2 selected as a vinner of Password hashing competition. The thesis describes Argon2 in detail.
+The practical part of the thesis deals with simulating of an attack on a disk encrypted with LUKS2 encryption scheme using Argon2 as PBKDF. It includes collecting Argon2 parameters benchmarked by Cryptsetup software. Attack is devised through CPUs and GPUs using high-performance hardware provided by MetaCentrum VO. 
+The last part of the thesis introduces a price model for an attacker using either physical hardware or on demand allocation of computing resources in the cloud. This model is then applied to real world prices and data obtained during the attack simulation.
+The thesis shows that it can take thousands of machines and hundreds of billions of dollars to crack a LUKS2 password eight characters long in ten years.
+}
 \thesissetup{advisor=Ing. Milan Brož\, Ph.D.}
 \thesislong{thanks}{
 My big thanks go to my advisor Milan Brož for very inspirational and positive supervision and for help with gaining access to hardware needed for benchmarking.
-Furthermore I would like to thank Ondrej Mosnáček for his consultations concerning Argon2 and for his software used in this thesis.
-
+Furthermore I would like to thank Ondrej Mosnáček for his consultations concerning Argon2 and for the software used in this thesis.
+My thanks also go to Lukáš Másilko for help with graphical appearance of the thesis.
+Last but not least, I would like to thank my family and my girlfriend Justyna for supporting me during the whole process.
 Computational resources were provided by the CESNET LM2015042 and the CERIT Scientific Cloud LM2015085, provided under the programme "Projects of Large Research, Development, and Innovations Infrastructures". Computational resources were supplied by the Ministry of Education, Youth and Sports of the Czech Republic under the Projects CESNET (Project No. LM2015042) and CERIT-Scientific Cloud (Project No. LM2015085) provided within the program Projects of Large Research, Development and Innovations Infrastructures.
 }
 
@@ -1240,9 +1245,8 @@ $$P = (26 + 26 + 10)^8 = 2,.183401056 \times 10^{14}$$
 I set the \emph{E} constant to 0.21. This was the price of electricity per kilowatt hour in dollars as shown in \parencite{electricity}. The average price in EU was even slightly higher after conversion from euro to dollars reaching 0.23.
 
 \subsection{Case 1 - modern laptop}
-For the first case, suppose that an attacker decides to buy machines comparable to the machine Nympha which can compute one hash in cca 217 ms. Also suppose that an attacker gets hold of a drive encrypted with LUKS2 with parameters of 6 iterations, 1048576 KiB of memory required and degree of parallelism 4.
-
 \FloatBarrier
+For the first case, suppose that an attacker decides to buy machines comparable to the machine Nympha which can compute one hash in cca 217 ms. Also suppose that an attacker gets hold of a drive encrypted with LUKS2 with parameters of 6 iterations, 1048576 KiB of memory required and degree of parallelism 4.
 
 \noindent
 \begin{table}
@@ -1263,15 +1267,11 @@ L in years & number of machines\\
 \end{tabularx}
 \end{table}
 
-\FloatBarrier
-
 Further, let's set $H = 2 \times 1900 + 14 \times 70 = 4780$ as total price of 2 16-core CPUs and 14 16 GiB memory modules. TDP of the particular CPU is 125 watts, running 24 hours per day the power draw is 3 kilowatts.
 
 $$F = ( N \times 4780 ) + ( N \times 3 \times 0.21 \times 24 \times L)$$
 
 Inserting respective \emph{N} and \emph{L} values according to the table \ref{tab:at1} produces following results.
-
-\FloatBarrier
 
 \noindent
 \begin{table}
@@ -1292,13 +1292,9 @@ L  in years & number of machines & F in dollars\\
 \end{tabularx}
 \end{table}
 
-\FloatBarrier
-
 The table \ref{tab:at2} shows that prices are in range of billions of dollars. Just to put this into some context, if an attacker would like to crack the passphrase in one year, according to this model the amount is equal to circa 3.4 percent of Czech Republic GDP \parencite{czechgdp}. Notice that although the number of machines was cut by one half for \emph{L} set to 10 years, the total price dropped only by cca 7.3 percent.
 
 Considering cloud options there are multiple choices. For example Microsoft Azure cloud offers F72s v2 instances offering 72 virtual CPUs based on Intel Xeon Platinum 8168 which can reach sustained turbo frequencies for all cores up to 3.4 GHz and supports AVX512F instruction set. The instance provides only 144 GiB of RAM but it is sufficient as a rough estimate. Following table shows expected final prices counting in discounts for long term usage. Values were calculated by placing appropriate price values showed at \parencite{azure} into equation \ref{eq3}. In particular, at the time of writing (spring 2019) the price were set at \$1.7996 per hour if the instance is reserved for one year and \$1.1161 if it is reserved for three years. The price without reservation discounts was \$3.06 per hour and was not taken into consideration at all.
-
-\FloatBarrier
 
 \noindent
 \begin{table}
@@ -1319,14 +1315,12 @@ L  in years & number of machines & F in dollars\\
 \end{tabularx}
 \end{table}
 
-\FloatBarrier
-
 The table \ref{tab:at3} shows that renting an online instance for the same computation is definitely not the cheaper option. Even with expected time of ten years the price is still above seven billions of dollars per hash.
+
+\FloatBarrier
 
 \subsection{Case 2 - Raspberry Pi}
 As the second example suppose that an attacker gains access to a drive encrypted with parameters benchmarked on Raspberry Pi. In particular parameters were 4 iterations, 95296.58 KiB of memory and degree of paralellism 4. Suppose that an attacker decides to use NVIDIA GeForce GTX 1080 Ti with 11178 MiB of GPU memory equal with provided one by Konos machine. In the table \ref{tab:rpicrack} it is shown that it takes 3.132034 milliseconds to compute one Argon2 hash.
-
-\FloatBarrier
 
 \noindent
 \begin{table}
@@ -1349,8 +1343,6 @@ L in years & number of machines\\
 
 Suppose $H = 1000$, NVidia unfortunately does not provide suggested customer price, therefore the price was estimated according to \parencite{geforceprice}. The TDP of the card is 250 watts, therefore \emph{D} is set to 6 kilowatts.
 
-\FloatBarrier
-
 \noindent
 \begin{table}
 \caption{final prices for the second model case using physical hardware}
@@ -1370,13 +1362,10 @@ L  in years & number of machines & F in dollars\\
 \end{tabularx}
 \end{table}
 
-\FloatBarrier
-
 The table \ref{tab:at5} confirms that drastical decrease in parameters lowers also the expected attack price. Note that the memory parameter was decreased almost ten times. The price is still above hundred millions of dollars. Notice also that the price to buy initial hardware affects the final price less with longer expected time of attack.
 
 Although this GPU did not achieve the best hash computing time, it provided relatively low price compared to NVidia Tesla P100 (estimated 1000  dollars versus estimated 4500 dollars). But it is possible to rent Tesla P100 in the cloud. As an example let's take the instance NCV2 providing up to 4 GPUs per instance provided by Microsoft Azure. The table \ref{tab:at6} shows the results and demonstrates that in certain extreme situations it might be cheaper to rent online resources. Note that at the time of writing (spring 2019) the renting price was set to \$1.3187 per hour for one year reserved instance and \$0.9189 for three years reserved instance.
 
-\FloatBarrier
 
 \noindent
 \begin{table}
