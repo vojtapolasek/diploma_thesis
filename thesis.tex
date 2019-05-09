@@ -25,8 +25,13 @@
 %This thesis deals with tools for dynamic security analysis of web applications. It introduces 14 tools divided into 4 categories: reconnaissance tools, tools for discovery of specific vulnerabilities, intercepting web proxies, and complex vulnerability scanners. Tools are compared according to their features, licence, price, OWASP Top 10 coverage, and ability to be integrated into Atlassian stack. The thesis researches three selected tools in more details: Sqlmap, W3af, and Arachni. In the end, the thesis contains results produced by the three tools while performing audit of open-source deliberately vulnerable web applications.
 %}
 \thesissetup{advisor=Ing. Milan Brož\, Ph.D.}
-%\thesislong{thanks}{I would like to thank Andriy Stetsko for professional supervision, Tomáš Kuba for technical help while facing numerous problems, Radim Göth for invaluable help while collecting initial testing data, and Jiří Pecl for help while polishing final look of the thesis. My thanks also go to my girlfriend Věruška and my family for support during writing of this thesis.}
-%doplnit zadani
+\thesislong{thanks}{
+My big thanks go to my advisor Milan Brož for very inspirational and positive supervision and for help with gaining access to hardware needed for benchmarking.
+Furthermore I would like to thank Ondrej Mosnáček for his consultations concerning Argon2 and for his software used in this thesis.
+
+Computational resources were provided by the CESNET LM2015042 and the CERIT Scientific Cloud LM2015085, provided under the programme "Projects of Large Research, Development, and Innovations Infrastructures". Computational resources were supplied by the Ministry of Education, Youth and Sports of the Czech Republic under the Projects CESNET (Project No. LM2015042) and CERIT-Scientific Cloud (Project No. LM2015085) provided within the program Projects of Large Research, Development and Innovations Infrastructures.
+}
+
 
 \thesisload
 \setcounter{tocdepth}{2}
@@ -67,7 +72,7 @@ A \emph{cryptographic salt} is often used during process of key derivation. The 
 \label{whypbkdfs}
 Today, as more and more private information is stored on various kinds of media and transfered over the Internet, it is becoming crucial to protect it from being accessed or changed by unauthorised actors. Although there are several interesting authentication options such as biometrics, passwords or passphrases are still the most common method.
 
-Considering passwords we are facing a problematic situation. Organisations and services provide guidelines or requirements which should help an user to choose a strong password \parencite{nistpasswords} \parencite{sanspasswordguidelines}. Important parameters are password length (in characters), password complexity, uniqueness and others. By complexity I mean amount and diversity of used characters (letters, numbers, symbols, emojis\dots) and by uniqueness I mean the fact that the password does not contain easily guessable or predictable sequences. See mentioned policies for example.
+Considering passwords we are facing a problematic situation. Organisations and services provide guidelines or requirements which should help an user to choose a strong password \parencites{nistpasswords}{sanspasswordguidelines}. Important parameters are password length (in characters), password complexity, uniqueness and others. By complexity I mean amount and diversity of used characters (letters, numbers, symbols, emojis\dots) and by uniqueness I mean the fact that the password does not contain easily guessable or predictable sequences. See mentioned policies for example.
 
 I will find some researches supporting following lines
 
@@ -79,7 +84,7 @@ PBKDF stands for password-based key derivation function. The goal of these funct
 
 Lately PBKDFs are taking another specific task. Due to availability of GPUs, FPGAs and ASICs, there are  new possibilities in running functions in parallel computing environment \parencite[see][chapter 4]{mosnacek}. This increases effectivity of brute-force attacks. PBKDFs try to defend against such attacks by using salt and and function-specific parameters like iteration count etc. See section~\ref{sec:attacks} for more details.
 
-Examples of PBKDFs include Argon2, PBKDF2, Scrypt, Yscrypt and more. See chapter~\ref{chap:pbkdfs} for comparison of several functions.
+Examples of PBKDFs include Argon2, PBKDF2, Scrypt, Yescrypt and more. See chapter~\ref{chap:pbkdfs} for comparison of several functions.
 
 \section{PBKDFs and disk encryption}
 Disk encryption is a very good use case for usage of PBKDFs. Used encryption algorithms require cryptographic keys of certain length \parencite{veracrypt}. It is also important to consider the fact, that it is usually not desirable to change the encryption key often because reencryption of whole disk takes considerable amount of time. Let aside the fact that if an attacker gains permanent access to such an encrypted disk, the key cannot be changed at all and they may have extensive time period during which they can manage to crack the key. 
@@ -390,11 +395,34 @@ Argon2id behaves as Argon2i if the pass number is 0 and at the same time the sli
 Further computations common for all Argon2 modes are described in \parencite{argon2draft}{3.4.2}.
 
 \section{Scrypt}
-Scrypt is a PBKDF introduced by Colin Percival in \parencite{memoryhard}. At the time of releasing the paper (2009) problems of PBKDF2 and its parallel computation were already well-known. Percival came with two new concepts. He defined a memory-hard algorithm as an algorithm which performs asymptotically almost the same number of operations compared to number of accessed memory locations. The second concept is called sequential memory-hard function. This definition describes a function which can be computed by a memory-hard sequential algorithm and at the same time even the fastest parallel algorithm cannot asymptotically reach a significantly lower cost.
+\label{sec:scrypt}
+Scrypt is a PBKDF introduced by Colin Percival in \parencite{memoryhard}. At the time of releasing the paper (2009) problems of PBKDF2 and its parallel computation were already well-known. Percival came with two new concepts. He defined a memory-hard algorithm as an algorithm which performs asymptotically almost the same number of operations compared to number of accessed memory locations. The second concept is called sequential memory-hard function. This definition describes a function which can be computed by a sequential memory-hard algorithm and at the same time even the fastest parallel algorithm cannot asymptotically reach a significantly lower cost. Both concepts came as a reaction to increasing computing power of parallel hardware. He also defined the ROMix and SMix functions which are sequential memory hard functions and they perform mixing of data blocks in memory.
 
-Both concepts came as a reaction to increasing computing power of parallel hardware. 
+Scrypt accepts the memory/CPU cost parameter \emph{n}, the parallelization parameter \emph{p} and the block size parameter \emph{r}. The idea behind the Scrypt function can be described as follows:
+
+\begin{enumerate}
+\item Use PBKDF2 with PRF being SHA256 to process the passhprase and salt provided as Scrypt input and generate \emph{p} blocks. Their size is affected by parameter \emph{r}
+
+\item Blocks generated in the previous step are independently mixed by a mixing function which is actually composed of ROMix function, SMix function and 8-round version of  Salsa20 stream cipher function. This step makes whole computation expensive.
+
+\item The result is used as salt for another PBKDF2 computation whigh produces the final result.
+\end{enumerate}
+
+There exist theoretical work describing cache timing side-channel attack against Scrypt but it has not been put into practice yet \parencite{scryptattack}.
 
 \section{Other PBKDFs}
+The Password hashing competition received 24 submission. The panel chose 9 finalists and finally Argon2 as the winner. Four finalists which received special recognition by PHC panel are described in this section.
+
+The Catena is presented as a password-scrambling framework \parencite{catena}. It can be used for many purposes including password derivation or proof of work. Catena instance is characterised by cryptographic primitive, a reduced primitive, optional randomization layer and a memory-hard function. These parts are independent on each other and therefore the whole platform is somehow modular. Three tunable parameters are provided, affecting time and memory requirements and also resistance against precomputation attacks.
+
+An interesting feature is introduced by server relief protocol which allows to shift actual computation from a server to a client, while keeping memory and time requirements. For example authentication servers could benefit from this feature by not being burdened by too many authentication requests. Another interesting feature is option to increase security paremeters (recomputing hash) without knowledge of the actual password.
+
+The Lyra2 function was chosen for its useage of cryptographic sponges \parencite{lyra2}. The function accepts parameters for tuning of memory and time cost. The function supports parallelism on multicore CPU platforms but tries to minimize benefits of parallelism on GPUs. Different underlying sponge functions can be used.
+
+The main highlight of the Maqa function is its ability to delegate its computation to untrustworthy clients. This feature is similar to the one provided by Catena. A feature which makes this function unique is support for password escrow. This feature allows to recover password by knowing a specific private key. This can be used for example as a password recovery, although this method is definitely not ideal and should be considered carefuly.
+
+The Yescrypt function is based on the Scrypt function briefly described in section~\ref{sec:scrypt} \parencite{yescrypt}. It is therefore backward compatible with Scrypt and can compute Scrypt hashes. It also offers delegation of computation to externa clients and hash upgrades without knowledge of the password. The running time can be increased separately from the memory usage and paralellism.
+
 
 \chapter{Analysis of LUKS2}
 \label{chap:analysis}
@@ -1132,7 +1160,7 @@ This chapter focuses on creating a price model for potential attacker trying to 
 \label{sec:attacker}
 For the purpose of this thesis an attacker is defined as an entity which gained unauthorized access to a LUKS2 volume header with Argon2 used as PBKDF. The header can be part of actual encrypted volume or it can be a detached header stored for example for backup purposes. The volume is not damaged. The attacker has moderate knowledge of information security and computers in general but does not want to invest the time in searching for vulnerabilities in Argon2 or Cryptsetup. The attacker decides to use brute-force or dictionary attack.
 
-The attacker currently does not have any hardware with sufficient computing power and amount of RAM to be used for cracking the passphrase. However, suppose that the attacker has sufficient financial resources to purchase needed hardware or rent cloud computing resources. there is no upper limit set for financial resources.
+The attacker currently does not have any hardware with sufficient computing power and amount of RAM to be used for cracking the passphrase. However, suppose that the attacker has sufficient financial resources to purchase needed hardware or rent cloud computing resources. There is no upper limit set for financial resources.
 
 \subsection{Hardware}
 While considering cracking a password or a hash, there are several types of hardware to consider. An attacker can use powerful CPUs which can be cheaper solution compared to other possibilities but they are also usually slower because of their generic nature. The fact which is crucial while considering Argon2 is that they can have access to relatively large volume of RAM without degrading their computing performance. It is also less time-consuming to eventually optimize the hash algorithm for CPU than for other types of hardware.
@@ -1153,7 +1181,7 @@ Ondrej Mosnáček created an experimental program for benchmarking speed of Argo
 Based on previous assumptions of an attacker's options I tried to create a price model which will estimate costs connected with finding the right passphrase to unlock the LUKS2 encrypted volume. These costs include purchase of devices and electricity costs. Following variables were defined to formalize the model:
 
 \begin{description}
-\item[D] -- power draw of one machine expressed in kilowatt hours
+\item[D] -- power draw of one machine expressed in kilowatts
 
 \item[E] -- price of electricity expressed in dollars per kilowatt hour
 
@@ -1167,7 +1195,7 @@ Based on previous assumptions of an attacker's options I tried to create a price
 
 \item[P] -- number of passwords contained in the chosen password space
 
-\item[R] -- price to rent one machine for one day expressed in dollars
+\item[R] -- price to rent one machine for one hour expressed in dollars
 
 \item[S] -- speed of one machine expressed as number of seconds spent computing one hash
 \end{description}
@@ -1214,6 +1242,8 @@ I set the \emph{E} constant to 0.21. This was the price of electricity per kilow
 \subsection{Case 1 - modern laptop}
 For the first case, suppose that an attacker decides to buy machines comparable to the machine Nympha which can compute one hash in cca 217 ms. Also suppose that an attacker gets hold of a drive encrypted with LUKS2 with parameters of 6 iterations, 1048576 KiB of memory required and degree of parallelism 4.
 
+\FloatBarrier
+
 \noindent
 \begin{table}
 \caption{number of Nympha-like machines to exhaust password space depending on expected length of attack}
@@ -1233,11 +1263,15 @@ L in years & number of machines\\
 \end{tabularx}
 \end{table}
 
+\FloatBarrier
+
 Further, let's set $H = 2 \times 1900 + 14 \times 70 = 4780$ as total price of 2 16-core CPUs and 14 16 GiB memory modules. TDP of the particular CPU is 125 watts, running 24 hours per day the power draw is 3 kilowatts.
 
 $$F = ( N \times 4780 ) + ( N \times 3 \times 0.21 \times 24 \times L)$$
 
 Inserting respective \emph{N} and \emph{L} values according to the table \ref{tab:at1} produces following results.
+
+\FloatBarrier
 
 \noindent
 \begin{table}
@@ -1258,9 +1292,13 @@ L  in years & number of machines & F in dollars\\
 \end{tabularx}
 \end{table}
 
-The table \ref{tab:at1} shows that prices are in range of billions of dollars. Just to put this into some context, if an attacker would like to crack the passphrase in one year, according to this model the amount is equal to circa 3.4 percent of Czech Republic GDP \parencite{czechgdp}. Notice that although the number of machines was cut by one half for \emph{L} set to 10 years, the total price dropped only by cca 7.3 percent.
+\FloatBarrier
+
+The table \ref{tab:at2} shows that prices are in range of billions of dollars. Just to put this into some context, if an attacker would like to crack the passphrase in one year, according to this model the amount is equal to circa 3.4 percent of Czech Republic GDP \parencite{czechgdp}. Notice that although the number of machines was cut by one half for \emph{L} set to 10 years, the total price dropped only by cca 7.3 percent.
 
 Considering cloud options there are multiple choices. For example Microsoft Azure cloud offers F72s v2 instances offering 72 virtual CPUs based on Intel Xeon Platinum 8168 which can reach sustained turbo frequencies for all cores up to 3.4 GHz and supports AVX512F instruction set. The instance provides only 144 GiB of RAM but it is sufficient as a rough estimate. Following table shows expected final prices counting in discounts for long term usage. Values were calculated by placing appropriate price values showed at \parencite{azure} into equation \ref{eq3}. In particular, at the time of writing (spring 2019) the price were set at \$1.7996 per hour if the instance is reserved for one year and \$1.1161 if it is reserved for three years. The price without reservation discounts was \$3.06 per hour and was not taken into consideration at all.
+
+\FloatBarrier
 
 \noindent
 \begin{table}
@@ -1281,10 +1319,14 @@ L  in years & number of machines & F in dollars\\
 \end{tabularx}
 \end{table}
 
+\FloatBarrier
+
 The table \ref{tab:at3} shows that renting an online instance for the same computation is definitely not the cheaper option. Even with expected time of ten years the price is still above seven billions of dollars per hash.
 
 \subsection{Case 2 - Raspberry Pi}
 As the second example suppose that an attacker gains access to a drive encrypted with parameters benchmarked on Raspberry Pi. In particular parameters were 4 iterations, 95296.58 KiB of memory and degree of paralellism 4. Suppose that an attacker decides to use NVIDIA GeForce GTX 1080 Ti with 11178 MiB of GPU memory equal with provided one by Konos machine. In the table \ref{tab:rpicrack} it is shown that it takes 3.132034 milliseconds to compute one Argon2 hash.
+
+\FloatBarrier
 
 \noindent
 \begin{table}
@@ -1305,7 +1347,9 @@ L in years & number of machines\\
 \end{tabularx}
 \end{table}
 
-Suppose $H = 1000$, NVidia unfortunately does not provide suggested customer price, therefore the price was estimated according to \parencite{geforceprice}. $D = \frac{250 \times 24}{1000} = 6$ kilowatts. 
+Suppose $H = 1000$, NVidia unfortunately does not provide suggested customer price, therefore the price was estimated according to \parencite{geforceprice}. The TDP of the card is 250 watts, therefore \emph{D} is set to 6 kilowatts.
+
+\FloatBarrier
 
 \noindent
 \begin{table}
@@ -1326,9 +1370,13 @@ L  in years & number of machines & F in dollars\\
 \end{tabularx}
 \end{table}
 
+\FloatBarrier
+
 The table \ref{tab:at5} confirms that drastical decrease in parameters lowers also the expected attack price. Note that the memory parameter was decreased almost ten times. The price is still above hundred millions of dollars. Notice also that the price to buy initial hardware affects the final price less with longer expected time of attack.
 
 Although this GPU did not achieve the best hash computing time, it provided relatively low price compared to NVidia Tesla P100 (estimated 1000  dollars versus estimated 4500 dollars). But it is possible to rent Tesla P100 in the cloud. As an example let's take the instance NCV2 providing up to 4 GPUs per instance provided by Microsoft Azure. The table \ref{tab:at6} shows the results and demonstrates that in certain extreme situations it might be cheaper to rent online resources. Note that at the time of writing (spring 2019) the renting price was set to \$1.3187 per hour for one year reserved instance and \$0.9189 for three years reserved instance.
+
+\FloatBarrier
 
 \noindent
 \begin{table}
