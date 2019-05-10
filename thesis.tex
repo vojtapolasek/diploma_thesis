@@ -44,7 +44,7 @@ Computational resources were provided by the CESNET LM2015042 and the CERIT Scie
 
 
 \begin{document}
-\tableofcontents
+%\tableofcontents
 \chapter{Introduction}
 This diploma thesis deals with password-based key derivation functions and their application in disk encryption software. At the very beginning of the computer era there were no passwords. They appeared for the first time in 1960's and they were introduced by Fernando Corbató \parencite{ctss}. They are going through evolving process as they try to keep pace with developing technology and new ways in which the technology is being used.
 
@@ -83,7 +83,7 @@ I will find some researches supporting following lines
 
 As shown by researches, users tend to circumvent such policies by finding loopholes in them. %to be done
 
-What more, passwords them selves are not good cryptographic material which should be used as a cryptographic key. There are surprisingly many reasons. They are usually not sufficiently long. Because they are composed of printable characters, they do not meet the requirement of being uniformly distributed. If they should be remembered, they will probably contain dictionary words, which lessens their entropy even more. See \parencite[section 5.6.4]{itmc14} for short but interesting analysis.
+What more, passwords them selves are not good cryptographic material which should be used as a cryptographic key. There are surprisingly many reasons. They are usually not sufficiently long. Because they are composed of printable characters, they do not meet the requirement of being uniformly distributed. If they should be remembered, they will probably contain dictionary words, which lessens their entropy even more. See section 5.6.4 at \parencite{itmc14} for short but interesting analysis.
 
 PBKDF stands for password-based key derivation function. The goal of these functions is to derive one or more cryptographic keys from a password or a passphrase. This key should be pseudorandom and sufficiently long to make brute-force guessing as time-consuming as possible. As stated above, they are based on cryptographic hashing functions.
 
@@ -97,7 +97,6 @@ Disk encryption is a very good use case for usage of PBKDFs. Used encryption alg
 By looking at \parencite{pbkdf2usage} we can see that PBKDFs are used in many types of disk encryption software. Note that this list mentions only PBKDF2 as this has been most used PBKDF since recent times. PBKDF2 is for example used in LUKS version 1 \parencite{luks1}, FileVault software used by macOS \parencite{filevault}, CipherShed disk encryption software \parencite{ciphershed}, Veracrypt disk encryption software \parencite{veracrypt} and more.
 
 In 2013 there was initiated a new open competition called Password hashing competition. Its goal was to find a new password hashing function which would resist new attacks devised against those functions \parencite{phc}. The winner was function named Argon2. It is already used for example in LUKS version 2 \parencite{luks2}.
-
 
 \section{Attacks on PBKDFs}
 \label{sec:attacks}
@@ -123,7 +122,7 @@ In \parencite{pbkdf2weakness}{subsection~4.2} there is shown that an attacker ca
 
 In 2009 Colin Percival suggested that to defend against usage of parallel computing, PBKDFs should fulfill requirements of memory-hard functions \parencite{memoryhard}.   As a reaction to previously mentioned problems of PBKDF2, the Password hashing competition was held from 2013 to 2015 to select a new function for password hashing. The winner is Argon2 described in section~\ref{argon2} and it is indeed a memory-hard function. Of course that does not mean that memory-hard functions are not prone to attacks.
 
-In a paper from 2016, authors show that there still exists an attack which can decrease computational complexity of Argon2I-B function. It was shown that at that time it was needed to configure at least ten passes of Argon2I-B to mitigate this attack. At the time of releasing the paper, the IRTF proposal suggested only six passes for "paranoid" situations. Fortunately authors of Argon2 reacted to those attacks and improved the function, sothat the attack is not effective against Argon2I anymore except when runnin with only signle pass. Details and rationale can be found in \parencite{argon2}{subsection~5.2}.
+In a paper from 2016, authors show that there still exists an attack which can decrease computational complexity of Argon2I-B function. It was shown that at that time it was needed to configure at least ten passes of Argon2I-B to mitigate this attack. At the time of releasing the paper, the IRTF proposal suggested only six passes for "paranoid" situations. Fortunately authors of Argon2 reacted to those attacks and improved the function, sothat the attack is not effective against Argon2I anymore except when runnin with only single pass. Details and rationale can be found in subsection~5.2  at \parencite{argon2}.
 
 \chapter{State of the art PBKDFs}
 \label{chap:pbkdfs}
@@ -397,7 +396,7 @@ Inputs for the function \emph{G} are described below. Note that no data from mem
 
 Argon2id behaves as Argon2i if the pass number is 0 and at the same time the slice number is 0 or 1. Othervise it behaves like Argon2D.
 
-Further computations common for all Argon2 modes are described in \parencite{argon2draft}{3.4.2}.
+Further computations common for all Argon2 modes are described in section 3.4.2 at \parencite{argon2draft}.
 
 \section{Scrypt}
 \label{sec:scrypt}
