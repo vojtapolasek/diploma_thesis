@@ -396,7 +396,7 @@ Inputs for the function \emph{G} are described below. Note that no data from mem
 
 Argon2id behaves as Argon2i if the pass number is 0 and at the same time the slice number is 0 or 1. Othervise it behaves like Argon2D.
 
-Further computations common for all Argon2 modes are described in section 3.4.2 at \parencite{argon2draft}.
+Further computations common for all Argon2 modes are described in the subsection 3.4.2 at \parencite{argon2draft}.
 
 \section{Scrypt}
 \label{sec:scrypt}
@@ -426,7 +426,6 @@ The Lyra2 function was chosen for its useage of cryptographic sponges \parencite
 The main highlight of the Maqa function is its ability to delegate its computation to untrustworthy clients. This feature is similar to the one provided by Catena. A feature which makes this function unique is support for password escrow. This feature allows to recover password by knowing a specific private key. This can be used for example as a password recovery, although this method is definitely not ideal and should be considered carefuly.
 
 The Yescrypt function is based on the Scrypt function briefly described in section~\ref{sec:scrypt} \parencite{yescrypt}. It is therefore backward compatible with Scrypt and can compute Scrypt hashes. It also offers delegation of computation to externa clients and hash upgrades without knowledge of the password. The running time can be increased separately from the memory usage and paralellism.
-
 
 \chapter{Analysis of LUKS2}
 \label{chap:analysis}
@@ -507,9 +506,9 @@ Both password-based encryption and password checking require additional cryptogr
 
 \subsection{Usage of PBKDFs in LUKS version 2}
 \label{luks2pbkdf}
-LUKS version 2 extends LUKS version 1 and uses similar principles. Therefore, I will focus on differences between version 1 and 2 which are related to usage of PBKDFs. For detailed list of changes see \parencite{}{luks2}{section 1.1}.
+LUKS version 2 extends LUKS version 1 and uses similar principles. Therefore, I will focus on differences between version 1 and 2 which are related to usage of PBKDFs. For detailed list of changes see the section 1.1 at \parencite{luks2}.
 
-The new version supports configurable algorithms for encryption, hashing and also key derivation. That means that the set of algorithms can be extended as new are developed and other are obsoleted. Note that there still exist some requirements for algorithms provided by cryptographic backend \parencite{}{luks2}{section 4.6}. The backend has to support SHA-1 and SHA-256 hashing functions, PBKDF2, Argon2i and Argon2id key derivation functions and AES-XTS symmetric encryption.
+The new version supports configurable algorithms for encryption, hashing and also key derivation. That means that the set of algorithms can be extended as new are developed and other are obsoleted. Note that there still exist some requirements for algorithms provided by cryptographic backend \parencite{luks2}. The backend has to support SHA-1 and SHA-256 hashing functions, PBKDF2, Argon2i and Argon2id key derivation functions and AES-XTS symmetric encryption.
 
 LUKS2 introduces PBKDF memory hard functions Argon2i and Argon2id which are described in~\ref{argon2}. Argon2 functions should offer increased resistance to brute-force attacks.
 
@@ -659,19 +658,19 @@ time in ms & avg(t)  in iterations & stdev(t) in iterations & avg(M) in KiB & st
 \hline
 time in ms & avg(t)  in iterations & stdev(t) in iterations & avg(M) in KiB & stdev(M) in KiB\\
 \hline
-1000 & 4 & 0 & 781944 & 1715,758\\
+1000 & 4 & 0 & 781,944 & 1,715.758\\
 \hline
-2000 & 6 & 0 & 1048576 & 0\\
+2000 & 6 & 0 & 1,048,576 & 0\\
 \hline
-3000 & 9 & 0 & 1048576 & 0\\
+3000 & 9 & 0 & 1,048,576 & 0\\
 \hline
-4000 & 12 & 0 & 1048576 & 0\\
+4000 & 12 & 0 & 1,048,576 & 0\\
 \hline
-5000 & 15 & 0 & 1048576 & 0\\
+5000 & 15 & 0 & 1,048,576 & 0\\
 \hline
-10000 & 31.26 & 0.438 & 1048576 & 0\\
+10000 & 31.26 & 0.438 & 1,048,576 & 0\\
 \hline
-20000 & 63.57 & 1.041 & 1048576 & 0\\
+20000 & 63.57 & 1.041 & 1,048,576 & 0\\
 \hline
 \end{tabularx}
 \end{table}
