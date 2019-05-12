@@ -6,9 +6,9 @@
 \thesissetup{keywords = {security, password hashing, key derivation, disk encryption, password cracking}}
 \usepackage[english]{babel}
 \usepackage{alltt}
-\usepackage{hyperref}
 \usepackage{listings}
 \usepackage{csquotes}
+\usepackage[hidelinks]{hyperref}
 \usepackage[style=ieee,sorting=nty,block=ragged]{biblatex}
 \renewbibmacro*{bbx:savehash}{} %disabling dashing
 \addbibresource{bibliography.bib}
@@ -18,21 +18,20 @@
 %\usepackage[chars=60, lines=30]{stdpage}
 \usepackage{algorithm2e}
 \SetAlCapSkip{3mm}
-\usepackage{siunitx}
 
 
 \thesislong{abstract}{
-Passwords are popular authentication method in the field of information technologies. Passwords were created for humans to be remembered. Sometimes they are not ideal for usage in encryption software. Therefore, there exist key derivation functions, which transform a password into more suitable cryptographic key.
-This thesis deals with such functions, in particular considering their usage in disk encryption. The most popular function PBKDF2 is described together with its vulnerabilities and attacks. To mitigate them it was decided to use so called memory-hard functions. One of such functions is Argon2 selected as a vinner of Password hashing competition. The thesis describes Argon2 in detail.
+Passwords are a popular authentication method in the field of information technology. Passwords were created for humans to be remembered. Sometimes they are not ideal for usage in encryption software. Therefore, there exist key derivation functions, which transform a password into more suitable cryptographic key.
+This thesis deals with such functions, in particular considering their usage in disk encryption. The most popular function PBKDF2 is described together with its vulnerabilities and attacks. Memory-hard functions have started being used as a mitigation of time-memory trade-off attacks. One of such functions is Argon2 selected as a winner of Password hashing competition. The thesis describes Argon2 in detail.
 The practical part of the thesis deals with simulating of an attack on a disk encrypted with LUKS2 encryption scheme using Argon2 as PBKDF. It includes collecting Argon2 parameters benchmarked by Cryptsetup software. Attack is devised through CPUs and GPUs using high-performance hardware provided by MetaCentrum VO. 
-The last part of the thesis introduces a price model for an attacker using either physical hardware or on demand allocation of computing resources in the cloud. This model is then applied to real world prices and data obtained during the attack simulation.
-The thesis shows that it can take thousands of machines and hundreds of billions of dollars to crack a LUKS2 password eight characters long in ten years.
+The last part of the thesis introduces a price model for an attacker using either physical hardware or on-demand allocation of computing resources in the cloud. This model is then applied to real world prices and data obtained during the attack simulation.
+The thesis shows that it can take thousands of machines and hundreds of millions of dollars to crack a LUKS2 password eight characters long in ten years.
 }
 \thesissetup{advisor=Ing. Milan Brož\, Ph.D.}
 \thesislong{thanks}{
 My big thanks go to my advisor Milan Brož for very inspirational and positive supervision and for help with gaining access to hardware needed for benchmarking.
-Furthermore I would like to thank Ondrej Mosnáček for his consultations concerning Argon2 and for the software used in this thesis.
-My thanks also go to Lukáš Másilko for help with graphical appearance of the thesis.
+Furthermore, I would like to thank Ondrej Mosnáček for his consultations concerning Argon2 and for the software used in this thesis.
+My thanks also go to Lukáš Másilko for help with polishing of graphical appearance of the thesis.
 Last but not least, I would like to thank my family and my girlfriend Justyna for supporting me during the whole process.
 Computational resources were provided by the CESNET LM2015042 and the CERIT Scientific Cloud LM2015085, provided under the programme "Projects of Large Research, Development, and Innovations Infrastructures". Computational resources were supplied by the Ministry of Education, Youth and Sports of the Czech Republic under the Projects CESNET (Project No. LM2015042) and CERIT-Scientific Cloud (Project No. LM2015085) provided within the program Projects of Large Research, Development and Innovations Infrastructures.
 }
@@ -44,99 +43,94 @@ Computational resources were provided by the CESNET LM2015042 and the CERIT Scie
 
 
 \begin{document}
-%\tableofcontents
 \chapter{Introduction}
-This diploma thesis deals with password-based key derivation functions and their application in disk encryption software. At the very beginning of the computer era there were no passwords. They appeared for the first time in 1960's and they were introduced by Fernando Corbató \parencite{ctss}. They are going through evolving process as they try to keep pace with developing technology and new ways in which the technology is being used.
+This diploma thesis deals with password-based key derivation functions and their application in disk encryption software. At the very beginning of the computer era there were no passwords. They appeared for the first time in the 1960s and they were introduced by Fernando Corbató \parencite{ctss}. They are going through evolving process as they try to keep pace with developing technology and new ways in which the technology is being used.
 
-Passwords are becoming more and more important. They protect our secrets, our money, our communication. All these things are valuable not only to us but also to other people and some of them would like to gain access to them for malicious purposes. There are many ways how to gain access to the secret passhprase including guessing, social engineering, exploiting application vulnerabilities etc. This thesis deals with the method mentioned first and it tries to look at it from the attacker's perspective. To be more exact, it considers this option from the perspective of attacker's financial resources. It tries to answer a question: How much would it cost to guess a password opening an encrypted disk volume? It will be shown that to guess a password for LUKS encrypted volume even if created on low performance hardware costs currently more than hundred million dollars and involves thousants of purchased or rented machines.
+Passwords are becoming more and more important. They protect our secrets, our money, our communication. All these things are valuable not only to us but also to other people and some of them would like to gain access to them for malicious purposes. There are many ways how to gain access to the secret passphrase including guessing, social engineering, exploiting application vulnerabilities etc. This thesis deals with the method mentioned first and it tries to look at it from the attacker's perspective. To be more exact, it considers this option from the perspective of attacker's financial resources. It tries to answer a question: How much would it cost to guess a password opening an encrypted disk volume? The thesis shows that to guess a password for LUKS encrypted volume even if created on low performance hardware costs currently more than a hundred million dollars and involves thousands of purchased or rented machines.
 
-The second chapter introduces basic terminology and rationale for usage of PBKDFs in the scope of disk encryption. It also summarises history and possible attacks against PBKDFs. The third chapter describes in detail the PBKDF2 function and the Argon2 function. During their analysis the rationale for using memory hard functions is shown. The Argon2 function is described in greater detail because it is fundamental for rest of the thesis. At the end of the chapter several other password hashing functions and their features are briefly mentioned.
+The second chapter introduces basic terminology and rationale for usage of PBKDFs in scope of disk encryption. It also summarizes history and possible attacks against PBKDFs. The third chapter describes in detail the PBKDF2 function and the Argon2 function. During their analysis the rationale for using memory-hard functions is shown. The Argon2 function is described in greater detail because it is fundamental for rest of the thesis. At the end of the chapter several other password hashing functions and their features are briefly mentioned.
 
-The fourth chapter analyses the LUKS2 disk encryption scheme and its frontend called Cryptsetup. First the inner working of LUKS2 is introduced with special focus on usage of PBKDFs in various processes. The rationale for benchmarking of PBKDF parameters is explained. This benchmarking function is then used to collect real world data to be used in subsequent analysis. The last part is dedicated to experimental simulation of an attacker trying to break LUKS2 disk encryption by guessing the passphrase. This process inevitably requires processing of PBKDFs. Methodology, tools and highlights from resulting data are shown.
+The fourth chapter analyses the LUKS2 disk encryption scheme and its front-end called Cryptsetup. First the inner workings of LUKS2 are introduced with special focus on usage of PBKDFs in various processes. The rationale for benchmarking of PBKDF parameters is explained. This benchmarking function is then used to collect real world data to be used in subsequent analysis. The last part is dedicated to experimental simulation of an attacker trying to break LUKS2 disk encryption by guessing the passphrase. This process inevitably requires processing of PBKDFs. Methodology, tools and highlights from resulting data are shown.
 
-The fifth chapter summarizes options of a potential attacker and introduces the price model suited for estimating final price of an attack agains LUKS2 encrypted volume. The model is applied to real world data based on results from the previous chapter. The option of using CPUs, GPUs and cloud based on-demand allocated resources is taken into account. The sixth chapter provides conclusions and several paths for further research in this area.
+The fifth chapter summarizes options of a potential attacker and introduces the price model suited for estimating final price of an attack against LUKS2 encrypted volume. The model is applied to real world data based on results from the previous chapter. The option of using CPUs, GPUs and cloud based on-demand allocated resources is taken into account. The sixth chapter provides conclusions and several paths for further research in this area.
 
 \chapter{Password hashing and key derivation\\functions}
 
 \section{Definitions}
 \label{definitions}
-This thesis deals with various cryptographic terms including password hashing and key derivation. This section briefly explains some of them. Note that reader of this thesis is expected to have at least basic knowlege of cryptography and computer security.
+This thesis deals with various cryptographic terms including password hashing and key derivation. This section briefly explains some of them.
 
-A \emph{hashing function} is a function which receives an input of arbitrary length and produces an output of specified shorter length, effectively compressing the input. These functions are used in many areas such as effective data retrieval \parencite{itmc14}. \emph{Cryptographic hashing functions} are subset of \emph{hashing functions} and they have to meet certain properties, namely preimage resistance, second preimage resistance and collision resistance. We will consider only cryptographic hash functions in this thesis.
-%explain properties?
+A \emph{hashing function} is a function which receives an input of arbitrary length and produces an output of specified shorter length, effectively compressing the input. These functions are used in many areas such as effective data retrieval \parencite{itmc14}. \emph{Cryptographic hashing functions} are subset of \emph{hashing functions} and they have to meet certain properties, namely preimage resistance, second preimage resistance and collision resistance. Only cryptographic hash functions are considered in this thesis.
 
-\emph{Password hashing} is a process in which a password is supplied to a hash function. This is de facto standard method of storing of saved passwords in operating systems and applications. In case that an attacker gets hold of such password hashes, it should be ractically infeasible for an attacker to derive he original password. Therefore hashing functions are used also in process of password verification, during which the entered password is hashed and compared with the stored hash.
+\emph{Password hashing} is a process in which a password is supplied to a hash function. This is de facto standard method of storing of saved passwords in operating systems and applications. In case that an attacker gets hold of such password hashes, it should be practically infeasible for an attacker to derive the original password. Therefore, hashing functions are used also in process of password verification, during which the entered password is hashed and compared with the stored hash.
 
-This thesis is not going to deal with \emph{password hashing}. However, many \emph{key derivation functions} described below meet desired properties for being used in the password hashing process. However, this thesis is focused primarily on key derivation and verification of cryptographic keys during disk encryption.
+This thesis is not going to deal with \emph{password hashing}. However, many \emph{password hashing functions} described below meet desired properties for being used in the key derivation process.
 
-\emph{Key derivation functions} are based on \emph{hash functions}. Their basic purpose is to take an input and produce an output which can be used as a cryptographic key. The input is usually a password or other material such as biometric sample converted into binary form. These materials could be of course used as cryptographic keys on their own but they often lack properties of a good cryptographic key such as sufficient entropy or length. 
+\emph{Key derivation functions} are based on \emph{hash functions}. Their basic purpose is to take an input and produce an output which can be used as a cryptographic key. The input is usually a password or other material such as biometric sample converted into binary form. These materials could be of course used as cryptographic keys on their own, but they often lack properties of a good cryptographic key such as sufficient entropy or length. 
 
-A \emph{cryptographic salt} is often used during process of key derivation. The purpose of salt is to prevent attacks which use precomputed tables such as Rainbow tables \parencite{rainbowtables}. Salt introduces another factor which influences a derived key. It means that it is no longer dependent only on passhprase. For example suppose that 32 bit long integer is used as a salt. In that case there are \(2^{32}\) possible keys derived from the same passphrase. This makes precomputing attacks effectively infeasible. Salt is usualy stored unobfuscated together with hashed material.
+A \emph{cryptographic salt} is often used during process of key derivation. The purpose of salt is to prevent attacks which use precomputed tables such as Rainbow tables \parencite{rainbowtables}. Salt introduces another factor which influences a derived key. It means that it is no longer dependent only on passphrase. For example suppose that 32 bit long integer is used as a salt. In that case there are \(2^{32}\) possible keys derived from the same passphrase. This makes precomputing attacks effectively infeasible. Salt is usually stored unobfuscated together with hashed material.
+
+A \emph{memory-hard algorithm} is an algorithm which performs asymptotically almost the same number of operations compared to number of accessed memory locations. A \emph{sequential memory-hard function} is defined as a function which can be computed by a sequential memory-hard algorithm and at the same time even the fastest parallel algorithm cannot asymptotically reach a significantly lower cost.
 
 \section{Why do we need PBKDFs?}
 \label{whypbkdfs}
-Today, as more and more private information is stored on various kinds of media and transfered over the Internet, it is becoming crucial to protect it from being accessed or changed by unauthorised actors. Although there are several interesting authentication options such as biometrics, passwords or passphrases are still the most common method.
+Today, as more and more private information is stored on various kinds of media and transferred over the Internet, it is becoming crucial to protect it from being accessed or changed by unauthorized actors. Although there are several interesting authentication options such as biometrics, passwords or passphrases are still the most common method.
 
-Considering passwords we are facing a problematic situation. Organisations and services provide guidelines or requirements which should help an user to choose a strong password \parencites{nistpasswords}{sanspasswordguidelines}. Important parameters are password length (in characters), password complexity, uniqueness and others. By complexity I mean amount and diversity of used characters (letters, numbers, symbols, emojis\dots) and by uniqueness I mean the fact that the password does not contain easily guessable or predictable sequences. See mentioned policies for example.
+Considering passwords we are facing a problematic situation. Organizations and services provide guidelines or requirements which should help a user to choose a strong password \parencites{nistpasswords}{sanspasswordguidelines}. Important parameters are password length (in characters), password complexity, uniqueness and others. I define complexity as amount and diversity of used characters (letters, numbers, symbols, emojis\dots) and by uniqueness I mean the fact that the password does not contain easily guessable or predictable sequences. See mentioned policies for example.
 
-I will find some researches supporting following lines
-
-As shown by researches, users tend to circumvent such policies by finding loopholes in them. %to be done
-
-What more, passwords them selves are not good cryptographic material which should be used as a cryptographic key. There are surprisingly many reasons. They are usually not sufficiently long. Because they are composed of printable characters, they do not meet the requirement of being uniformly distributed. If they should be remembered, they will probably contain dictionary words, which lessens their entropy even more. See section 5.6.4 at \parencite{itmc14} for short but interesting analysis.
+In some situations passwords  do not provide a good cryptographic material to be used as a cryptographic key. There are surprisingly many reasons. They are usually not sufficiently long. Because they are composed of printable characters, they do not meet the requirement of being uniformly distributed. If they should be remembered, they will probably contain dictionary words, which lessens their entropy even more. See section 5.6.4 at \parencite{itmc14} for short but interesting analysis.
 
 PBKDF stands for password-based key derivation function. The goal of these functions is to derive one or more cryptographic keys from a password or a passphrase. This key should be pseudorandom and sufficiently long to make brute-force guessing as time-consuming as possible. As stated above, they are based on cryptographic hashing functions.
 
-Lately PBKDFs are taking another specific task. Due to availability of GPUs, FPGAs and ASICs, there are  new possibilities in running functions in parallel computing environment \parencite[see][chapter 4]{mosnacek}. This increases effectivity of brute-force attacks. PBKDFs try to defend against such attacks by using salt and and function-specific parameters like iteration count etc. See section~\ref{sec:attacks} for more details.
+Lately PBKDFs are taking another specific task. Due to availability of GPUs, FPGAs and ASICs, there are new possibilities of running functions in parallel computing environment. See chapter 4 at \parencite{mosnacek}. This increases effectiveness of brute-force attacks. PBKDFs try to defend against such attacks by using memory-hard algorithms to slow down potential attackers and to make running the function in parallel extremely expensive or inefficient. See section~\ref{sec:attacks} for more details.
 
 Examples of PBKDFs include Argon2, PBKDF2, Scrypt, Yescrypt and more. See chapter~\ref{chap:pbkdfs} for comparison of several functions.
 
 \section{PBKDFs and disk encryption}
-Disk encryption is a very good use case for usage of PBKDFs. Used encryption algorithms require cryptographic keys of certain length \parencite{veracrypt}. It is also important to consider the fact, that it is usually not desirable to change the encryption key often because reencryption of whole disk takes considerable amount of time. Let aside the fact that if an attacker gains permanent access to such an encrypted disk, the key cannot be changed at all and they may have extensive time period during which they can manage to crack the key. 
+Disk encryption is a very good use case for usage of PBKDFs. Used encryption algorithms require cryptographic keys of certain length \parencite{veracrypt}. It is also important to consider the fact, that it is usually not desirable to change the encryption key often because reencryption of whole disk takes considerable amount of time. Let aside the fact that if an attacker gains permanent access to such an encrypted disk, the key cannot be changed at all and there exists an extensive period of time for cracking of the passphrase.
 
-By looking at \parencite{pbkdf2usage} we can see that PBKDFs are used in many types of disk encryption software. Note that this list mentions only PBKDF2 as this has been most used PBKDF since recent times. PBKDF2 is for example used in LUKS version 1 \parencite{luks1}, FileVault software used by macOS \parencite{filevault}, CipherShed disk encryption software \parencite{ciphershed}, Veracrypt disk encryption software \parencite{veracrypt} and more.
+By looking at \parencite{pbkdf2usage} we can see that PBKDFs are used in many types of disk encryption software. Note that this list mentions only PBKDF2 as this has been most used PBKDF until recent times. PBKDF2 is for example used in LUKS version 1 \parencite{luks1}, FileVault software used by macOS \parencite{filevault}, CipherShed disk encryption software \parencite{ciphershed}, Veracrypt disk encryption software \parencite{veracrypt} and more.
 
 In 2013 there was initiated a new open competition called Password hashing competition. Its goal was to find a new password hashing function which would resist new attacks devised against those functions \parencite{phc}. The winner was function named Argon2. It is already used for example in LUKS version 2 \parencite{luks2}.
 
 \section{Attacks on PBKDFs}
 \label{sec:attacks}
-History of password cracking is as old as computer passwords them selves. People crack passwords for two main reasons. Either they want to recover a forgotten password, or they want to recover password of someone else, later being able to use it for authentication purposes. There exist two main techniques for password cracking; brute force attacks and dictionary attacks. The first form of attacks tries to guess the password by trying all passwords of given length composed of all combinations of given characters. Dictionary attacks exploit the fact that people often use passwords containing words found in language dictionaries. It means that if an attacker tries paswords containing dictionary words or permutations, they have quite good chance of success.
+History of password cracking is as old as computer passwords. People crack passwords for two main reasons. They either want to recover a forgotten password, or they want to recover password of someone else, later being able to use it for authentication purposes. There exist two main techniques for password cracking; brute force attacks and dictionary attacks. The idea behind the first method is to guess the password by trying all passwords of given length composed of all combinations of given characters. Dictionary attacks exploit the fact that people often use passwords containing words found in language dictionaries. It means that if an attacker tries passwords containing dictionary words or permutations, they might have quite good chance of success.
 
-At the begining passwords were stored on computer systems in plain text, protected only by the fact that users shouldn't be able to read passwords of other users. But soon it appeared that plain text passwords can be revealed for example by badly designed software permissions. This is shown in case of Allan Scherr, who misused capabilities of a printing program to print out whole password file \parencite{ctss}{}{page 37}. Since that time, passwords started to be hashed.
+At the beginning passwords were stored on computer systems in plain text, protected only by the fact that users should not be able to read passwords of other users. But soon it had been discovered that plain text passwords could be revealed for example by badly designed software permissions. This was shown in the case of Allan Scherr, who misused capabilities of a printing program to print out whole password file, see page 37 at \parencite{ctss}. Since that time, passwords started to be hashed.
 
-. This time marks begining of the never-ending fight between authors of hash functions and people trying to crack passwords hashed by them. First hash functions were really simple and they were definitely not cryptographically secure, such as hash mechanism used in Multics. This mechanism squared numerical form of each password and applied a bit mask with AND operation \parencite{multicssecurity}. This increased number of guesses but only negligibly compared to modern functions.
+This time marks beginning of the never-ending fight between authors of hash functions and people trying to crack passwords hashed by them. First hash functions were really simple and they were definitely not cryptographically secure, such as hash mechanism used in Multics. This mechanism squared numerical form of each password and applied a bit mask with AND operation \parencite{multicssecurity}. This increased number of guesses but only negligibly compared to modern functions.
 
-The first cryptographic hash came with Robert Morris and his Crypt function. Crypt used up to Unix 6th edition mimicked the M209 cipher machine from World War II. and proved not very secure because the algorithm could be recoded in a way which allowed to test passwords in very short period of time (1.25 milliseconds per password) \parencite{pshistory}. Later version used since Unix 7th edition employed the DES block cipher. This cipher was at that time very slow if implemented in software. The password entry program also introduced two new concepts; automated proactive password strength checking and \emph{cryptographic salt} (12 bit random number at that time). Currently for example the LUKS2 specification uses 32 bytes long salt.
+The first cryptographic hash came with Robert Morris and his Crypt function. Crypt used up to Unix 6th edition mimicked the M209 cipher machine from World War II. It proved to be not very secure because the algorithm could be recoded in a way which allowed to test passwords in very short period of time (1.25 milliseconds per password) \parencite{pshistory}. Later version used since Unix 7th edition employed the DES block cipher. This cipher was at that time very slow if implemented in software. The password entry program also introduced two new concepts; automated proactive password strength checking and \emph{cryptographic salt} (12 bit random number at that time). Currently for example the LUKS2 specification uses 32 bytes long salt.
 
-During 1980s there happened some password cracking contests and hash functions were also improved. Some of them were made deliberately slow to slow down potential attacker. If this measure was not effective enough, more iterations of hashing function could be used. During 1990s many password cracking programs appeared including John the Ripper, Crack, LOphtCrack etc. \parencite{crackinghistory}. Most of those programs tried to improve the cracking speed by optimizing underlying algorithms and later by using CPU parallelism.
+During 1980s there were organized some password cracking contests and hash functions were also improved. Some of them were made deliberately slow to slow down potential attacker. If this measure was not effective enough, more iterations of hashing function could be used. During 1990s many password cracking programs appeared including John the Ripper, Crack, LOphtCrack and others \parencite{crackinghistory}. Most of those programs tried to improve the cracking speed by optimizing underlying algorithms and later by using CPU parallelism.
 
-The concept of \emph{KDFs} started being studied in late 1990s. The RFC 2898 for PBKDF2 was released in 2000 and it started being used primarily for key derivation in many applications such as WinZip, Opendocument, Truecrypt or Android. However, it was also used for actual password hashing for example in Mac OS X 10.8. Note that PBKDF1 exists, but it is not recommended because of its limited key length (20 bytes at best) and it is provded solely for backward compatibility. PBKDF2 introduced configurable pseudorandom function, number of iterations and derived key length. These parameters allow flexibility while choosing trade-off between security and user experience.
+The concept of \emph{KDFs} started being studied in late 1990s. The RFC 2898 for PBKDF2 was released in 2000 and it started being used primarily for key derivation in many applications such as WinZip, Opendocument, Truecrypt or Android. However, it was also used for actual password hashing for example in Mac OS X 10.8. Note that PBKDF1 exists, but it is not recommended because of its limited key length (20 bytes at best) and it is provided solely for backward compatibility. PBKDF2 introduced configurable pseudorandom function, number of iterations and derived key length. These parameters allow flexibility while choosing trade-off between security and user experience.
 
-However, in 2007 there appeared first password crackers using parrallel computing capabitilies of GPUs \parencite{elcomsoftgpu}. Other password crackers followed; Whitepixel in 2010, Oclhashcat in 2012, John the ripper in 2012. Until 2012 software could recover primarily MD5 and NTLM hashes, but Oclhashcat introduced recovery of many other hashes.
+However, in 2007 there appeared the first password cracker using parallel computing capabilities of GPUs \parencite{elcomsoftgpu}. Other password crackers followed; Whitepixel in 2010, Oclhashcat in 2012, John the ripper in 2012. Until 2012 software could recover primarily MD5 and NTLM hashes, but Oclhashcat introduced recovery of many other hashes.
 
-As far as PBKDF2 is considered, its resistance to password cracking using GPUs or even ASICs/FPGAs is currently not ideal \parencite{mosnacek}{section~7}. PBKDF2 does not offer support for parallelism while used as suggested. However, at the same time its low memory requirements and GPU friendly algorithm (see algorithm~\ref{pbkdf2alg} bring advantage to the attacker. As shown in \parencite{mosnacek}, it was possible to improve cracking speed of LUKS passwords fourty times. This required rewriting the function for GPUs. Moreover, it is shown that proper optimization of underlying algorithms can greatly increase PBKDF2 performance even without GPUs. This was shown after analysis of closed source Oclhashcat in \parencite{pbkdf2accel}.
+As far as PBKDF2 is considered, its resistance to password cracking using GPUs or even ASICs/FPGAs is currently not ideal as discussed in section 7 at \parencite{mosnacek}. PBKDF2 does not offer support for parallelism while used as suggested. However, at the same time its low memory requirements and GPU friendly algorithm (see algorithm~\ref{pbkdf2alg}) bring advantage to the attacker. As shown in \parencite{mosnacek}, it was possible to improve cracking speed of LUKS passwords forty times. This required rewriting the function for GPUs. Moreover, it is shown that proper optimization of underlying algorithms can greatly increase PBKDF2 performance even without GPUs. This was shown after analysis of closed source Oclhashcat in \parencite{pbkdf2accel}.
 
-As shown in \parencite{pbkdf2weakness}, there exist other attacks not connected with GPU. This paper shows that an attacker can save 50 \% of PBKDF2 cpu operations if the PBKDF2 is not implemented according to suggested performance improvements described in RFC 2104 \parencite{rfc2104} and NIST FIPS PUB 198 \parencite{fipspub198}. In this case it is possible to precompute first message block of underlying keyed hash function (used as PRF) and replace it with resulting constant in subsequent operations. See lines 11--13 in algorithm \ref{pbkdf2alg}. Note that HMAC function is not described in this thesis, see \parencite{pbkdf2weakness}{subsection~4.1}. 
+As shown in \parencite{pbkdf2weakness}, there exist other attacks not connected with GPU. This paper shows that an attacker can save 50 \% of PBKDF2 CPU operations if the PBKDF2 is not implemented according to suggested performance improvements described in RFC 2104 \parencite{rfc2104} and NIST FIPS PUB 198 \parencite{fipspub198}. In this case it is possible to precompute first message block of underlying keyed hash function (used as PRF) and replace it with resulting constant in subsequent operations. See lines 11--13 in algorithm \ref{pbkdf2alg}. Note that HMAC function is not described in this thesis, see section~4.1 at \parencite{pbkdf2weakness}. 
 
-In \parencite{pbkdf2weakness}{subsection~4.2} there is shown that an attacker can omit considerable amount of XOR operations while using SHA1 as a pseudorandom function within PBKDF2 because this operation is sometimes performed on two blocks containing only zeroes. Additionally, more XOR operations can be omitted because of padding characters which are constant and some XOR operations in this case just zero out them selves. Finally, in subsection 4.3, it is shown that it is possible to precompute the word expansion part of the second message block of a keyed hash function. The block is password independent and can be thus precomputed. However, this saves only negligible amount of time compared to previous attacks described in this paragraph.
+In section~4.2 \parencite{pbkdf2weakness} there is shown that an attacker can omit considerable amount of XOR operations while using SHA1 as a pseudorandom function within PBKDF2 because this operation is sometimes performed on two blocks containing only zeroes. Additionally, more XOR operations can be omitted because of padding characters which are constant and some XOR operations in this case just zero out them selves. Finally, in section 4.3, it is shown that it is possible to precompute the word expansion part of the second message block of a keyed hash function. The block is password independent and can be thus precomputed. However, this saves only negligible amount of time compared to previous attacks described in this paragraph.
 
 In 2009 Colin Percival suggested that to defend against usage of parallel computing, PBKDFs should fulfill requirements of memory-hard functions \parencite{memoryhard}.   As a reaction to previously mentioned problems of PBKDF2, the Password hashing competition was held from 2013 to 2015 to select a new function for password hashing. The winner is Argon2 described in section~\ref{argon2} and it is indeed a memory-hard function. Of course that does not mean that memory-hard functions are not prone to attacks.
 
-In a paper from 2016, authors show that there still exists an attack which can decrease computational complexity of Argon2I-B function. It was shown that at that time it was needed to configure at least ten passes of Argon2I-B to mitigate this attack. At the time of releasing the paper, the IRTF proposal suggested only six passes for "paranoid" situations. Fortunately authors of Argon2 reacted to those attacks and improved the function, sothat the attack is not effective against Argon2I anymore except when runnin with only single pass. Details and rationale can be found in subsection~5.2  at \parencite{argon2}.
+In a paper from 2016, authors show that there still exists an attack which can decrease computational complexity of Argon2I-B function. It was shown that at that time it was needed to configure at least ten passes of Argon2I-B to mitigate this attack. At the time of releasing the paper, the IRTF proposal suggested only six passes for "paranoid" situations. Fortunately authors of Argon2 reacted to those attacks and improved the function, therefore the attack is not effective against Argon2I anymore except when running with only single pass. Details and rationale can be found in section~5.2  at \parencite{argon2}.
 
 \chapter{State of the art PBKDFs}
 \label{chap:pbkdfs}
 
 \section{PBKDF2}
 \label{sec:pbkdf2}
-
 PBKDF2 is a password-based key derivation function defined in RFC 8018 \parencite{rfc8018}. This RFC thoroughly describes two use cases of PBKDF2; password-based encryption scheme and password-based message authentication scheme. Other mentioned use cases include password checking and derivation of multiple keys from one password. As shown in \ref{luks1}, LUKS version 1 uses PBKDF2 for password checking and derivation of key for encryption or decryption of master key.
 
 the function requires four input parameters; passphrase, cryptographic salt, iteration count and length of a key to be derived. Moreover, the function requires a pseudorandom function (PRF) which is used in process of key derivation.
 
 The term \emph{Passphrase} in this context means any data which are source for subsequent key derivation process. Usually it is a password entered by user. The \emph{cryptographic salt} is represented by randomly generated number.
 
-The purpose of \emph{iteration count} parameter is to defend against brute force and dictionary attacks performed on PBKDF2. The iteration count prolongs the time which is needed to derive a single key. Technically, the iteration count signifies number of successive runs of chosen PRF for every block of the derived key. In general, the \emph{iteration count} should be chosen as large as possible, taking into account the fact that the processing time should be acceptable for the end user \parencite{nistpbkdf2}. According to the cited document, minimum iteration count should be 1000 iterations and for critical security systems a count of 10000000 iterations is appropriate. 
+The purpose of \emph{iteration count} parameter is to defend against brute force and dictionary attacks performed on PBKDF2. The iteration count prolongs the time which is needed to derive a single key. Technically, the iteration count signifies number of successive runs of chosen PRF for every block of the derived key. In general, the \emph{iteration count} should be chosen as large as possible, taking into account the fact that the processing time should be acceptable for the end user \parencite{nistpbkdf2}. According to the cited document, minimum iteration count should be 1,000 iterations and for critical security systems a count of 10,000000 iterations is appropriate. 
 
 The function is described by following algorithm. Verbal description is also provided. Following abbreviations and conventions are used in the algorithm and description:
 
@@ -161,7 +155,7 @@ The function is described by following algorithm. Verbal description is also pro
 
 \item[||] -- concatenation of strings
 
-\item[INT(x)] -- a big§-endian encoding of integer x
+\item[INT(x)] -- a big-endian encoding of integer x
 \end{description}
 
 
@@ -196,27 +190,26 @@ The function is described by following algorithm. Verbal description is also pro
 \label{pbkdf2alg}
 \end{algorithm}
 
-At the begining the algorithm checks if the desired length of the key does not exceed \(2^{32} - 1\). If it does, it exits immediatelly. Then it processes the input and creates output key in blocks. Every block has length of hLen octects, except for the last one which can have shorter length. 
+At the beginning the algorithm checks if the desired length of the key does not exceed \(2^{32} - 1\). If it does, it exits immediately. Then it processes the input and creates output key in blocks. Every block has length of hLen octets, except for the last one which can have shorter length. 
 
-In the pseudocode there is defined function \emph{F} which is applied to every block. Results of such applications are finally concatenated and returned as the resulting derived key. This function performs \emph{c} iterations of underlying pseudorandom function \emph{PRF}. The \emph{PRF} takes a passhprse as the first parameter and result of previous iteration as the second parameter. The only exception is the first iteration where the second parameter is concatenation of salt and binary representation of the block index \emph{i}. Results of all iterations are xored and returned as a particular block of the derived key. Finally, all blocks are concatenated and returned as the derived key.
+In the pseudocode there is defined function \emph{F} which is applied to every block. Results of such applications are finally concatenated and returned as the resulting derived key. This function performs \emph{c} iterations of underlying pseudorandom function \emph{PRF}. The \emph{PRF} takes a passphrase as the first parameter and result of previous iteration as the second parameter. The only exception is the first iteration where the second parameter is concatenation of salt and binary representation of the block index \emph{i}. Results of all iterations are xored and returned as a particular block of the derived key. Finally, all blocks are concatenated and returned as the derived key.
 
-Notice that the function F can be rewritten to be quickly computed in parallel computing environments such as GPUs. See \parencite{mosnacek}{section~4.1} for more details.
-
+Notice that the function F can be rewritten to be quickly computed in parallel computing environments such as GPUs. See section~4.1 at \parencite{mosnacek} for more details.
 
 \section{Argon2}
 \label{argon2}
-As mentioned in very brief history of attacks on password hashes in section~\ref{sec:attacks}, the Argon2 function is the winner of Password Hashing Competition. Argon2 is a hash function belonging to the set of memory-hard functions as defined in \parencite{memoryhard}. As defined in section~\ref{definitions} PBKDFs are subset of hashing functions and Argon2 can be definitely used as PBKDF. Current version of the function is 1.3 and the latest IETF draft is \parencite{argon2draft}.
+As mentioned in very brief history of attacks on password hashes in section~\ref{sec:attacks}, the Argon2 function is the winner of Password Hashing Competition. Argon2 is a hash function belonging to the set of memory-hard functions as defined in \parencite{memoryhard}. Current version of the function is 1.3 and the latest IETF draft is \parencite{argon2draft}.
 
 The function quickly fills up given amount of memory and performs a sequence of computations over values stored in this memory. The Argon2 comes in three versions which differ in the way in which data in the memory matrix (described further below) is processed. Argon2D, Argon2I and Argon2ID. See subsection~\ref{argon2versions} for detailed description.
 
 Argon2 is used as the default PBKDF in LUKS version 2. Note that according to \parencite{cryptsetupmanual} the default PBKDF can be configured during compilation.
 
-The function is optimized for X86 architecture using improvements in handling of cache and memory access in recent Intel and AMD processors. To be exact, currently the Argon2 supports compilation on platforms with SSE2, SSSE3, XOP, AVX2 and AVX512F cpu instructions. All the instructions except for XOP are Intel specific, XOP is specific for AMD processors.
+The function is optimized for X86 architecture using improvements in handling of cache and memory access in recent Intel and AMD processors. To be exact, currently the Argon2  can utilize SSE2, SSSE3, XOP, AVX2 and AVX512F CPU instructions. All the instructions except for XOP are Intel specific, XOP is specific for AMD processors.
 
 The function can be implemented on specialised hardware, but the previously mentioned fact makes this implementation possibly very slow and expensive and even specialised ASICs shouldn't acquire significant benefit even if they employ large areas of memory. However, no implementations of any Argon2 mode for specialised hardware are known so far.
 
 \subsection{Operation}
-The function expects following primary input parameters. Primary means that parameters must always be supplied by user.
+The function expects following mandatory input parameters.
 
 \begin{description}
 \item[P] -- the message of any length from 0 to \(2^{32} - 1\) bytes. In case of PBKDF this is the passphrase.
@@ -244,22 +237,22 @@ The function also accepts secondary inputs, which do not need to be supplied.
 \item[y] -- type (mode) of Argon2 to be used. 0 for Argon2D, 1 for Argon2I, 2 for Argon2ID.
 \end{description}
 
-Argon2 makes use of the permutation function \emph{P} which is based on Blake2b hashfunction \parencite{blake2}. The function actually copies blake2b design but additionally it uses 64 bit multiplications. This particular modification makes the function more complicated to implement and optimize for ASICs, while the running speed on X86 processors should be degraded only negligibly. See \parencite{argon2draft}{section~3.6} for detailed explanation.
+Argon2 makes use of the permutation function \emph{P} which is based on Blake2b hash function \parencite{blake2}. The function actually copies blake2b design but additionally it uses 64 bit multiplications. This particular modification makes the function more complicated to implement and optimize for ASICs, while the running speed on X86 processors should be degraded only negligibly. See section~3.6 at \parencite{argon2draft} for detailed explanation.
 
-Another internal function of Argon2 is compression function \emph{G} which internally uses previously mentioned function \emph{P}. \emph{G} accepts two 1024 bytes long inputs and produces one 1024 bytes long output. Let \emph{X} and \emph{Y} be the inputs. Firstly, the function XORs them:
+Another internal function of Argon2 is compression function \emph{G} which internally uses previously mentioned function \emph{P}. \emph{G} accepts two 1,024 bytes long inputs and produces one 1,024 bytes long output. Let \emph{X} and \emph{Y} be the inputs. Firstly, the function XORs them:
 
 \(R = X \oplus Y \)
 
-R is treated as a \(8 \times 8 \) matrix of 16 byte registers. The function \emph{P} is first applied to every row of the matrix and then to every column. The result is denoted as \emph{Z}. Finally, the result is computed as \(Z \oplus R\). For more detailed description see \parencite{argon2draft}{section~3.5}.
+R is treated as a \(8 \times 8 \) matrix of 16 byte registers. The function \emph{P} is first applied to every row of the matrix and then to every column. The result is denoted as \emph{Z}. Finally, the result is computed as \(Z \oplus R\). For more detailed description see section~3.5 at \parencite{argon2draft}.
 
-Argon2 makes use of two more hash functions. The \emph{\(H^X\)} function where \emph{X} denotes the output length in bytes and the whole function is again based on Blake2b. Finally, the variable length hash function \emph{\(H'^X\)} based on \emph{\(H^X\)} defined in \parencite{argon2draft}{section~3.3} is also used.
+Argon2 makes use of two more hash functions. The \emph{\(H^X\)} function where \emph{X} denotes the output length in bytes and the whole function is again based on Blake2b. Finally, the variable length hash function \emph{\(H'^X\)} based on \emph{\(H^X\)} defined in section~3.3 at \parencite{argon2draft} is also used.
 
 The argon2 operation can be described as follows. The emphasized variables are Argon2 input parameters, primary and secondary parameters are not distinguished. The numbers in brackets denote the line numbers in algorithm~\ref{argon2alg}.
 
 \begin{enumerate}
 \item initialisation of the block \(H_0\)
 
-\item allocation of the memory according to \emph{m} and \emph{p} parameters. The real size of allocated memory is denoted with \(m'\) in 1024 byte blocks. Note that the memory is treated as a matrix \(B[I][J]\) with \emph{p} rows and \(q = m' / p\) columns.
+\item allocation of the memory according to \emph{m} and \emph{p} parameters. The real size of allocated memory is denoted with \(m'\) in 1,024 byte blocks. Note that the memory is treated as a matrix \(B[I][J]\) with \emph{p} rows and \(q = m' / p\) columns.
 
 \item compute \(B[i][0]\) for \(0 <= i < p\)
 
@@ -280,7 +273,7 @@ This subsection describes Argon2 through pseudocode. In addition to input parame
 \begin{description}
 \item[\(||\)] -- concatenation of two strings
 
-\item[floor(x)] -- function returns the largest integer which is not bigger than x
+\item[floor(x)] -- function returns the largest integer which is not larger than x
 
 \item[ceil(x)] -- function returns the smallest integer which is not smaller than x
 
@@ -342,14 +335,14 @@ This subsection describes Argon2 through pseudocode. In addition to input parame
 Argon2 comes in three versions:
 
 \begin{description}
-\item[Argon2D] -- data-dependent variant of Argon2. This version uses previously computed data while performing computations and memory access. It is recommended to be used for cryptocurrencies and other proof-of-work applications as well for hashing on backend servers. In general, this version is suited for an environment where no side-channel timing attacks are expected. It provides better protection against brute-force attacks usin specialised hardware and tradeoff attacks.
+\item[Argon2D] -- data-dependent variant of Argon2. This version uses previously computed data while performing computations and memory access. It is recommended to be used for cryptocurrencies and other proof-of-work applications as well for hashing on back-end servers. In general, this version is suited for an environment where no side-channel timing attacks are expected. It provides better protection against brute-force attacks using specialised hardware and tradeoff attacks.
 
-\item[Argon2I] -- data-independent version. This version does not rely on previously computed data while performing calculations in memory. The version is recommended for key derivation and password hashing, where side-channel timing attacks are more probable because an adversary can have physical access to the machine. The mode is slower because it performs multiple passes over memory to defend against tradeoff attacks.
+\item[Argon2I] -- data-independent version. This version does not rely on previously computed data while performing calculations in memory. The version is recommended for key derivation and password hashing, where side-channel timing attacks are more probable because an adversary can have physical access to the machine. The mode is slower because it performs multiple passes over memory to defend against trade-off attacks.
 
 \item[Argon2ID] -- combination of previous versions. In this mode the function behaves as Argon2I during computation of the first half of the first iteration over the memory. During remaining operation the Argon2D mode is used. The mode combines benefits of mitigation of side-channel timing attacks and brute force attacks.
 \end{description}
 
-The difference lies in line number xx in the algorithm~\ref{argon2alg}. In particular indexes \emph{l} and \emph{z} are computed differently within different Argon2 versions. The allocated memory is represented as a matrix \(B[I][J]\) with \emph{p} rows and \(q = m' / p\) columns. Before computing indexes \emph{l} and \emph{z}, values \(J_1\) and \(J_2\) have to be calculated. This is the difference among Argon2 versions. AFter calculating of these values, further processing needs to be done but this stays the same for all versions.
+The difference lies in line number xx in the algorithm~\ref{argon2alg}. In particular indexes \emph{l} and \emph{z} are computed differently within different Argon2 versions. The allocated memory is represented as a matrix \(B[I][J]\) with \emph{p} rows and \(q = m' / p\) columns. Before computing indexes \emph{l} and \emph{z}, values \(J_1\) and \(J_2\) have to be calculated. This is the difference among Argon2 versions. After calculating of these values, further processing needs to be done but this stays the same for all versions.
 
 Rows of memory are called lanes and there are p lanes according to the parameter \emph{p}, which signifies degree of parallelism. Moreover, the memory is divided into 4 vertical slices, where number of slices is denoted as \emph{S}. Every intersection of a lane and a slice is called a segment. Segments belonging to the same slice are computed in parallel and they must not reference blocks of each other.
 
@@ -359,7 +352,7 @@ Argon2d computes \(J_1\) and \(J_2\) based on data stored in memory. Therefore i
 
 \(J_2 \leftarrow int32(extract(B[i][j-1], 2))\)
 
-Where the function int32(s) converts the 32 bit string s into non-negative integer represented in little endian. The function extract(s, i) extracts ith set 32 bits long from bitstring s while s is indexed from 0.
+Where the function int32(s) converts the 32 bit string s into non-negative integer represented in little endian. The function extract(s, i) extracts ith set 32 bits long from bit string s while s is indexed from 0.
 
 Argon2i computes indexes by running two rounds of the compression function \emph{G} in counter mode in the following way
 \begin{eqnarray*}
@@ -394,38 +387,38 @@ Inputs for the function \emph{G} are described below. Note that no data from mem
 \item[ZERO] -- string of zeroes, in the first case 1024 bytes long, in the second case 968 bytes long
 \end{description}
 
-Argon2id behaves as Argon2i if the pass number is 0 and at the same time the slice number is 0 or 1. Othervise it behaves like Argon2D.
+Argon2id behaves as Argon2i if the pass number is 0 and at the same time the slice number is 0 or 1. Otherwise it behaves like Argon2D.
 
 Further computations common for all Argon2 modes are described in the subsection 3.4.2 at \parencite{argon2draft}.
 
 \section{Scrypt}
 \label{sec:scrypt}
-Scrypt is a PBKDF introduced by Colin Percival in \parencite{memoryhard}. At the time of releasing the paper (2009) problems of PBKDF2 and its parallel computation were already well-known. Percival came with two new concepts. He defined a memory-hard algorithm as an algorithm which performs asymptotically almost the same number of operations compared to number of accessed memory locations. The second concept is called sequential memory-hard function. This definition describes a function which can be computed by a sequential memory-hard algorithm and at the same time even the fastest parallel algorithm cannot asymptotically reach a significantly lower cost. Both concepts came as a reaction to increasing computing power of parallel hardware. He also defined the ROMix and SMix functions which are sequential memory hard functions and they perform mixing of data blocks in memory.
+Scrypt is a PBKDF introduced by Colin Percival in \parencite{memoryhard}. At the time of releasing the paper (2009) problems of PBKDF2 and its parallel computation were already well-known. Percival came with two new concepts. He introduced a concept of memory-hard algorithm and a sequential memory-hard function. Both concepts came as a reaction to increasing computing power of parallel hardware. He also defined the ROMix and SMix functions which are sequential memory hard functions and they perform mixing of data blocks in memory.
 
 Scrypt accepts the memory/CPU cost parameter \emph{n}, the parallelization parameter \emph{p} and the block size parameter \emph{r}. The idea behind the Scrypt function can be described as follows:
 
 \begin{enumerate}
-\item Use PBKDF2 with PRF being SHA256 to process the passhprase and salt provided as Scrypt input and generate \emph{p} blocks. Their size is affected by parameter \emph{r}
+\item Use PBKDF2 with PRF being SHA256 to process the passphrase and salt provided as Scrypt input and generate \emph{p} blocks. Their size is affected by parameter \emph{r}.
 
 \item Blocks generated in the previous step are independently mixed by a mixing function which is actually composed of ROMix function, SMix function and 8-round version of  Salsa20 stream cipher function. This step makes whole computation expensive.
 
-\item The result is used as salt for another PBKDF2 computation whigh produces the final result.
+\item The result is used as salt for another PBKDF2 computation which produces the final result.
 \end{enumerate}
 
 There exist theoretical work describing cache timing side-channel attack against Scrypt but it has not been put into practice yet \parencite{scryptattack}.
 
 \section{Other PBKDFs}
-The Password hashing competition received 24 submission. The panel chose 9 finalists and finally Argon2 as the winner. Four finalists which received special recognition by PHC panel are described in this section.
+The Password hashing competition received 24 submissions. The panel chose 9 finalists and finally Argon2 as the winner. Four finalists which received special recognition by PHC panel are described in this section.
 
 The Catena is presented as a password-scrambling framework \parencite{catena}. It can be used for many purposes including password derivation or proof of work. Catena instance is characterised by cryptographic primitive, a reduced primitive, optional randomization layer and a memory-hard function. These parts are independent on each other and therefore the whole platform is somehow modular. Three tunable parameters are provided, affecting time and memory requirements and also resistance against precomputation attacks.
 
-An interesting feature is introduced by server relief protocol which allows to shift actual computation from a server to a client, while keeping memory and time requirements. For example authentication servers could benefit from this feature by not being burdened by too many authentication requests. Another interesting feature is option to increase security paremeters (recomputing hash) without knowledge of the actual password.
+An interesting feature is introduced by server relief protocol which allows to shift actual computation from a server to a client, while keeping memory and time requirements. For example authentication servers could benefit from this feature by not being burdened by too many authentication requests. Another interesting feature is option to increase security parameters (recomputing hash) without knowledge of the actual password.
 
-The Lyra2 function was chosen for its useage of cryptographic sponges \parencite{lyra2}. The function accepts parameters for tuning of memory and time cost. The function supports parallelism on multicore CPU platforms but tries to minimize benefits of parallelism on GPUs. Different underlying sponge functions can be used.
+The Lyra2 function was chosen for its usage of cryptographic sponges \parencite{lyra2}. The function accepts parameters for tuning of memory and time cost. The function supports parallelism on multi-core CPU platforms but tries to minimize benefits of parallelism on GPUs. Different underlying sponge functions can be used.
 
-The main highlight of the Maqa function is its ability to delegate its computation to untrustworthy clients. This feature is similar to the one provided by Catena. A feature which makes this function unique is support for password escrow. This feature allows to recover password by knowing a specific private key. This can be used for example as a password recovery, although this method is definitely not ideal and should be considered carefuly.
+The main highlight of the Maqa function is its ability to delegate its computation to untrustworthy clients \parencite{maqa}. This feature is similar to the one provided by Catena. A feature which makes this function unique is support for password escrow. This feature allows to recover password by knowing a specific private key. This can be used for example as a password recovery, although this method is definitely not ideal and should be considered carefully.
 
-The Yescrypt function is based on the Scrypt function briefly described in section~\ref{sec:scrypt} \parencite{yescrypt}. It is therefore backward compatible with Scrypt and can compute Scrypt hashes. It also offers delegation of computation to externa clients and hash upgrades without knowledge of the password. The running time can be increased separately from the memory usage and paralellism.
+The Yescrypt function is based on the Scrypt function briefly described in section~\ref{sec:scrypt} \parencite{yescrypt}. It is therefore backward compatible with Scrypt and can compute Scrypt hashes. It also offers delegation of computation to external clients and hash upgrades without knowledge of the password. The running time can be increased separately from the memory usage and parallelism.
 
 \chapter{Analysis of LUKS2}
 \label{chap:analysis}
@@ -434,34 +427,34 @@ This chapter deals with the actual practical research performed as a part of the
 Therefore, before the actual model is created, it is necessary to collect sufficient data about parameters used as a result of  this benchmark under various real world conditions. The process and results are described in section~\ref{sec:benchmark}. These parameters are further used while simulating attacks on LUKS2 encrypted volumes on real machines.  This is described in section~\ref{sec:attack}. Results are used to create an actual price model in chapter~\ref{chap:model}.
 
 \section{LUKS}
-LUKS stands for Linux Unified Key Setup. This project started to be developed by Clemens Fruhwirth as a reaction to several incompatible disk encryption schemes which coexisted at the same time at the begining of 21st century. At certain point there existed three incompatible disk encryption schemes which varried from Linux distribution to Linux distribution. If an user created an encrypted disk, they couldn't be sure if they will be able to encrypt the disk with a different distribution or even with a new version of the same distribution.
+LUKS stands for Linux Unified Key Setup. This project started being developed by Clemens Fruhwirth as a reaction to several incompatible disk encryption schemes which coexisted at the same time at the beginning of 21st century. At certain point there existed three incompatible disk encryption schemes which varied from Linux distribution to Linux distribution. If an user had created an encrypted disk, they could not be sure if they will be able to encrypt the disk with a different distribution or even with a new version of the same distribution.
 
-LUKS began as a metadata format for storing information about cryptographic key setup. However, Fruhwirth discovered that to design a proper metadata format, he needs to knoww enough information about key setup process \parencite{newmethods}. Therefore, he created TKS1 and TKS2. These are templates for the key setup process. Together with LUKS they ensure safe and standardized key management during disk encryption. After some user feedback, LUKS on-disk specification version 1.0 was created in 2005 \parencite{luks1}. Currently the latest version is LUKS on-disk specification version 2 \parencite{luks2}.
+LUKS began as a metadata format for storing information about cryptographic key setup. However, Fruhwirth discovered that to design a proper metadata format, he needs to know enough information about key setup process \parencite{newmethods}. Therefore, he created TKS1 and TKS2. These are templates for the key setup process. Together with LUKS they ensure safe and standardized key management during disk encryption. After some user feedback, LUKS on-disk specification version 1.0 was created in 2005 \parencite{luks1}. Currently the latest version is LUKS on-disk specification version 2 \parencite{luks2}.
 
-The reference implementation of both versions of LUKS is called libcryptsetup. The userspace interface is called Cryptsetup. In the following two subsections, default parameters and information concerning command line switches are specific to this implementation.
+The reference implementation of both versions of LUKS is called Libcryptsetup. The user space interface is called Cryptsetup. In the following two subsections, default parameters and information concerning command line switches are specific to this implementation.
 
 \subsection{usage of PBKDFs in LUKS version 1}
 \label{luks1}
-PBKDF2 function is used as a key derivation function in LUKS version 1. It is used during master key initialisation, adding of a new password, master key recovery, and also during password changing because this operation is actually composed of previously mentioned operations. During all operations it internaly uses a hash algorithm specified by user during initialisation of the LUKS header. By default, SHA256 algorithm is used.
+PBKDF2 function is used as a key derivation function in LUKS version 1. It is used during master key initialisation, adding of a new password, master key recovery, and also during password changing because this operation is actually composed of previously mentioned operations. During all operations it internally uses a hash algorithm specified by user during initialisation of the LUKS header. By default, SHA256 algorithm is used.
 
 During initialisation, the PBKDF2 function is used to create a checksum of a master key. This key is subsequently used for symmetric encryption of actual data stored on the encrypted disk. The function receives following parameters:
 
 \begin{description}
 \item[masterKey] -- a new randomly generated master key of user specified length
 
-\item[phdr.mk-digest-salt] -- a random number 32 bytes long which is used to prevent attacks against password using precomputed tables \parencite[see][section 5.6.3]{itmc14}
+\item[phdr.mk-digest-salt] -- a cryptographic salt 32 bytes long which is used to prevent attacks against password using precomputed tables, see subsection~5.6.3 at \parencite{itmc14}
 
 \item[phdr.mk-digest-iteration-count] -- number of iterations for PBKDF2, see section~\ref{sec:pbkdf2}
 
 \item[LUKS\-DIGEST\-SIZE] -- length of he computed digest in bytes, default is 20
 \end{description}
 
-The generated 20 bytes long checksum is stored in the LUKS header together with the iteration count and salt. Please note that the \emph{phdr.mk-digest-iteration-count} parameter is obtained by performing a benchmark with minimum of 1000 iterations.
+The generated 20 bytes long checksum is stored in the LUKS header together with the iteration count and salt. Please note that the \emph{phdr.mk-digest-iteration-count} parameter is obtained by performing a benchmark with minimum of 1,000 iterations.
 
 During adding of a new password, PBKDF2 is used to process the passphrase supplied by user. It receives following parameters:
 
 \begin{description}
-\item[password] -- a passphrase supplied by an user
+\item[password] -- a passphrase supplied by user
 
 \item[ks.salt] -- randomly generated salt used for this particular key slot with length of 32 bytes
 
@@ -470,9 +463,9 @@ During adding of a new password, PBKDF2 is used to process the passphrase suppli
 \item[MasterKeyLength] -- length of the derived key
 \end{description}
 
-The resulting key derived from the passphrase is used to encrypt the master key. This key has to be present in memory either because initialisation happened recently or it was successfully recovered through a different key stored in different key slot. Together with the encrypted master key, the salt and iteration count are also written into the key slot.
+The resulting key derived from the passphrase is used to encrypt the master key. This key has to be present in memory either because initialisation has happened recently or it has been successfully recovered through a different key stored in different key slot. Together with the encrypted master key, the salt and iteration count are also written into the key slot.
 
-Note that the ks.iteration-count parameter can be influenced by user in several ways \parencite{cryptsetupmanual}. One possibility is to specify number of iterations directly with the command line option \verb+--pbkdf-force-iterations+. Another option is to specify the iteration time through \verb+-i+ or \verb+--iter-time+ command line options. This option expects a number which signifies number of milliseconds which should be spent calculating the hash. A benchmark is used to calculate number of iterations which corresponds to this time. If no option is specified then the default iteration time of 2000 milliseconds is used.
+Note that the ks.iteration-count parameter can be influenced by user in several ways \parencite{cryptsetupmanual}. One possibility is to specify number of iterations directly with the command line option \verb+--pbkdf-force-iterations+. Another option is to specify the iteration time through \verb+-i+ or \verb+--iter-time+ command line options. This option expects a number which signifies number of milliseconds which should be spent unlocking the keyslot. A benchmark is used to calculate number of iterations which corresponds to this time. If no option is specified then the default iteration time of 2,000 milliseconds is used.
 
 The function is also used during the master key recovery. This process is performed while unlocking the encrypted partition. During key recovery the PBKDF is actually used twice for every key slot until the master key is decrypted or there are no more key slots to try. First it is used to derive a decryption key from a passphrase supplied by an user. Then this decryption key is used to decrypt the encrypted master key stored in the current key slot. The result is called the candidate master key because we are still not sure if the passphrase was correct. This candidate is again hashed with PBKDF and finally compared with hash of the master key stored in the LUKS header. If hashes match then the passphrase was entered correctly and the master key can be used.
 
@@ -502,13 +495,13 @@ In the second case the function receives following parameters:
 
 The process of changing a password is composed of previously mentioned operations and hence I am not mentioning it here in greater details. To sum it up, firstly the master key is recovered, then a new password is added to a new key slot and the previous one is revoked.
 
-Both password-based encryption and password checking require additional cryptographic primitives which process the derived key. For encryption, reference implementation of LUKS uses aes-xts-plain64 and for hashing it uses sha256. Usage of PBKDF2 requires underlying pseudorandom function. In case of LUKS version 1, default PRF is SHA1. Alternatively, it is possible to choose SHA256, SHA512, ripemd160 or whirlpool.
+Both password-based encryption and password checking require additional cryptographic primitives which process the derived key. For encryption, reference implementation of LUKS uses aes-xts-plain64 and for hashing it uses sha256. Usage of PBKDF2 requires underlying pseudorandom function. In case of LUKS version 1, default PRF is SHA256. Alternatively, it is possible to choose SHA512, ripemd160 or whirlpool.
 
 \subsection{Usage of PBKDFs in LUKS version 2}
 \label{luks2pbkdf}
 LUKS version 2 extends LUKS version 1 and uses similar principles. Therefore, I will focus on differences between version 1 and 2 which are related to usage of PBKDFs. For detailed list of changes see the section 1.1 at \parencite{luks2}.
 
-The new version supports configurable algorithms for encryption, hashing and also key derivation. That means that the set of algorithms can be extended as new are developed and other are obsoleted. Note that there still exist some requirements for algorithms provided by cryptographic backend \parencite{luks2}. The backend has to support SHA-1 and SHA-256 hashing functions, PBKDF2, Argon2i and Argon2id key derivation functions and AES-XTS symmetric encryption.
+The new version supports configurable algorithms for encryption, hashing and also key derivation. That means that the set of algorithms can be extended as new are developed and other are obsoleted. Note that there still exist some requirements for algorithms provided by cryptographic back-end \parencite{luks2}. The back-end has to support SHA-1 and SHA-256 hashing functions, PBKDF2, Argon2i and Argon2id key derivation functions and AES-XTS symmetric encryption.
 
 LUKS2 introduces PBKDF memory hard functions Argon2i and Argon2id which are described in~\ref{argon2}. Argon2 functions should offer increased resistance to brute-force attacks.
 
@@ -516,32 +509,32 @@ The volume key digest is no longer limited by length of 20 bytes, because it no 
 
 As stated in subsection~\ref{luks1},  in case of PBKDF2 user can influence number of iterations directly or specify approximate time required for processing of the passphrase. This stays the same for LUKS2. Functions from Argon2 family introduce two additional parameters; memory cost and parallel cost. Both parameters can be specified through \verb+--pbkdf-memory+ and \verb+--pbkdf-parallel+ command line parameters respectively. The number of iterations is either benchmarked or it can be manually specified through \verb+--pbkdf-force-iterations+.
 
-The benchmarking function takes as an input a desired unlocking time specified in milliseconds. The function tries to find the best parameters while not exceeding this unlocking time. Note that the number of parallel threads will be always at most 4 and it will decrease if not enough CPUs are online at the time of its usage. In Cryptsetup version 2.6.0 the default unlocking time is set at 2000 miliseconds and the default memory cost is set at 1048576 kB. Both default values can be changed at compilation time.
+The benchmarking function takes as an input a desired unlocking time specified in milliseconds. The function tries to find the best parameters while not exceeding this unlocking time. Note that the number of parallel threads will be always at most 4 and it will decrease if not enough CPUs are online at the time of its usage. In Cryptsetup version 2.1.0 the default unlocking time is set at 2,000 milliseconds and the default memory cost is set at 1,048,576 KiB. Both default values can be changed at compilation time.
 
-\section{Benchmarking ofLUKS2 and Argon2 parameters}
+\section{Benchmarking of LUKS2 and Argon2 parameters}
 \label{sec:benchmark}
-In \ref{luks2pbkdf} three parameters for Argon2 were mentioned. They have crucial impact on resistance of the resulting hash against dictionary or brute-force attacks. Their effects are described in detail in section~\ref{argon2}. From the Cryptsetup's point of view, these parameters impact not only security but  user experience as well. If they are set to too low values, the security of encryption keys can be endangered. If they are set to tooo high values, the unlocking process can last undesirably long time or  excesive amount of computing power and memory can be used. Cryptsetup does not suppose that all users know exact implications of choosing particular parameters. Therefore, it introduces a benchmarking function. Note that advanced users can still choose parameters manually.
+In \ref{luks2pbkdf} three parameters for Argon2 were mentioned. They have crucial impact on resistance of the resulting hash against dictionary or brute-force attacks. Their effects are described in detail in section~\ref{argon2}. From the Cryptsetup's point of view, these parameters impact not only security but  user experience as well. If they are set to too low values, the security of encryption keys can be endangered. If they are set to too high values, the unlocking process can last undesirably long time or  excessive amount of computing power and memory can be used. Cryptsetup does not suppose that all users know exact implications of choosing particular parameters. Therefore, it introduces a benchmarking function. Note that advanced users can still choose parameters manually.
 
 The benchmarking function takes as an input the desired unlocking time specified in milliseconds. It starts with default parameters and performs several PBKDF computations. By increasing and decreasing parameters during computations it tries to find the most secure (the highest) parameters while not exceeding the unlocking time. Additionally the function performs some estimations to reduce number of required computations because the benchmarking process should not last too long. Due to this approach the resulting parameters are dependent on several conditions, in particular available hardware and current workload of the system.
 
 Currently there exist some limitations which are hardcoded into Cryptsetup. The minimal number of iterations for Argon2 is 4, maximum number is limited by limit of unsigned 32 bit integer for the given platform. The minimum memory parameter is 32 KiB, maximum is 4 GiB. The minimal degree of parallelism for Argon2 is 1, maximum is 4. All the limits are hardcoded in \parencite{cryptsetupgitpbkdfcheck}. Note that the number of parallel threads will be always at most 4 and it will decrease if not enough CPUs are online at the time of the benchmark.
 
-In Cryptsetup version 2.1.0 the default unlocking time is set at 2000 miliseconds. The default Argon2 memory cost is set at 1048576 kB. Both default values can be changed at compilation time.
+In Cryptsetup version 2.1.0 the default unlocking time is set at 2,000 milliseconds. The default Argon2 memory cost is set at 1,048,576 KiB. Both default values can be changed at compilation time.
 
 \subsection{Benchmarking tool}
-As a part of my thesis I performed collection of Argon2 parameters estimated by the function mentioned above. I created a small tool which can perform series of benchmarks with given parameters and output results in human-readable or machine-readable format. The source code of the tool is part of the thesis (bude na Githubu).
+As a part of my thesis I performed collection of Argon2 parameters estimated by the function mentioned above. I created a small tool which can perform series of benchmarks with given parameters and output results in human-readable or machine-readable format. Additionally, the tool measures time spent performing the benchmark. Although this information is not directly related to the topic of the thesis, it might be useful in future. The source code of the tool is part of the thesis \parencite{thesisrepo}.
 
 The tool accepts several parameters. It is possible to specify desired unlocking time, maximum degree of parallelism, maximum memory cost and number of benchmarks performed.
 
-The tool can output results in a text format or in a CSV format including headers for better machine processing. The tool does not perform actual benchmarking, it utilizes API of Libcryptsetup library. Therefore the library is required for it to work. The tool does not create any cryptsetup volumes and does not require root privileges.
+The tool can output results in a text format or in a CSV format including headers for better machine processing. The tool does not perform actual benchmarking, it utilizes API of Libcryptsetup library. Therefore the library is required for it to work. The tool does not create any Cryptsetup volumes and does not require root privileges.
 
 \subsection{Methodology of collecting of real world parameters}
 \label{subsec:laptop}
 I used the previously mentioned tool to collect real data on real physical hardware. I tried to simulate various environments in which Cryptsetup can be used to create and unlock encrypted volumes. I decided to use real hardware and not virtual machines because of possible inaccuracies during measurement caused by virtualization layer.
 
-The first hardware configuration consisted of Lenovo Thinkpad P50 laptop with Intel(R) Core(TM) i7-6820HQ CPU @ 2.70GHz with 4 cores, 8 threads. The laptop was equipped with 32 GiB of SODIMM DDR4 Synchronous 2133 MHz (0,5 ns) RAM \parencite{laptopspecs}.
+The first hardware configuration consisted of Lenovo Thinkpad P50 laptop with Intel(R) Core(TM) i7-6820HQ CPU @ 2.70GHz with 4 cores, 8 threads. The laptop was equipped with 32 GiB of SODIMM DDR4 Synchronous 2,133 MHz (0,5 ns) RAM \parencite{laptopspecs}.
 
-The second configuration comprises Raspberry Pi 3, model B+. This device is equipped with quad core Broadcom CM2837B0, Cortex-A53 (ARMv8) 64-bit SoC @ 1.4GHz processor and 1GB LPDDR2 SDRAM memory \parencite{raspberryspecs}. Note that parameters of this device are considerably lower but there still might be scenarios in which an user might wish to perform drive encryption utilizing this device (network attached storage, home media server). The device was running Raspbian GNU/Linux 9 (stretch).
+The second configuration comprised Raspberry Pi 3, model B+. This device was equipped with quad core Broadcom CM2837B0, Cortex-A53 (ARMv8) 64-bit SoC @ 1.4GHz processor and 1GB LPDDR2 SDRAM memory \parencite{raspberryspecs}. Note that parameters of this device are considerably lower but there still might be scenarios in which an user might wish to perform drive encryption utilizing this device (network attached storage, home media server). The device was running Raspbian GNU/Linux 9 (stretch).
 
 I have performed following steps on both devices:
 
@@ -554,9 +547,9 @@ I have performed following steps on both devices:
 
 \item compile the benchmarking tool linking it to the Libcryptsetup compiled in the previous step
 
-\item simulate hardware limitations (amount of available CPUs, amount of available memory)
+\item if desired, simulate hardware limitations (amount of available CPUs, amount of available memory)
 
-\item run series of benchmarks over unlocking times of 1000, 2000, 3000, 4000, 5000, 10000 and 20000 miliseconds with 1, 2, 3 and 4 parallel threads with every benchmark repeated 100 times
+\item run series of benchmarks over unlocking times of 1,000, 2,000, 3,000, 4,000, 5,000, 10,000 and 20,000 milliseconds with 1, 2, 3 and 4 parallel threads with every benchmark repeated 100 times
 \end{enumerate}
 
 During compilation, I decided to run the configure script with \verb+--disable-udev+ and \verb+--disable-blkid+ options. They disable support for udev and device signature detection through blkid. These features were not needed during benchmarking and they caused complications while installing necessary development libraries.
@@ -575,9 +568,9 @@ This method could not be applied to raspberry, as the needed file had not existe
 \begin{tt}
 maxcpus=\emph{n}
 \end{tt}
- kernel parameter. This device does not offer hyperthreading.
+ kernel parameter. This device did not offer hyperthreading.
 
-Due to the way in which the Cryptsetup detects available amount of memory, I decided to perform modification to Cryptsetup it self \parencite{cryptsetuputils}. I decided to modify directly the function \emph{crypt\_getphysmemory\_kb} which returns available physical memory in Kb. I modified it sothat it reads the value from an environment variable, see the patch in the thesis git repository \parencite{thesisrepo}.
+Due to the way in which the Cryptsetup detects available amount of memory, I decided to perform modification to Cryptsetup it self \parencite{cryptsetuputils}. I decided to modify directly the function \emph{crypt\_getphysmemory\_kb} which returns available physical memory in KiB. I modified it so that it reads the value from an environment variable, see the patch in the thesis git repository \parencite{thesisrepo}.
 
 After the benchmark I used the Datamash tool to perform basic statistic computations on resulting CSV data \parencite{datamash}. Raw data as well as Datamash results can be found in the thesis Git repository \parencite{thesisrepo}.
 
@@ -598,7 +591,7 @@ Following tables present chosen results gained through methodology described in 
 \item[stdev(M)] -- standard deviation of benchmarked Argon2 memory cost expressed in KiB
 \end{description}
 
-The table \ref{tab:l8c32g} serves as an introduction and it shows which parameters to expect. The most important is the row concerning unlocking time of 2000 milliseconds as these values were used as baseline for simlating of attacks in the next chapter. Tables \ref{tab:l4c4g} and \ref{tab:l4c2g} demonstrate hardware limitations affecting Argon2 parameters. See the Git repository for more combinations of CPU and memory limitations \parencite{thesisrepo}.
+The table \ref{tab:l8c32g} serves as an introduction and it shows what parameters to expect. The most important is the row concerning unlocking time of 2,000 milliseconds as these values were used as baseline for simulating of attacks in the next chapter. Tables \ref{tab:l4c4g} and \ref{tab:l4c2g} demonstrate hardware limitations affecting Argon2 parameters. See the Git repository for more combinations of CPU and memory limitations \parencite{thesisrepo}.
 
 \noindent
 \begin{table}
@@ -608,19 +601,19 @@ The table \ref{tab:l8c32g} serves as an introduction and it shows which paramete
 \hline
 time in ms & avg(t) in iterations & stdev(t) in iterations & avg(M) in KiB & stdev(M) in KiB\\
 \hline
-1000 & 4 & 0 & 804032.75 & 3886\\
+1,000 & 4 & 0 & 804,032.75 & 3,886\\
 \hline
-2000 & 6 & 0 & 1048576 & 0\\
+2,000 & 6 & 0 & 1,048,576 & 0\\
 \hline
-3000 & 9 & 0 & 1048576 & 0\\
+3,000 & 9 & 0 & 1,048,576 & 0\\
 \hline
-4000 & 12 & 0 & 1048576 & 0\\
+4,000 & 12 & 0 & 1,048,576 & 0\\
 \hline
-5000 & 15 & 0 & 1048576 & 0\\
+5,000 & 15 & 0 & 1,048,576 & 0\\
 \hline
-10000 & 31.01 & 0.099 & 1048576 & 0\\
+10,000 & 31.01 & 0.099 & 1,048,576 & 0\\
 \hline
-20000 & 64 & 0 & 1048576 & 0\\
+20,000 & 64 & 0 & 1,048,576 & 0\\
 \hline
 \end{tabularx}
 \end{table}
@@ -633,19 +626,19 @@ time in ms & avg(t) in iterations & stdev(t) in iterations & avg(M) in KiB & std
 \hline
 time in ms & avg(t)  in iterations & stdev(t) in iterations & avg(M) in KiB & stdev(M) in KiB\\
 \hline
-1000 & 4 & 0 & 785173.44 & 4532\\
+1,000 & 4 & 0 & 785,173.44 & 4,532\\
 \hline
-2000 & 5 & 0 & 1048576 & 0\\
+2,000 & 5 & 0 & 1,048,576 & 0\\
 \hline
-3000 & 9 & 0 & 1048576 & 0\\
+3,000 & 9 & 0 & 1,048,576 & 0\\
 \hline
-4000 & 12 & 0 & 1048576 & 0\\
+4,000 & 12 & 0 & 1,048,576 & 0\\
 \hline
-5000 & 15 & 0 & 1048576 & 0\\
+5,000 & 15 & 0 & 1,048,576 & 0\\
 \hline
-10000 & 31 & 0 & 1048576 & 0\\
+10,000 & 31 & 0 & 1,048,576 & 0\\
 \hline
-20000 & 61.97 & 0.298 & 1048576 & 0\\
+20,000 & 61.97 & 0.298 & 1,048,576 & 0\\
 \hline
 \end{tabularx}
 \end{table}
@@ -677,61 +670,61 @@ time in ms & avg(t)  in iterations & stdev(t) in iterations & avg(M) in KiB & st
 
 \FloatBarrier
 
-Tables \ref{tab:comp2000} and \ref{tab:comp1000} compare benchmarking results for unlocking time of 1000 and 2000 ms respectively. Cryptsetup was compiled with different options explained below:
+Tables \ref{tab:comp2000} and \ref{tab:comp1000} compare benchmarking results for unlocking time of 1,000 and 2,000 ms respectively. Cryptsetup was compiled with different options explained below:
 
 \begin{description}
 \item[none] -- no special options were added
 
 \item[SSE] -- the \verb+--enable-internal-sse-argon2+ configuration option was added. If this option is specified, additional checks for special CPU features are performed (SSE2, SSE3, AVX2, AVX512). If they are detected, Argon2 is compiled with support for the most advanced one.
 
-\item[native] -- the \verb+-march=native+ flag is passed to the compiler, optimizing the source code for the particular platform
+\item[native] -- the \verb+-march=native+ flag was passed to the compiler, optimizing the source code for the particular platform
 
-\item[external] -- Cryptsetup is compiled against external Argon2 library
+\item[external] -- Cryptsetup was compiled against external Argon2 library
 \end{description}
 
 \noindent
 \begin{table}
-\caption{Comparing results for various Cryptsetup compilation options with unlocking time of 2000 ms}
+\caption{Comparing results for various Cryptsetup compilation options with unlocking time of 2,000 ms}
 \label{tab:comp2000}
 \begin{tabularx}{\textwidth}{| l | X | X | X | X |}
 \hline
 flags & avg(t)  in iterations & stdev(t) in iterations & avg(M) in KiB & stdev(M) in KiB\\
 \hline
-none & 6 & 0 & 1048576 & 0\\
+none & 6 & 0 & 1,048,576 & 0\\
 \hline
-SSE & 7 & 0 & 1048576 & 0\\
+SSE & 7 & 0 & 1,048,576 & 0\\
 \hline
-native & 6 & 0 & 1048576 & 0\\
+native & 6 & 0 & 1,048,576 & 0\\
 \hline
-native + SSE & 11 & 0 & 1048576 & 0\\
+native + SSE & 11 & 0 & 1,048,576 & 0\\
 \hline
-external & 6 & 0 & 1048576 & 0\\
+external & 6 & 0 & 1,048,576 & 0\\
 \hline
 \end{tabularx}
 \end{table}
 
 \noindent
 \begin{table}
-\caption{Comparing results for various Cryptsetup compilation options with unlocking time of 1000 ms}
+\caption{Comparing results for various Cryptsetup compilation options with unlocking time of 1,000 ms}
 \label{tab:comp1000}
 \begin{tabularx}{\textwidth}{| l | X | X | X | X |}
 \hline
 flags in ms & avg(t)  in iterations & stdev(t) in iterations & avg(M) in KiB & stdev(M) in KiB\\
 \hline
-none & 4 & 0 & 804032.75 & 3886.047\\
+none & 4 & 0 & 804,032.75 & 3,886.047\\
 \hline
-SSE & 4 & 0 & 949740.83 & 2305.669\\
+SSE & 4 & 0 & 949,740.83 & 2,305.669\\
 \hline
-native & 4 & 0 & 863822.25 & 1414.500\\
+native & 4 & 0 & 863,822.25 & 1,414.500\\
 \hline
-native + SSE & 5 & 0 & 1048576 & 0\\
+native + SSE & 5 & 0 & 1,048,576 & 0\\
 \hline
-external & 4 & 0 & 846713.44 & 1359.307\\
+external & 4 & 0 & 846,713.44 & 1,359.307\\
 \hline
 \end{tabularx}
 \end{table}
 
-Notice that combining optimized versions of Argon2 with compilation for the particular platform produces the best results. It almost doubles the number of iterations compared with the benchmark without and it produces only one less iteration compared to unlocking time of 4000 milliseconds benchmarked without optimization. Unfortunately, such combination of configuration options is not very common. A quick review of several Linux distributions (Debian, Ubuntu, Fedora) shows that distributions package the Argon2 library separatly and link the Cryptsetup against it. Also due to the support of broadest array of devices possible platform-specific optimizations are not used.
+Notice that combining optimized versions of Argon2 with compilation for the particular platform produces the best results. It almost doubles the number of iterations compared with the benchmark without these optimizations and it produces only one less iteration compared to unlocking time of 4,000 milliseconds benchmarked without optimization. Unfortunately, such combination of configuration options is not very common. A quick review of several Linux distributions (Debian, Ubuntu, Fedora) shows that distributions package the Argon2 library separately and link the Cryptsetup against it. Also due to the support of broadest array of devices possible, platform-specific optimizations are not used.
 
 The table \ref{tab:r4c1g} shows benchmarking results for the Raspberry Pi.  Notice that the memory cost is significantly lower. It is important to note here that the benchmarking algorithm of Cryptsetup will never use more than half of available amount of physical memory to prevent out of memory killer from killing the actual benchmarking process. Note also that the algorithm tries to use maximum available memory first and then tries to increase number of iterations.
 
@@ -743,19 +736,19 @@ The table \ref{tab:r4c1g} shows benchmarking results for the Raspberry Pi.  Noti
 \hline
 time in ms & avg(t)  in iterations & stdev(t) in iterations & avg(M) in KiB & stdev(M) in KiB\\
 \hline
-1000 & 4 & 0 & 43291.74 & 3628\\
+1,000 & 4 & 0 & 43,291.74 & 3,628\\
 \hline
-2000 & 4 & 0 & 95296.58 & 8199\\
+2,000 & 4 & 0 & 95,296.58 & 8,199\\
 \hline
-3000 & 4 & 0 & 150860.59 & 10508\\
+3,000 & 4 & 0 & 150,860.59 & 10,508\\
 \hline
-4000 & 4 & 0 & 203604.14 & 6723\\
+4,000 & 4 & 0 & 203,604.14 & 6,723\\
 \hline
-5000 & 4 & 0 & 255361.51 & 10598\\
+5,000 & 4 & 0 & 255,361.51 & 10,598\\
 \hline
-10000 & 4 & 0 & 474446.97 & 2737\\
+10,000 & 4 & 0 & 474,446.97 & 2,737\\
 \hline
-20000 & 7.81 & 0.879 & 474722 & 0\\
+20,000 & 7.81 & 0.879 & 474,722 & 0\\
 \hline
 \end{tabularx}
 \end{table}
@@ -770,19 +763,19 @@ By comparing tables \ref{tab:r4c1g} and \ref{tab:r4c1go} it can be seen that the
 \hline
 time in ms & avg(t)  in iterations & stdev(t) in iterations & avg(M) in KiB & stdev(M) in KiB\\
 \hline
-1000 & 4 & 0 & 25639.15 & 4745.422\\
+1,000 & 4 & 0 & 25,639.15 & 4,745.422\\
 \hline
-2000 & 4 & 0 & 53143.46 & 1493.866\\
+2,000 & 4 & 0 & 53,143.46 & 1,493.866\\
 \hline
-3000 & 4 & 0 & 82432.72 & 2296.222\\
+3,000 & 4 & 0 & 82,432.72 & 2,296.222\\
 \hline
-4000 & 4 & 0 & 111220.07 & 1818.082\\
+4,000 & 4 & 0 & 111,220.07 & 1,818.082\\
 \hline
-5000 & 4 & 0 & 140627.5 & 1984.865\\
+5,000 & 4 & 0 & 140,627.5 & 1,984.865\\
 \hline
-10000 & 4 & 0 & 292344.17 & 1726.421\\
+10,000 & 4 & 0 & 292,344.17 & 1,726.421\\
 \hline
-20000 & 4.17 & 0.375 & 474722 & 0\\
+20,000 & 4.17 & 0.375 & 474,722 & 0\\
 \hline
 \end{tabularx}
 \end{table}
@@ -794,41 +787,41 @@ time in ms & avg(t)  in iterations & stdev(t) in iterations & avg(M) in KiB & st
 \label{sec:attack}
 This section describes the rest of the practical research. The next chapter then defines and presents the price model which is based on results collected in this chapter. The following three subsections describe utilized hardware and software. The last subsection presents the results.
 
-The motivation behind performing of experimental simulations described in this chapter was to make the price model more precise and realistic. I found some results of benchmarks of Argon2 on CPU or GPU \parencite{argon2gpuold},, they are, however, almost four years old. Since that time there appeared new technologies in GPU and CPU segment and the Argon2 went through several upgrades. Another reason was that  by using a real hardware I was able to finetune parameters such as number of CPU cores, amount of available memory, available specialized CPU instructions etc.
+The motivation behind performing of experimental simulations described in this chapter was to make the price model more precise and realistic. I found some results of benchmarks of Argon2 on CPU or GPU \parencite{argon2gpuold}, they are, however, almost four years old. Since that time there appeared new technologies in GPU and CPU segment and the Argon2 went through several upgrades. Another reason was that  by using a real hardware I was able to fine-tune parameters such as number of CPU cores, amount of available memory, available specialized CPU instructions etc.
 
 \subsection{Utilized hardware}
-. For the purpose of this thesis I chose to utilize machines offered by the MetaCentrum VO organization because they are easily accessible to registered students and they offer diverse spectrum of computing resources. This proved useful especially considering the fact that according to the definition of an attacker in section~\ref{sec:attacker} it is expected to utilize as powerful machines as possible.
+For the purpose of this thesis I chose to utilize machines offered by the MetaCentrum VO organization because they are easily accessible to registered students and they offer diverse spectrum of computing resources. This proved useful especially considering the fact that according to the definition of an attacker in section~\ref{sec:attacker} it is expected to utilize as powerful machines as possible. MetaCentrum VO is a virtual organization supporting all members of Czech National Grid Organization. It manages and operates distributed  computing and storage resources owned by Cesnet as well as other cooperating academic organizations in Czech Republic.
 
 The following list describes parameters of the most interesting machines used during the research. For description of all the machines offered in Metacentrum see \parencite{metacentrumhw}.
 
 \begin{description}
-\item[Doom] -- $2 |times 8$ cores Intel Xeon E5-2650v2 2.60 GHz, hyperthreading 2 threads per core, supporting SSSE3 instruction, 64 GiB RAM, nVidia Tesla K20 with 4743 MiB of memory
+\item[Doom] -- $2 \times 8$ cores Intel(R) Xeon(R) E5-2,650v2 2.60 GHz, hyperthreading 2 threads per core, supporting SSSE3 instruction, 64 GiB RAM, nVidia Tesla K20 with 4,743 MiB of memory
 
-\item[Konos] -- $2\times10$ cores Intel(R) Xeon(R) CPU E5-2630 v4 at 2.20 GHz, hyperthreading 2 threads per core, supporting AVX2 instruction, 128 GB of RAM, NVIDIA GeForce GTX 1080 Ti with 11178 MiB of GPU memory
+\item[Konos] -- $2\times10$ cores Intel(R) Xeon(R) CPU E5-2630 v4 at 2.20 GHz, hyperthreading 2 threads per core, supporting AVX2 instruction, 128 GB of RAM, NVIDIA GeForce GTX 1080 Ti with 11,178 MiB of GPU memory
 
 \item[Nympha] -- $2\times16$ cores Intel(R) Xeon(R) Gold 6130 CPU at 2.10 GHz, hyperthreading 2 threads per core, supporting AVX512F instruction, 192 GiB of RAM
 
-\item[Manegrot] -- $4\times$ 8-core Intel Xeon E5-4627v2 at 3.30GHz, no hyperthreading, supporting SSSE3 instruction, 512 GiB of RAM
+\item[Manegrot] -- $4\times$ 8-core Intel(R) Xeon(R) E5-4627v2 at 3.30GHz, no hyperthreading, supporting SSSE3 instruction, 512 GiB of RAM
 
-\item[Uruk] -- $8\times18$ cores Intel Xeon Gold 6140  3.70 GHz, hyperthreading 2 threads per core, supporting AVX512F instruction, 2.86 TiB of RAM
+\item[Uruk] -- $8\times18$ cores Intel(R) Xeon(R) Gold 6140  3.70 GHz, hyperthreading 2 threads per core, supporting AVX512F instruction, 2.86 TiB of RAM
 
-\item[White] -- $2\times12$ core Intel Xeon Gold 6138 2.0 GHz, no hyperthreading, supporting SSSE3 instruction, 512 GiB of RAM, GPU Tesla P100 with 16280 MiB of memory
+\item[White] -- $2\times12$ core Intel(R) Xeon(R) Gold 6138 2.0 GHz, no hyperthreading, supporting SSSE3 instruction, 512 GiB of RAM, GPU Tesla P100 with 16,280 MiB of memory
 
-\item[Zubat] -- $2\times8$ core Intel Xeon E5-2630v3 2.40GHz, hyperthreading 2 threads per core, supporting SSSE3 instruction, 128 GiB of RAM, GPU Tesla K20Xm with 5700 MiB of memory
+\item[Zubat] -- $2\times8$ core Intel(R) Xeon(R) E5-2630v3 2.40GHz, hyperthreading 2 threads per core, supporting SSSE3 instruction, 128 GiB of RAM, GPU Tesla K20Xm with 5,700 MiB of memory
 \end{description}
 
 While performing computations on CPU I always allocated whole computing host and requested maximum number of available CPUS. I requested always at least $(T/L) \times M$ GiB of memory where \emph{T} denotes number of available CPU threads, \emph{L} denotes degree of parallelism for instance of Argon2 being computed and \emph{M} denotes memory cost. While simulating attacks on GPU I always reserved one instance of GPU, 1 CPU and 1 GiB of RAM memory. Reservations of GPUs are always exclusive. All tests used SSDs as underlying storage.
 
 \subsection{naive method}
 \label{subsec:naive}
-The first chosen attack method is naive but simple. It requires Libcryptsetup library to be present because it directly utilizes the API. The main idea is simply to try to recover the master key through normal means but to perform this action in multiple parallel threads.
+The first chosen attack method is naive but simple. It requires Libcryptsetup library to be present because it directly utilizes the API. The main idea is to try to recover the master key through normal means but to perform this action in multiple parallel threads.
 
-I created the tool which performs this attack. The tool was based on proof of concept called Dict\_search \parencite{cryptsetupdictsearch}.  I modified it sothat it uses threads instead of processes and it measures every recovery attempt and provides statistics. I also improved its usability. The tool can be found in the thesis Git repository \parencite{thesisrepo}.
+I created the tool which performs this attack. The tool was based on proof of concept called Dict\_search \parencite{cryptsetupdictsearch}.  I modified it so that it uses threads instead of processes and it measures every recovery attempt and provides statistics. I also improved its usability. The tool can be found in the thesis Git repository \parencite{thesisrepo}.
 
 The tool expects following inputs where letters denoting parameters correspond to the command line options:
 
 \begin{description}
-\item[t] -- type of encrypted volume, so far there are supported LUKS1, Truecrypt and LUKS2 and other types supported by Cryptsetup can be easily added by adding appropriate handler into the source code
+\item[t] -- type of encrypted volume, so far LUKS1, Truecrypt and LUKS2 are recognized and other types supported by Cryptsetup can be easily added by adding appropriate handler into the source code
 
 \item[i] -- base name of input device files
 
@@ -837,16 +830,18 @@ The tool expects following inputs where letters denoting parameters correspond t
 \item[T] -- number of parallel threads
 \end{description}
 
-The tool performs basic validation of input parameters and launches defined number of threads. Every thread receives a handler to the specified file containing the encrypted partition. Every thread opens the file with passwords and starts attempting to unlock the keyslot with passwords read from the input file. The file is internaly divided into segments and every thread reads a different segment. The tool runs until the passphrase is found or all the passhprases in the input file had been tried.
+The tool performs basic validation of input parameters and launches defined number of threads. Every thread receives a handler to the specified file containing the encrypted partition. Every thread opens the file with passwords and starts attempting to unlock the keyslot with passwords read from the input file. The file is internally divided into segments and every thread reads a different segment. The tool runs until the passphrase is found or all the passphrases in the input file had been tried.
 
-Memory footprint of this method can be expressed as $M \times T$, where \emph{M} denotes the memory cost parameter used during creation of the encrypted partition and \emph{T} denotes number of cracking threads specified while launching the tool. The number of utilized CPU threads can be expressed as $P \times T$, where \emph{P} denotes the degreee of parallelism of Argon2 used during initialization of the encrypted drive and \emph{T} is number of parallel cracking threads.
+Memory footprint of this method can be expressed as $M \times T$, where \emph{M} denotes the memory cost parameter used during creation of the encrypted partition and \emph{T} denotes number of cracking threads specified while launching the tool. The number of utilized CPU threads can be expressed as $P \times T$, where \emph{P} denotes the degree of parallelism of Argon2 used during initialization of the encrypted drive and \emph{T} is number of parallel cracking threads.
 
 Because an attacker would try to speed up the cracking process as soon as possible, I compiled Cryptsetup with support for optimized Argon2 using the \verb+--enable-sse-internal-argon2+ and I applied a simple patch which disabled clearing of internal Argon2 memory after every Argon2 computation. The patch can be found in the Git repository of the thesis \parencite{thesisrepo}.
 
 \subsection{Method based on Argon2-gpu-bench tool}
 This method utilizes a tool called Argon2-gpu-bench written by Ondrej Mosnáček \parencite{argon2gpu}. The tool was originally created to benchmark speed and energy consumption of Argon2 computing hashes. The background scenario was offline brute-force attack against Argon2 hash, which overlaps with goals of my thesis. that is the reason why I selected this tool.
 
-Note that this is not a password guessing tool in its current implementation. It only computes provided Argon2 hashes. The scenario expects that an attacker would use this tool to precompute Argon2 hashes and later, possibly in parallel, would use hashes as decryption keys to recover the master key. the right password could be verified by decrypting several sectors of a volume with recovered master key and searching for well-known signatures.
+Note that this is not a password guessing tool in its current implementation. It only computes provided Argon2 hashes. Originally the tool generated random strings 64 bytes long. I modified the tool so that strings are loaded from provided file containing one password per line. My modifications can be found at \parencite{argon2gpuvojta}.
+
+The scenario expects that an attacker would use this tool to precompute Argon2 hashes and later, possibly in parallel, would use hashes as decryption keys to recover the master key. the right password could be verified by decrypting several sectors of a volume with recovered master key and searching for well-known signatures. Note that AES used during decryption of sectors can be definitely parallelized and there exist special CPU instructions to improve its speed. Although the time required to try all the candidate hashes as decryption keys is not negligible, it is definitely smaller and less memory-intensive compared to Argon2 computations.
 
 The tool can compute Argon2 using three different modes. It can utilize standard CPU implementation and automatically choose the most optimized one according to supported CPU instructions. Clearing of internal memory is disabled for performance reasons. It also contains Argon2 implementation for OpenCL platform and three different GPU kernels (implementations) to be used with CUDA platform. Every GPU kernel handles the GPU memory in a different way, possibly producing different results under different parameters.
 
@@ -868,11 +863,9 @@ Following list describes chosen input parameters for the application. Letters ma
 \item[b] -- number of hashes computed in every computation (batches)
 \end{description}
 
-Please notice the \emph{s} and \emph{b} parameters, they are important while interpreting results collected through this tool. The tool performs \emph{s} consecutive discrete computations. Every such computation is measured separately and the tool outputs its length including time of writing and reading of data for OpenCL and CUDA modes. In every such phase \emph{b} hopefully parallel hash computations is performed. I say hopefully because it is not always possible or desirable. Lenght of every such small computation is measured and averaged at the end of the whole benchmark.  So at the end the tool performs $s \times b$ computations.
+Please notice the \emph{s} and \emph{b} parameters, they are important while interpreting results collected through this tool. The tool performs \emph{s} consecutive discrete computations. Every such computation is measured separately and the tool outputs its length including time of writing and reading of data for OpenCL and CUDA modes. In every such phase \emph{b} hopefully parallel hash computations is performed. I say hopefully because it is not always possible or desirable. Length of every such small computation is measured and averaged at the end of the whole benchmark.  So at the end the tool performs $s \times b$ computations.
 
-The tool tries to run as many parallel threads as possible. The number of such threads is determined as $b \times L$. The amount of needed memory is determined as $b \times M$. However, there are upper limits for both values considering effectivity of calculations. While computing on CPU through standard Argon2 CPU implementation or OpenCL platform, the number of available CPU threads should be effectively the limit. While performing computations on GPU through OpenCL or CUDA, the tool cannot run if amount of memory required is higher than amount of memory available at the GPU.
-
-originally the tool generated random strings 64 bytes long. I modified the tool sothat strings are loaded from provided file containing one password per line. My modifications can be found at \parencite{argon2gpuvojta}.
+The tool tries to run as many parallel threads as possible. The number of such threads is determined as $b \times L$. The amount of needed memory is determined as $b \times M$. However, there are upper limits for both values considering effectiveness of calculations. While computing on CPU through standard Argon2 CPU implementation or OpenCL platform, the number of available CPU threads should be effectively the limit. While performing computations on GPU through OpenCL or CUDA, the tool cannot run if amount of memory required is higher than amount of memory available at the GPU.
 
 \FloatBarrier
 
@@ -882,7 +875,7 @@ Here I describe and compare results collected by two methods described in previo
 \begin{description}
 \item[threads] -- number of threads passed as parameter to cracker
 
-\item[batch size] -- number of concurent Argon2 computations passed through \verb+-b+ parameter to the Argon2-gpu-bench tool
+\item[batch size] -- number of concurrent Argon2 computations passed through \verb+-b+ parameter to the Argon2-gpu-bench tool
 
 \item[avg(time per hash)] -- average time spent calculating one hash in milliseconds
 
@@ -893,97 +886,97 @@ Here I describe and compare results collected by two methods described in previo
 \item[stdev(time per batch)] -- standard deviation of time spent computing one batch of hashes in milliseconds
 \end{description}
 
-Tables \ref{tab:nymphacracker}, \ref{tab:nymphacpu}  and \ref{tab:konosgpu} show us a baseline of results. Nympha and Konos were the most powerful machines for computing Argon2 I managed to find in MetaCentrum. We can see that cracking hashes with high memory parameter (1049576 KiB) is highly ineffective with the naive approach. The best result was achieved while running two concurrent unlocking operations, therefore occupying 8 threads. This configuration enabled computation of 1 hash per 1.107 seconds.
+Tables \ref{tab:nymphacracker}, \ref{tab:nymphacpu}  and \ref{tab:konosgpu} show us a baseline of results. Nympha and Konos were the most powerful machines for computing Argon2 I managed to find in MetaCentrum. We can see that cracking hashes with high memory parameter (1,049,576 KiB) is highly ineffective with the naive approach. The best result was achieved while running two concurrent unlocking operations, therefore occupying 8 threads. This configuration enabled computation of 1 hash per 1.107 seconds.
 
-However, using powerful enough CPU supporting AVX512F instructions it is possible to get more interesting results. The table \ref{tab:nymphacpu} is very interesting in particular. As we can see, we can get to the speed of 1 hash per 215 milliseconds, that is 4.651 hashes per second. From the theoretical point of view, the most effective computation should occur while running 16 concurrent Argon2 computations using $16 \times 4 = 64$ threads, as Nympha machine offers 64 CPU threads. As we can observe, at this degree of parallelism one hash can be computed in 296.3 milliseconds. However, increasing degree of parallelism up to 512 decreases the time up to 215 milliseconds. This is probably caused by desynchronization of threads during the computing process because it is not possible to have 512 threads running at the same time if every thread requires 1 GiB of memory and the machine has only 180 GiB of memory. apparently threads get managed by operating system scheduler sothat performance is not degraded.
+However, using powerful enough CPU supporting AVX512F instructions it is possible to get more interesting results. The table \ref{tab:nymphacpu} is very interesting in particular. As we can see, we can get to the speed of 1 hash per 215 milliseconds, that is 4.651 hashes per second. From the theoretical point of view, the most effective computation should occur while running 16 concurrent Argon2 computations using $16 \times 4 = 64$ threads, as Nympha machine offers 64 CPU threads. As we can observe, at this degree of parallelism one hash can be computed in 296.3 milliseconds. However, increasing degree of parallelism up to 512 decreases the time up to 215 milliseconds. This is probably caused by desynchronization of threads during the computing process because it is not possible to have 512 threads running at the same time if every thread requires 1 GiB of memory and the machine has only 180 GiB of memory. apparently threads get managed by operating system scheduler so that performance is not degraded.
 
 Considering GPU it is possible to get even slightly better times. The GPU provided by Konos machine can run at most 10 parallel Argon2 computations calculating one hash in cca 307 milliseconds, that is 3.25 hashes per second. The table \ref{tab:konosgpuopt} shows us that thanks to precomputing values for Argon2i it is possible to reach 294.5 milliseconds per hash. All values in table \ref{tab:konosgpuopt} were computed with $\emph{b} = 10$.
 
 \noindent
 \begin{table}
-\caption{Cracker running on Nympha cracking drive created with benchmark parameters on laptop}
+\caption{Cracker running on Nympha against drive benchmarked on laptop with unlocking time of 2,000 ms}
 \label{tab:nymphacracker}
 \begin{tabularx}{\textwidth}{| X | X | X |}
 \hline
 threads & avg(time per hash) in ms & stdev(time per hash) in ms\\
 \hline
-1 & 1584.7674505155 & 50.545681611488\\
+1 & 1,584.767 & 50.545\\
 \hline
-2 & 1634.9176665279 & 82.044594758925\\
+2 & 1,634.917 & 82.044\\
 \hline
-4 & 1906.2277095858 & 106.58529332311\\
+4 & 1,906.227 & 106.585\\
 \hline
-8 & 2502.0319979111 & 178.33914452799\\
+8 & 2,502.031 & 178.339\\
 \hline
-16 & 4302.8584071083 & 385.43973954664\\
+16 & 4,302.858 & 385.439\\
 \hline
-32 & 8482.6342007254 & 816.59626290929\\
+32 & 8,482.634 & 816.596\\
 \hline
-64 & 17180.945616567 & 1810.2488004088\\
+64 & 17,180.945 & 1,810.248\\
 \hline
-128 & 34929.874538718 & 3893.6171198381\\
+128 & 34,929.874 & 3,893.617\\
 \hline
 \end{tabularx}
 \end{table}
 
 \noindent
 \begin{table}
-\caption{Argon2-gpu-bench running on Nympha in CPU mode}
+\caption{Argon2-gpu-bench running on Nympha in CPU mode against parameters benchmarked on laptop with unlocking time of 2,000 ms}
 \label{tab:nymphacpu}
 \begin{tabularx}{\textwidth}{| X | X | X | X | X |}
 \hline
 batch size & avg(time per hash) in ms & stdev(time per hash) in ms & avg(time per batch) in ms & stdev(time per batch) in ms\\
 \hline
-1 & 1641.408 & 29.667225 & 1641.408 & 29.667225 \\
+1 & 1,641.408 & 29.667 & 1,641.408 & 29.667\\
 \hline
-2 & 893.785107 & 21.578192 & 1787.570 & 43.156384 \\
+2 & 893.785 & 21.578 & 1,787.570 & 43.156\\
 \hline
-4 & 525.360194 & 10.351916 & 2101.441 & 41.407664\\
+4 & 525.360 & 10.351 & 2,101.441 & 41.407664\\
 \hline
-8 & 351.323321 & 10.219132 & 2810.587 & 81.753061\\
+8 & 351.323 & 10.219 & 2,810.587 & 81.753\\
 \hline
-16 & 296.345655 & 4.376179 & 4741.530 & 70.018871\\
+16 & 296.345 & 4.376 & 4,741.530 & 70.018\\
 \hline
-32 & 252.618991 & 2.967656 & 8083.808 & 94.964996\\
+32 & 252.618 & 2.967 & 8,083.808 & 94.964\\
 \hline
-64 & 235.185256 & 2.112931 & 15051.856 & 135.227588\\
+64 & 235.185 & 2.112 & 15,051.856 & 135.227\\
 \hline
-128 & 224.986376 & 2.046735 & 28798.256 & 261.982150\\
+128 & 224.986 & 2.046 & 28,798.256 & 261.982\\
 \hline
-256 & 219.888724 & 1.691552 & 56291.514 & 433.037402\\
+256 & 219.888 & 1.691 & 56,291.514 & 433.037\\
 \hline
-512 & 217.429176 & 1.660830 & 111323,76 & 850.345233\\
+512 & 217.429 & 1.660 & 111,323.760 & 850.345\\
 \hline
 \end{tabularx}
 \end{table}
 
 \noindent
 \begin{table}
-\caption{Argon2-gpu-bench running on Konos in CUDA mode}
+\caption{Argon2-gpu-bench running on Konos in CUDA mode against parameters benchmarked on laptop with unlocking time of 2,000 ms}
 \label{tab:konosgpu}
 \begin{tabularx}{\textwidth}{| X | X | X | X | X |}
 \hline
 batch size & avg(time per hash) in ms & stdev(time per hash) in ms & avg(time per batch) in ms & stdev(time per batch) in ms\\
 \hline
-1 & 2996.175 & 0.057949 & 2996.175 & 0.057949\\
+1 & 2,996.175 & 0.057 & 2,996.175 & 0.057\\
 \hline
-2 & 1499.818 & 0.025972 & 2999.637 & 0.051945 \\
+2 & 1,499.818 & 0.025 & 2,999.637 & 0.051\\
 \hline
-3 & 1000.870 & 0.049965 & 3002.610 & 0.149898 \\
+3 & 1,000.870 & 0.049 & 3,002.610 & 0.149\\
 \hline
-4 & 752.094474 & 0.015133 & 3008.378 & 0.060533 \\
+4 & 752.094 & 0.015 & 3,008.378 & 0.060\\
 \hline
-5 & 602.25337 & 0.007514 & 3011.267 & 0.037569 \\
+5 & 602.253 & 0.007 & 3,011.267 & 0.037\\
 \hline
-6 & 502.370514 & 0.106702 & 3014.223 & 0.640211 \\
+6 & 502.370 & 0.106 & 3,014.223 & 0.640\\
 \hline
-7 & 430.885932 & 0.007669 & 3016.202 & 0.053687 \\
+7 & 430.885 & 0.007 & 3,016.202 & 0.053\\
 \hline
-8 & 382.38511 & 0.079782 & 3059.081 & 0.638259 \\
+8 & 382.385 & 0.079 & 3,059.081 & 0.638\\
 \hline
-9 & 340.40505 & 0.060572 & 3063.645 & 0.545148 \\
+9 & 340.405 & 0.060 & 3,063.645 & 0.545\\
 \hline
-10 & 306.682325 & 0.04252 & 3066.823 & 0.4252 \\
+10 & 306.682 & 0.042 & 3,066.823 & 0.425\\
 \hline
 \end{tabularx}
 \end{table}
@@ -991,27 +984,27 @@ batch size & avg(time per hash) in ms & stdev(time per hash) in ms & avg(time pe
 
 \noindent
 \begin{table}
-\caption{Argon2-gpu-bench running on Konos in CUDA mode comparing various options}
+\caption{Argon2-gpu-bench running on Konos in CUDA mode comparing various options against parameters benchmarked on laptop with unlocking time of 2,000 ms}
 \label{tab:konosgpuopt}
 \begin{tabularx}{\textwidth}{| X | X | X | X | X |}
 \hline
 option & avg(time per hash) in ms & stdev(time per hash) in ms & avg(time per batch) in ms & stdev(time per batch) in ms\\
 \hline
-master & 306.682325 & 0.04252 & 3066.823 & 0.4252 \\
+master & 306.682 & 0.042 & 3,066.823 & 0.425 \\
 \hline
-master + precomputes & 294.535537 & 0.04566 & 2945.355 & 0.45661 \\
+master + precomputes & 294.535 & 0.045 & 2,945.355 & 0.456 \\
 \hline
-master + oneshot & 305.809563 & 0.009897 & 3058.096 & 0.98977 \\
+master + oneshot & 305.809 & 0.009 & 3,058.096 & 0.989 \\
 \hline
-master + oneshot + precomputes & 334.033881 & 0.008523 & 3340.339 & 0.085239 \\
+master + oneshot + precomputes & 334.033 & 0.008 & 3,340.339 & 0.085 \\
 \hline
-warpshuffle & 306.163346 & 0.83872 & 3061.633 & 8.387203 \\
+warp\-shuffle & 306.163 & 0.838 & 3,061.633 & 8.387 \\
 \hline
-warpshuffle + precomputes & 294.932399 & 0.054746 & 2949.324 & 0.547467\\
+warpshuffle + precomputes & 294.932 & 0.054 & 2,949.324 & 0.547\\
 \hline
-warpshuffleshared & 306.103173 & 0.834074 & 3061.032 & 8.340742 \\
+warp\-shuffle\-shared & 306.103 & 0.834 & 3,061.032 & 8.340\\
 \hline
-warpshuffleshared + precomputes & 297.277366 & 0.003769 & 2972.774 & 0.037696 \\
+warp\-shuffle\-shared + precomputes & 297.277 & 0.003 & 2,972.774 & 0.037\\
 \hline
 \end{tabularx}
 \end{table}
@@ -1024,61 +1017,60 @@ Comparing table \ref{tab:nymphacpu} with tables \ref{tab:manegrot} and \ref{tab:
 
 \noindent
 \begin{table}
-\caption{Argon2-gpu-bench running on Manegrot}
+\caption{Argon2-gpu-bench running on Manegrot against parameters benchmarked on laptop with unlocking time of 2,000 ms}
 \label{tab:manegrot}
 \begin{tabularx}{\textwidth}{| X | X | X | X | X |}
 \hline
 batch size & avg(time per hash) in ms & stdev(time per hash) in ms & avg(time per batch) in ms & stdev(time per batch) in ms\\
 \hline
-1 & 3385.726 & 119.515742 & 3385.726 & 119.515742\\
+1 & 3,385.726 & 119.515 & 3,385.726 & 119.515\\
 \hline
-2 & 1622.290 & 46.643630 & 3244.581 & 93.287261\\
+2 & 1,622.290 & 46.643 & 3,244.581 & 93.287\\
 \hline
-4 & 818.661144 & 20.524608 & 3290.041 & 82.098433\\
+4 & 818.661 & 20.524 & 3,290.041 & 82.098\\
 \hline
-8 & 657.445886 & 14.087495 & 5259.567 & 112.699966\\
+8 & 657.445 & 14.087 & 5,259.567 & 112.699\\
 \hline
-16 & 629.229857 & 11.710085 & 10067.678 & 187.361361\\
+16 & 629.229 & 11.710 & 10,067.678 & 187.361\\
 \hline
-32 & 606.408693 & 9.880113 & 19405.078 & 316.163620\\
+32 & 606.408 & 9.880 & 19,405.078 & 316.163\\
 \hline
-64 & 594.680230 & 6.248621 & 38059.535 & 399.911800\\
+64 & 594.680 & 6.248 & 38,059.535 & 399.911\\
 \hline
-128 & 585.261050 & 6.576771 & 74913.42 & 841.826712\\
+128 & 585.261 & 6.576 & 74,913.420 & 841.826\\
 \hline
-256 & 580.427723 & 6.157127 & 148589.52 & 1576.225\\
+256 & 580.427 & 6.157 & 148,589.520 & 1,576.225\\
 \hline
 \end{tabularx}
 \end{table}
 
-
 \noindent
 \begin{table}
-\caption{Argon2-gpu-bench running on Uruk}
+\caption{Argon2-gpu-bench running on Uruk against parameters benchmarked on laptop with unlocking time of 2,000 ms}
 \label{tab:uruk}
 \begin{tabularx}{\textwidth}{| X | X | X | X | X |}
 \hline
 batch size & avg(time per hash) in ms & stdev(time per hash) in ms & avg(time per batch) in ms & stdev(time per batch) in ms\\
 \hline
-1 & 1420.081 & 158.506821 & 1420.081 & 158.506821\\
+1 & 1,420.081 & 158.506 & 1,420.081 & 158.506\\
 \hline
-2 & 522.104180 & 83.144792 & 1044.208 & 166.289585\\
+2 & 522.104 & 83.144 & 1,044.208 & 166.289\\
 \hline
-4 & 323.664122 & 49.838216 & 1294.656 & 199.352865\\
+4 & 323.664 & 49.838 & 1,294.656 & 199.352\\
 \hline
-8 & 370.464088 & 9.467304 & 2963.713 & 75.738437\\
+8 & 370.464 & 9.467 & 2,963.713 & 75.738\\
 \hline
-16 & 288.062681 & 36.603874 & 4609.003 & 585.661994\\
+16 & 288.062 & 36.603 & 4,609.003 & 585.661\\
 \hline
-32 & 262.378906 & 20.554056 & 8396.125 & 657.729801\\
+32 & 262.378 & 20.554 & 8,396.125 & 657.729\\
 \hline
-64 & 248.382633 & 32.444834 & 15896.489 & 2076.469\\
+64 & 248.382 & 32.444 & 15,896.489 & 2,076.469\\
 \hline
-128 & 262.579528 & 56.605614 & 33610.180 & 7245.519\\
+128 & 262.579 & 56.605 & 33,610.180 & 7,245.519\\
 \hline
-256 & 243.868085 & 20.708301 & 62430.24 & 5301.325\\
+256 & 243.868 & 20.708 & 62,430.24 & 5,301.325\\
 \hline
-512 & 266.685205 & 31.304294 & 136542.84 & 16027.799\\
+512 & 266.685 & 31.304 & 136,542.840 & 16,027.799\\
 \hline
 \end{tabularx}
 \end{table}
@@ -1087,73 +1079,70 @@ The table \ref{tab:gpus} summarizes results of running Argon2-gpu-bench on sever
 
 \noindent
 \begin{table}
-\caption{comparing Argon2-gpu-bench on various GPUs}
+\caption{comparing Argon2-gpu-bench on various GPUs against parameters benchmarked on laptop with unlocking time of 2,000 ms}
 \label{tab:gpus}
 \begin{tabularx}{\textwidth}{| X | X | X | X | X | X |}
 \hline
-device & batch size & avg(time per hash) in ms & stdev(time per hash) in ms & avg(time per batch) in ms & stdev(time per batch) in ms\\
+device & batch size & avg (time per hash) in ms & stdev (time per hash) in ms & avg (time per batch) in ms & stdev (time per batch) in ms\\
 \hline
-Doom (CUDA) & 4 & 4463.151 & 0.566438 & 17852.602 & 2.265753\\
+Doom (CUDA) & 4 & 4,463.151 & 0.566 & 17,852.602 & 2.265\\
 \hline
-Konos (CUDA) & 10 & 294.535537 & 0.04566 & 2945.355 & 0.45661 \\
+Konos (CUDA) & 10 & 294.535 & 0.045 & 2,945.355 & 0.456\\
 \hline
-Konos (OpenCL) & 330.875352 & 0.00042542 & 3308.754 & 0.000425425\\ 
+Konos (OpenCL) & 10 & 330.875 & 0.0004 & 3,308.754 & 0.0004\\
 \hline
-White  (CUDA) & 15 & 332.779834 & 0.388264 & 4991.698 & 5.823963\\
+White  (CUDA) & 15 & 332.779 & 0.388 & 4,991.698 & 5.823\\
 \hline
-Zubat (CUDA) & 5 & 1922.469 & 0.60108 & 9612.346 &0.300544\\
+Zubat (CUDA) & 5 & 1,922.469 & 0.601 & 9,612.346 &0.300\\
 \hline
 \end{tabularx}
 \end{table}
 
-
 \noindent
 \begin{table}
-\caption{Cracker running on Nympha cracking drive with parameters benchmarked on Raspberry Pi}
+\caption{Cracker running on Nympha cracking drive with parameters benchmarked on Raspberry Pi with unlocking time of 2,000 ms}
 \label{tab:nymphacrackerrpi}
 \begin{tabularx}{\textwidth}{| X | X | X |}
 \hline
 threads & avg(time per hash) in ms & stdev(time per hash) in ms\\
 \hline
-1 & 191.1086647873 & 28.144991133841\\
+1 & 191.108 & 28.144\\
 \hline
-2 & 181.3873000524 & 19.477671236564\\
+2 & 181.387 & 19.477\\
 \hline
-4 & 175.174665196 & 17.050759284106\\
+4 & 175.174 & 17.050\\
 \hline
-8 & 217.2155391269 & 25.309739052278\\
+8 & 217.215 & 25.309\\
 \hline
-16 & 348.0360111828 & 44.765986824601\\
+16 & 348.036 & 44.765\\
 \hline
-32 & 757.1984403583 & 134.52586365155\\
+32 & 757.198 & 134.525\\
 \hline
-64 & 1574.5352730001 & 227.50342685639\\
+64 & 1,574.535 & 227.503\\
 \hline
-128 & 3352.7277294633 & 609.03763595655\\
+128 & 3,352.727 & 609.037\\
 \hline
 \end{tabularx}
 \end{table}
 
 \noindent
 \begin{table}
-\caption{Comparing cracking methods for parameters benchmarked with Raspberry Pi}
+\caption{Comparing cracking methods for parameters benchmarked on Raspberry Pi with unlocking time of 2,000 ms}
 \label{tab:rpicrack}
 \begin{tabularx}{\textwidth}{| X | X | X | X | X | X |}
 \hline
-device & batch size & avg(time per hash) in ms & stdev(time per hash) in ms & avg(time per batch) in ms & stdev(time per batch) in ms\\
+device & batch size & avg(time per hash) in ms & stdev (time per hash) in ms & avg(time per batch) in ms & stdev (time per batch) in ms\\
 \hline
-Nympha (CPU) & 512 & 12.559353 & 0.191637 & 6430.389 & 98.118714\\
+Nympha (CPU) & 512 & 12.559 & 0.191 & 6,430.389 & 98.118\\
 \hline
-Konos (GPU) & 118 & 3.132034 & 0.7081000 & 369.580075 & 0.835626\\
+Konos (GPU) & 118 & 3.132 & 0.708 & 369.580 & 0.835\\
 \hline
-White (GPU) & 172 & 2.433951 & 0.000472 & 418.639785 & 0.81221\\
+White (GPU) & 172 & 2.433 & 0.0004 & 418.639 & 0.812\\
 \hline
-Zubat (GPU) & 18 & 15.791761 & 0.34889 & 947.505723 & 2.093391\\
+Zubat (GPU) & 18 & 15.791 & 0.348 & 947.505 & 2.093\\
 \hline
 \end{tabularx}
 \end{table}
-
-
 
 \chapter{The price of an attack}
 \label{chap:model}
@@ -1168,16 +1157,16 @@ The attacker currently does not have any hardware with sufficient computing powe
 \subsection{Hardware}
 While considering cracking a password or a hash, there are several types of hardware to consider. An attacker can use powerful CPUs which can be cheaper solution compared to other possibilities but they are also usually slower because of their generic nature. The fact which is crucial while considering Argon2 is that they can have access to relatively large volume of RAM without degrading their computing performance. It is also less time-consuming to eventually optimize the hash algorithm for CPU than for other types of hardware.
 
-The next option often used in this process is to use GPUs. Their architecture is suitable for computing many parallel identical tasks as is the case for hash cracking. GPUs showed to be effective against PBKDF2 \parencite{mosnacek}. However, the price of a GPU might be higher than the price of a CPU. To use full computing power of GPU it is important that the data being processed is copied into GPU memory which is limited. This fact could  reduce their effectivity in this particular case considering possible high memory demands of Argon2.
+The next option often used in this process is to use GPUs. Their architecture is suitable for computing many parallel identical tasks as is the case for hash cracking. GPUs showed to be effective against PBKDF2 \parencite{mosnacek}. However, the price of a GPU might be higher than the price of a CPU. To use full computing power of GPU it is important that the data being processed is copied into GPU memory which is limited. This fact could  reduce their effectiveness in this particular case considering possible high memory demands of Argon2.
 
 Last two options are FPGAs and ASICs. They represent two groups of hardware which can be optimized for highly specific tasks. FPGAs are in general less powerful but they can be easily reprogrammed after production. ASICs can incorporate parts which can be later reprogrammed but definitely not to the same extend as FPGAs. ASICs are also more expensive than FPGAs when produced in small volumes. Moreover, to the best of the author's knowledge, there does not exist any publicly available implementation of Argon2 for FPGAs or ASICs and it would take for an attacker nonnegligible amount of time to create one.
 
 \subsection{Software}
-There does not exist any publicly available software offering feature to crack passphrases of LUKS2 headers. There exists a simple proof of concept program distributed with Cryptsetup called Dict\_search \parencite{cryptsetupdictsearch}. It mounts dictionary attack against specified device supporting Truecrypt and LUKS1. After slight modifications it can be used also against LUKS2 volumes. It uses API of libcryptsetup. Therefore it obviously introduces slight overhead by creating and deleting structures pertaining to Cryptsetup. Modification of this tool is used in this thesis in subsection~\ref{subsec:naive}
+There does not exist any publicly available software offering feature to crack passphrases of LUKS2 headers. There exists a simple proof of concept program distributed with Cryptsetup called Dict\_search \parencite{cryptsetupdictsearch}. It mounts dictionary attack against specified device supporting Truecrypt and LUKS1. After slight modifications it can be used also against LUKS2 volumes. It uses API of Libcryptsetup. Therefore it obviously introduces slight overhead by creating and deleting structures pertaining to Cryptsetup. Modification of this tool is used in this thesis in subsection~\ref{subsec:naive}.
 
 Then there is a possibility of extracting the master key from the captured LUKS2 header and trying to find the right password by comparing it to it after being hashed. This removes some slight overload mentioned above. Support for cracking of Argon2 hashes appeared in well-known open source password auditing software John the ripper in July 2016. This allows to use some infrastructure offered by the framework but the hash function is not optimized in any way.
 
-Ondrej Mosnáček created an experimental program for benchmarking speed of Argon2 while running on CPUs and GPUs \parencite{argon2gpu}. The project can use both CUDA and OpenCL technologies to run on multiple GPUs or CPUs. The program currently does not perform password cracking, passwords are generated randomly and they are not compared to any hash. But slight modifications to the project could turn it into a password cracker. I modified this tool sothat it reads passwords from a provided file, see \parencite{argon2gpuvojta}.
+Ondrej Mosnáček created an experimental program for benchmarking speed of Argon2 while running on CPUs and GPUs \parencite{argon2gpu}. The project can use both CUDA and OpenCL technologies to run on multiple GPUs or CPUs. The program currently does not perform password cracking, passwords are generated randomly and they are not compared to any hash. But slight modifications to the project could turn it into a password cracker. I modified this tool so that it reads passwords from a provided file, see \parencite{argon2gpuvojta}.
 
 \section{Price model}
 \label{sec:model}
@@ -1190,20 +1179,20 @@ Based on previous assumptions of an attacker's options I tried to create a price
 
 \item[F] -- expected final price of whole attack expressed in dollars
 
-\item[H] -- initial price of one machine (CPU, RAM, accessories expressed in dollars
+\item[H] -- initial price of one machine (CPU, RAM, accessories) expressed in dollars
 
 \item[L] -- expected length of an attack expressed in days
 
 \item[N] -- number of machines expressed as an integer
 
-\item[P] -- number of passwords contained in the chosen password space
+\item[P] -- number of passwords contained in the chosen password space expressed as an integer
 
 \item[R] -- price to rent one machine for one hour expressed in dollars
 
 \item[S] -- speed of one machine expressed as number of seconds spent computing one hash
 \end{description}
 
-The model expects that an attacker uses array of homogenous machines and that the speed of Argon2 hash cracking was at least approximately benchmarked. The model does not assume any hints about the password. The model expects that passwords are distributed uniformly through the password space and therefore an attacker should on average search through one half of \emph{P} to recover the password. The model can simulate two different cases. In the first case an attacker plans to purchase actual physical hardware and in the second case an attacker rents machines from an online cloud provider (Amazon, Microsoft Azure, Alibaba Cloud etc.)
+The model expects that an attacker uses array of homogeneous machines and that the speed of Argon2 hash cracking was at least approximately benchmarked. The model does not assume any hints about the password. The model expects that passwords are distributed uniformly through the password space and therefore an attacker should on average search through one half of \emph{P} to recover the password. The model can simulate two different cases. In the first case an attacker plans to purchase actual physical hardware and in the second case an attacker rents machines from an online cloud provider (Amazon, Microsoft Azure, Alibaba Cloud etc.)
 
 The final price is determined by set of following equations:
 
@@ -1224,27 +1213,27 @@ F = N \times R \times 24 \times L
 
 The equation \ref{eq1} determines how many machines are needed to exhaust complete password space \emph{P} in \emph{L} days. The result denoted as \emph{N} can then be used in equations \ref{eq2} or \ref{eq3}.
 
-The equation \ref{eq2} is used in the case of purchasing and using physical hardware. In that case an attacker should estimate power draw of single machine by collecting information from datasheets or rather by performing real world tests. There exist online versions of power consumption calculators. If an attacker decides to allocate computing resources in online clouds, then the equation \ref{eq3} should be used. Online cloud providers usually provide online pricelists for their services.
+The equation \ref{eq2} is used in the case of purchasing and using physical hardware. In that case an attacker should estimate power draw of single machine by collecting information from data sheets or rather by performing real world tests. There exist online versions of power consumption calculators. If an attacker decides to allocate computing resources in online clouds, then the equation \ref{eq3} should be used. Online cloud providers usually provide online price lists for their services.
 
 \section{Real world cost estimation}
 In this section I apply the model defined in section \ref{sec:model} to real world data. Please note that results acquired through this price model are only estimates based on data sources described below and experiments performed throughout this thesis described in chapter~\ref{chap:analysis}.
 
-Following subsections show that to crack a passhprase eight characters long used for LUKS2 volume created on modern laptop, there are needed hundreds of thousants or even millions of machines and the expected price is in range of billions of dollars. Even if parameters are benchmarked on relatively low performance hardware such as Raspberry Pi, there are still needed thousants of machines and the price stays in millions of dollars. When compared to similar research performed earlier with PBKDF2, it is visible that the price of an attack increased with ARgon2 \parencite{pbkdfresearch}.
+Following subsections show that to crack a passphrase eight characters long used for LUKS2 volume created on modern laptop, hundreds of thousands or even millions of machines are needed and the expected price is in range of billions of dollars. Even if parameters are benchmarked on relatively low performance hardware such as Raspberry Pi, there are still needed thousands of machines and the price stays in millions of dollars. When compared to similar research performed earlier with PBKDF2, it is visible that the price of an attack increased with Argon2 \parencite{pbkdfresearch}.
 
 \subsection{Sources of real world data}
-Information about price and TDP of CPUs were collected from \parencite{intelspecs}, where as information about GPUs were collected from \parencite{teslak20}, \parencite{teslap100}, \parencite{geforceprice} and \parencite{geforce}. Information about prices of RAM memory were collected from \parencite{memoryprice}. Estimated electricity price is based on \parencite{electricity} and \parencite{euroelectricity}. Prices of cloud services are based on available offers from Amazon \parencite{amazon} \parencite{amazoncalc}, Microsoft Azure \parencite{azure} and Alibaba Cloud \parencite{alibaba}.
+Information about price and TDP of CPUs were collected from \parencite{intelspecs}, where as information about GPUs were collected from \parencites{teslak20}{teslap100}{geforceprice}{geforce}. Information about prices of RAM memory were collected from \parencite{memoryprice}. Estimated electricity price is based on \parencite{electricity} and \parencite{euroelectricity}. Prices of cloud services are based on available offers from Amazon \parencites{amazon}{amazoncalc}, Microsoft Azure \parencite{azure} and Alibaba Cloud \parencite{alibaba}.
 
 Note that power draw of machines is based on TDP of CPU or GPU as listed in particular technical specifications. Power draw of RAM and other peripheral components is not taken into account as it is relatively small and at the same time it is hard to set certain average value. I understand that TDP is not exact representation of actual power draw but as experimental machines were not under my physical control, I decided to use this value.
 
-I define the \emph{P} as space of passhprases eight characters long containing upper case letters, lower case letters and numbers.
+I define the \emph{P} as space of passphrases eight characters long containing upper case letters, lower case letters and numbers.
 
-$$P = (26 + 26 + 10)^8 = 2,.183401056 \times 10^{14}$$
+$$P = (26 + 26 + 10)^8 = 2.183401056 \times 10^{14}$$
 
-I set the \emph{E} constant to 0.21. This was the price of electricity per kilowatt hour in dollars as shown in \parencite{electricity}. The average price in EU was even slightly higher after conversion from euro to dollars reaching 0.23.
+I set the \emph{E} constant to 0.21. This was the price of electricity per kilowatt hour in USA expressed in dollars as shown in \parencite{electricity}. The average price in EU was even slightly higher after conversion from euro to dollars reaching 0.23.
 
 \subsection{Case 1 - modern laptop}
 \FloatBarrier
-For the first case, suppose that an attacker decides to buy machines comparable to the machine Nympha which can compute one hash in cca 217 ms. Also suppose that an attacker gets hold of a drive encrypted with LUKS2 with parameters of 6 iterations, 1048576 KiB of memory required and degree of parallelism 4.
+For the first case, suppose that an attacker decides to buy machines comparable to the machine Nympha which can compute one hash in cca 217 ms. Also suppose that an attacker gets hold of a drive encrypted with LUKS2 with parameters of 6 iterations, 1,048,576 KiB of memory required and degree of parallelism 4.
 
 \noindent
 \begin{table}
@@ -1254,20 +1243,20 @@ For the first case, suppose that an attacker decides to buy machines comparable 
 \hline
 L in years & number of machines\\
 \hline
-1 & 751202\\
+1 & 751,202\\
 \hline
-2 & 375601\\
+2 & 375,601\\
 \hline
-5 & 150241\\
+5 & 150,241\\
 \hline
-10 & 75121\\
+10 & 75,121\\
 \hline
 \end{tabularx}
 \end{table}
 
-Further, let's set $H = 2 \times 1900 + 14 \times 70 = 4780$ as total price of 2 16-core CPUs and 14 16 GiB memory modules. TDP of the particular CPU is 125 watts, running 24 hours per day the power draw is 3 kilowatts.
+Further, let's set $H = 2 \times 1,900 + 14 \times 70 = 4,780$ as total price of 2 16-core CPUs and 14 16 GiB memory modules. TDP of the particular CPU is 125 watts, running 24 hours per day the power draw is 3 kilowatts.
 
-$$F = ( N \times 4780 ) + ( N \times 3 \times 0.21 \times 24 \times L)$$
+$$F = ( N \times 4,780 ) + ( N \times 3 \times 0.21 \times 24 \times L)$$
 
 Inserting respective \emph{N} and \emph{L} values according to the table \ref{tab:at1} produces following results.
 
@@ -1279,13 +1268,13 @@ Inserting respective \emph{N} and \emph{L} values according to the table \ref{ta
 \hline
 L  in years & number of machines & F in dollars\\
 \hline
-1 & 751202 & 7736479157.6\\
+1 & 751,202 & 7,736,479,157.6\\
 \hline
-2 & 375601  & 5941106377.6\\
+2 & 375,601 & 5,941,106,377.6\\
 \hline
-5 & 150241 & 4863902134.0\\
+5 & 150,241 & 4,863,902,134.0\\
 \hline
-10 & 75121 & 4504856128.0\\
+10 & 75,121 & 4,504,856,128.0\\
 \hline
 \end{tabularx}
 \end{table}
@@ -1302,13 +1291,13 @@ Considering cloud options there are multiple choices. For example Microsoft Azur
 \hline
 L  in years & number of machines & F in dollars\\
 \hline
-1 & 751202 & 11842320924.19\\
+1 & 751,202 & 11,842,320,924.19\\
 \hline
-2 & 375601 & 11842320924.19\\
+2 & 375,601 & 11,842,320,924.19\\
 \hline
-5 & 150241 & 7344558328.38\\
+5 & 150,241 & 7,344,558,328.38\\
 \hline
-10 & 75121 & 7344607213.559999\\
+10 & 75,121 & 7,344,607,213.559999\\
 \hline
 \end{tabularx}
 \end{table}
@@ -1318,7 +1307,7 @@ The table \ref{tab:at3} shows that renting an online instance for the same compu
 \FloatBarrier
 
 \subsection{Case 2 - Raspberry Pi}
-As the second example suppose that an attacker gains access to a drive encrypted with parameters benchmarked on Raspberry Pi. In particular parameters were 4 iterations, 95296.58 KiB of memory and degree of paralellism 4. Suppose that an attacker decides to use NVIDIA GeForce GTX 1080 Ti with 11178 MiB of GPU memory equal with provided one by Konos machine. In the table \ref{tab:rpicrack} it is shown that it takes 3.132034 milliseconds to compute one Argon2 hash.
+As the second example suppose that an attacker gains access to a drive encrypted with parameters benchmarked on Raspberry Pi. In particular parameters were 4 iterations, 95,296.58 KiB of memory and degree of parallelism 4. Suppose that an attacker decides to use NVIDIA GeForce GTX 1080 Ti with 11,178 MiB of GPU memory equal with provided one by Konos machine. In the table \ref{tab:rpicrack} it is shown that it takes 3.132034 milliseconds to compute one Argon2 hash.
 
 \noindent
 \begin{table}
@@ -1328,18 +1317,18 @@ As the second example suppose that an attacker gains access to a drive encrypted
 \hline
 L in years & number of machines\\
 \hline
-1 & 10843\\	
+1 & 10,843\\	
 \hline
-2 & 5422\\
+2 & 5,422\\
 \hline
-5 & 2169\\
+5 & 2,169\\
 \hline
-10 & 1085\\
+10 & 1,085\\
 \hline
 \end{tabularx}
 \end{table}
 
-Suppose $H = 1000$, NVidia unfortunately does not provide suggested customer price, therefore the price was estimated according to \parencite{geforceprice}. The TDP of the card is 250 watts, therefore \emph{D} is set to 6 kilowatts.
+Suppose $H = 1,000$, NVidia unfortunately does not provide suggested customer price, therefore the price was estimated according to \parencite{geforceprice}. The TDP of the card is 250 watts, therefore \emph{D} is set to 6 kilowatts.
 
 \noindent
 \begin{table}
@@ -1349,20 +1338,20 @@ Suppose $H = 1000$, NVidia unfortunately does not provide suggested customer pri
 \hline
 L  in years & number of machines & F in dollars\\
 \hline
-1 & 10843 & 130523696.8\\
+1 & 10,843 & 130,523,696.8\\
 \hline
-2 & 5422 & 125113734.39\\
+2 & 5,422 & 125,113,734.39\\
 \hline
-5 & 2169 & 121871772.0\\
+5 & 2,169 & 121,871,772.0\\
 \hline
-10 & 1085 & 120842959.99\\
+10 & 1,085 & 120,842,959.99\\
 \hline
 \end{tabularx}
 \end{table}
 
-The table \ref{tab:at5} confirms that drastical decrease in parameters lowers also the expected attack price. Note that the memory parameter was decreased almost ten times. The price is still above hundred millions of dollars. Notice also that the price to buy initial hardware affects the final price less with longer expected time of attack.
+The table \ref{tab:at5} confirms that drastically decrease in parameters lowers also the expected attack price. Note that the memory parameter was decreased almost ten times. The price is still above hundred millions of dollars. Notice also that the price to buy initial hardware affects the final price less with longer expected time of attack.
 
-Although this GPU did not achieve the best hash computing time, it provided relatively low price compared to NVidia Tesla P100 (estimated 1000  dollars versus estimated 4500 dollars). But it is possible to rent Tesla P100 in the cloud. As an example let's take the instance NCV2 providing up to 4 GPUs per instance provided by Microsoft Azure. The table \ref{tab:at6} shows the results and demonstrates that in certain extreme situations it might be cheaper to rent online resources. Note that at the time of writing (spring 2019) the renting price was set to \$1.3187 per hour for one year reserved instance and \$0.9189 for three years reserved instance.
+Although this GPU did not achieve the best hash computing time, it provided relatively low price compared to NVidia Tesla P100 (estimated 1,000  dollars versus estimated 4,500 dollars). But it is possible to rent Tesla P100 in the cloud. As an example let's take the instance NCV2 providing up to 4 GPUs per instance provided by Microsoft Azure. The table \ref{tab:at6} shows the results and demonstrates that in certain extreme situations it might be cheaper to rent online resources. Note that at the time of writing (spring 2019) the renting price was set to \$1.3187 per hour for one year reserved instance and \$0.9189 for three years reserved instance.
 
 
 \noindent
@@ -1373,13 +1362,13 @@ Although this GPU did not achieve the best hash computing time, it provided rela
 \hline
 L  in years & number of machines & F in dollars\\
 \hline
-1 & 10843 & 125256297.52\\
+1 & 10,843 & 125,256,297.52\\
 \hline
-2 & 5422 & 125267849.33\\
+2 & 5,422 & 125,267,849.33\\
 \hline
-5 & 2169 & 87297521.58\\
+5 & 2,169 & 87,297,521.58\\
 \hline
-10 & 1085 & 87337769.4\\
+10 & 1,085 & 87,337,769.4\\
 \hline
 \end{tabularx}
 \end{table}
@@ -1387,26 +1376,22 @@ L  in years & number of machines & F in dollars\\
 \chapter{Conclusions}
 The thesis introduced password-based key derivation functions and their usage in disk volume encryption focusing on LUKS2 encryption scheme. Resistance of LUKS2 to brute-force or dictionary-based password cracking was researched and experimentally verified.
 
-Firstly a custom tool was used to collect real world Argon2 parameters as benchmarked by Cryptsetup. Two very different but real hardware configurations were used; a modern high-end laptop and a single-board computer. Factors influencing such benchmarks were briefly described. These data were then used as a basis for experimental simulation of guessing attack on LUKS2 passphrase.
+Firstly a custom tool was used to collect real world Argon2 parameters as benchmarked by Cryptsetup. Two very different but real hardware configurations were used; a modern high-end laptop and a single-board computer. Factors influencing such benchmarks were briefly described. These data were then used as a basis for experimental simulation of brute-force attack on LUKS2 passphrase.
 
-There were introduced two methods. The first method used API provided by Cryptsetup. The second method used slightly modified tool originally created for benchmarking Argon2 performance. The first method proved to be less effective and it was not considered in further research. Both methods were applied on a hardware provided by MetaCentrum VO organization. This hardware provided tens of CPU cores and hundrets of gibibites of RAM per single machine because it was assumed that determined attacker would buy or rent such machines. Both CPUs and GPUs were used if applicable. Results were collected and showed.
+There were introduced two methods. The first method used API provided by Cryptsetup. The second method used slightly modified tool originally created for benchmarking Argon2 performance. The first method proved to be less effective and it was not considered in further research. Both methods were applied on a hardware provided by MetaCentrum VO organization. This hardware provided tens of CPU cores and hundreds of gibibites of RAM per single machine because it was assumed that determined attacker would buy or rent such machines. Both CPUs and GPUs were used if applicable. Results were collected and showed.
 
 Based on information about Argon2 and collected data the price model was created. This model was then applied to real world data described in previous chapters. Note that some data had to be only estimated (power draw of machines, hardware prices etc). The model showed that resistance of Argon2 to brute-force guessing had greatly improved compared to PBKDF2.
 
-To point out one example, cracking in ten years an eight characters long passphrase used to unlock encrypted volume in cca two seconds on Raspberry PI could take up to 2169 NVidia Tesla P100 GPUs costing cca 12 million dollars. Trying to crack a volume created on modern laptop would require up to 150240 powerful machines running for ten years costing over one billion dollars.
+To point out one example, cracking in ten years an eight characters long passphrase used to unlock encrypted volume in cca two seconds on Raspberry PI could take up to 1,085 NVidia Tesla P100 GPUs costing cca 120 million dollars. Trying to crack a volume created on modern laptop would require up to 75,121 powerful machines running for ten years costing over four billion dollars.
 
 \section{Further research suggestions}
 There are many ways in which topic of PBKDFs and their resilience to guessing attacks could be explored more. In this section I try to suggest several areas for further research.
 
-The main method for simulating of an attack agains Argon2 was based on benchmarking tool. Only computation of Argon2 is involved, no actual decryption of volumes is performed. It would be interesting to create a fully working cracking tool and test its performance, eventually making the price model more precise. This process could be connected with measuring of real power draw of physical machines while performing the attack. This values would make the model even more precise.
+The main method for simulating of an attack against Argon2 was based on benchmarking tool. Only computation of Argon2 is involved, no actual decryption of volumes is performed. It would be interesting to create a fully working cracking tool and test its performance, eventually making the price model more precise. This process could be connected with measuring of real power draw of physical machines while performing the attack. This values would make the model even more precise.
 
 Another part which could be researched more are cloud-based computing services. The prices and estimates described in the fifth chapter of the thesis were made only based on theoretical information and no actual computation was made using these resources. The real efficiency might differ and in that case it might positively or negatively influence the resulting price and suitability for the attack.
 
 The Argon2-gpu-bench tool could be probably more improved with support for modern GPUs and their features. As shown in table \ref{tab:gpus}, the performance on older Nvidia Geforce GPU was better than on more recent P100 GPU which should theoretically be more powerful.
-
-
-
-
 
 \printbibliography
 \end{document}
