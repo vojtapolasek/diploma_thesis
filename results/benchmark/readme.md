@@ -18,8 +18,10 @@ There are following folders:
 
 - optimized - Cryptsetup was compiled with improved benchmark version, folders with "sse" in the name. The folders with name "external" were compiled agains external Argon2 library from the distro.
 
+- timing - contains also results obtained while measuring length of every single benchmarking attempt.
+
 ## Raspberry
 
 The second configuration comprises Raspberry Pi 3, model B+. This device is equipped with quad core Broadcom CM2837B0, Cortex-A53 (ARMv8) 64-bit SoC @ 1.4GHz processor and 1GB LPDDR2 SDRAM memory.
 
-As the memory is pretty liited already, I just performed benchmarks while disabling individual cores.
+As the memory is pretty limited already, I just performed benchmarks while disabling individual cores. The folder with "timing" in the name contains also results obtained while measuring length of every single benchmarking attempt.
