@@ -1386,6 +1386,8 @@ Based on information about Argon2 and collected data the price model was created
 
 To point out one example, cracking in ten years an eight characters long passphrase used to unlock encrypted volume in circa two seconds on Raspberry PI could take up to 1,085 Nvidia Tesla P100 GPUs costing circa 120 million dollars. Trying to crack a volume created on modern laptop would require up to 75,121 powerful machines running for ten years costing over four billion dollars.
 
+Based on collected results the default Argon2 parameters used by Cryptsetup and LUKS2 provide sufficient security considering intended use of this software.
+
 \section{Further research suggestions}
 There are many ways in which topic of PBKDFs and their resilience to guessing attacks could be explored more. In this section I try to suggest several areas for further research.
 
@@ -1439,6 +1441,8 @@ The following lists provides explanations for abbreviations used throughout the 
 \item[AVX2] -- an Intel-specific SSE, working with 256 bit operands, improving the AVX extension
 
 \item[AVX512F] -- an Intel-specific SSE working with 512 bit operands, replacing AVX2. 
+
+\item[Sponge functions] -- also called cryptographic sponges is a family of algorithms which take bit stream of arbitrary length and produce bit stream of desired length, they are often used  as cryptographic primitives
 
 \item[CUDA] -- a parallel computing platform created by Nvidia
 
